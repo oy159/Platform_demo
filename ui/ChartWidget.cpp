@@ -189,17 +189,15 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
             // 缩小 X 轴（放大范围）
             xAxis->setRange(xAxis->min(), xAxis->max() * 1.25);
         }
-    } else if(event->modifiers() & Qt::AltModifier) {
+    } else if(event->modifiers() & Qt::ShiftModifier) {
         QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
+        int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
         // 调整 X 轴范围
         if (event->angleDelta().y() > 0) {
             // 往右移动
-            int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
             xAxis->setRange(xAxis->min() + step, xAxis->max() + step);
-
         } else {
             // 往左移动
-            int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
             xAxis->setRange(xAxis->min() - step, xAxis->max() - step);
         }
     }else{
