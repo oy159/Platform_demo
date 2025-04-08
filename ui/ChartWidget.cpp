@@ -6,7 +6,7 @@
 #include "ChartWidget.h"
 
 ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
-    resize(1024, 600);
+    resize(800, 600);
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(5);
@@ -25,9 +25,42 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     // 初始化图表
     initChart();
 
+    auto* slider = new mSlider(this);
+    slider->setOrientation(Qt::Horizontal);
+    slider->setRange(0, 1000);
+    slider->setTracking(true);
+    slider->setPageStep(1);
+
+    // slider->setStyleSheet(
+    //     "QSlider::groove:horizontal { "
+    //     "    height: 12px; "
+    //     "    left: 0px; "
+    //     "    right: 0px; "
+    //     "    border: 0px; "
+    //     "    border-radius: 6px; "
+    //     "    background: rgb(34, 173, 143); "
+    //     "} "
+
+    //     "QSlider::handle:horizontal { "
+    //     "    width: 50px; "
+    //     "    height: 50px; "
+    //     "    margin-top: -20px; "
+    //     "    margin-left: 0px; "
+    //     "    margin-bottom: -20px; "
+    //     "    margin-right: 0px; "
+    //     "    border-image: url(:/res/images/setting_slider_handle.png); "
+    //     "} "
+    //     "QSlider::sub-page:horizontal { "
+    //     "    background: rgb(48, 84, 112); "
+    //     "}"
+    // );
+
+
+
     // 将控件添加到布局
     mainLayout->addWidget(counterLabel);
     mainLayout->addWidget(chartView);
+    mainLayout->addWidget(slider);
 }
 
 ChartWidget::~ChartWidget() {
@@ -85,6 +118,9 @@ void ChartWidget::initChart() {
 
     // 允许缩放
     chartView->setMouseTracking(true);
+
+    // 隐藏图例
+    chart->legend()->hide();
 }
 
 void ChartWidget::updateCounterLabel() {
@@ -107,8 +143,9 @@ void ChartWidget::updateWaveformData(const QVector<QPointF> &newData)
         optimizeAxisRanges(newData);
         firstDataReceived = false;
     }
-
 }
+
+
 
 void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
 {
@@ -133,6 +170,14 @@ void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
     if (axisY) axisY->setRange(minY - yMargin, maxY + yMargin);
 }
 
+void ChartWidget::AdjustAxisXRange(double min, double max)
+{
+    // 获取现有轴并更新范围
+    QValueAxis *axisX = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).constFirst());
+
+    if (axisX) axisX->setRange(min, max);
+}
+
 void ChartWidget::wheelEvent(QWheelEvent *event) {
     if (event->modifiers() & Qt::ControlModifier) {
         // Ctrl + 滚轮，调整 X 轴范围
@@ -144,7 +189,20 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
             // 缩小 X 轴（放大范围）
             xAxis->setRange(xAxis->min(), xAxis->max() * 1.25);
         }
-    } else {
+    } else if(event->modifiers() & Qt::AltModifier) {
+        QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
+        // 调整 X 轴范围
+        if (event->angleDelta().y() > 0) {
+            // 往右移动
+            int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
+            xAxis->setRange(xAxis->min() + step, xAxis->max() + step);
+
+        } else {
+            // 往左移动
+            int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
+            xAxis->setRange(xAxis->min() - step, xAxis->max() - step);
+        }
+    }else{
         // 普通滚轮，调整 Y 轴范围
         QValueAxis *yAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Vertical).first());
         if (event->angleDelta().y() > 0) {
@@ -154,7 +212,34 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
             // 缩小 Y 轴（放大范围）
             yAxis->setRange(yAxis->min() * 0.8, yAxis->max() * 0.8);
         }
+
     }
     event->accept();
 }
 
+mSlider::mSlider(QWidget *parent)
+{
+
+}
+
+mSlider::~mSlider()
+{
+}
+
+void mSlider::mousePressEvent(QMouseEvent *ev)
+{
+     //获取当前点击位置
+     int currentX = ev->pos().x();
+ 
+     //获取当前点击的位置占整个Slider的百分比
+     double per = currentX *1.0 /this->width();
+  
+     //利用算得的百分比得到具体数字
+     int value = per*(this->maximum() - this->minimum()) + this->minimum();
+  
+     //设定滑动条位置
+     this->setValue(value);
+  
+     //滑动条移动事件等事件也用到了mousePressEvent,加这句话是为了不对其产生影响，是的Slider能正常相应其他鼠标事件
+     QSlider::mousePressEvent(ev);
+}

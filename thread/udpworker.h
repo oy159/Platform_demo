@@ -7,6 +7,7 @@
 #include <QRunnable>
 #include <QTimer>
 #include <QEventLoop>
+#include <QDebug>
 
 class UdpWorker : public QObject{
 Q_OBJECT

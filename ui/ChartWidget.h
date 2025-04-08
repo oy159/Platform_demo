@@ -10,6 +10,7 @@
 #include <QValueAxis>
 #include <QLabel>
 #include "QChartView"
+#include "QSlider"
 
 class ChartWidget: public QWidget{
     Q_OBJECT
@@ -32,6 +33,8 @@ signals:
 private:
     void initChart();
     void optimizeAxisRanges(const QVector<QPointF> &data);
+    void AdjustAxisXRange(double min, double max);
+
     void wheelEvent(QWheelEvent *event) override;
 //    void mousePressEvent(QMouseEvent *event) override;
 //    void mouseMoveEvent(QMouseEvent *event) override;
@@ -55,6 +58,17 @@ private:
 
 private:
 
+};
+
+
+class mSlider: public QSlider {
+    Q_OBJECT
+public:
+    explicit mSlider(QWidget *parent = nullptr);
+    ~mSlider() override;
+
+private:
+    void mousePressEvent(QMouseEvent *ev) override;
 };
 
 

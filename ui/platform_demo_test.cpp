@@ -45,12 +45,14 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::TransferFFTData, this, &platform_demo_test::handleRefreshChart1);
 
 
-    chartWidget1 = new ChartWidget();
-    connect(ui->ClickChart1, &QAction::triggered, this, &platform_demo_test::handleShowChartPanel1);
+    // chartWidget1 = new ChartWidget();
+    // connect(ui->ClickChart1, &QAction::triggered, this, &platform_demo_test::handleShowChartPanel1);
 
-//    mCaculateParams->setData(Adc_data2);
-//    mCalculateThread->start();
-//    QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
+    chartWidget1 = ui->chartWidget1;
+
+    mCaculateParams->setData(Adc_data2);
+    mCalculateThread->start();
+    QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
 
     /** test code **/
     // create timer

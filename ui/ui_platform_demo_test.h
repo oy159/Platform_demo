@@ -17,6 +17,7 @@
 #include <QSplitter>
 #include <QMenu>
 #include <QSpacerItem>
+#include <ChartWidget.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -43,6 +44,18 @@ public:
     QLineEdit *messageLineEdit;
     QPushButton *sendButton;
     QSpacerItem *verticalSpacer;
+
+    QWidget *DisplayParamsWidget;
+    QVBoxLayout *DisplayParamsLayout;
+    QGroupBox *DynamicParamsGroupBox;
+    QVBoxLayout *DynamicParamsGroupBoxLayout;
+    QLabel *SFDRLabel;
+    QLabel *SNRLabel;
+    QLabel *THDLabel;
+    QLabel *ENOBLabel;
+
+
+    ChartWidget *chartWidget1;
     QWidget *rightWidget;
     QVBoxLayout *logLayout;
     QTextEdit *logTextEdit;
@@ -55,9 +68,7 @@ public:
     {
         if (platform_demo_test->objectName().isEmpty())
             platform_demo_test->setObjectName("platform_demo_test");
-        platform_demo_test->resize(800, 600);
-
-
+        platform_demo_test->resize(1400, 800);
 
         centralwidget = new QWidget(platform_demo_test);
         mainLayout = new QVBoxLayout(centralwidget);
@@ -111,16 +122,45 @@ public:
 
         leftWidget->setLayout(controlLayout);
 
-        rightWidget = new QWidget(splitter);
-        logLayout = new QVBoxLayout(rightWidget);
-        logTextEdit = new QTextEdit(rightWidget);
-        logLayout->addWidget(logTextEdit);
-        rightWidget->setLayout(logLayout);
+        DisplayParamsWidget = new QWidget(splitter);
+        DisplayParamsLayout = new QVBoxLayout(DisplayParamsWidget);
+
+        DynamicParamsGroupBox = new QGroupBox("Dynamic Parameters", DisplayParamsWidget);
+        DynamicParamsGroupBoxLayout = new QVBoxLayout(DynamicParamsGroupBox);
+        DisplayParamsLayout->addWidget(DynamicParamsGroupBox);
+
+        SFDRLabel = new QLabel("SFDR: ", DynamicParamsGroupBox);
+        SNRLabel = new QLabel("SNR: ", DynamicParamsGroupBox);
+        THDLabel = new QLabel("THD: ", DynamicParamsGroupBox);
+        ENOBLabel = new QLabel("ENOB: ", DynamicParamsGroupBox);
+        DynamicParamsGroupBoxLayout->addWidget(SFDRLabel);
+        DynamicParamsGroupBoxLayout->addWidget(SNRLabel);
+        DynamicParamsGroupBoxLayout->addWidget(THDLabel);
+        DynamicParamsGroupBoxLayout->addWidget(ENOBLabel);
+
+        DisplayParamsLayout->addWidget(DynamicParamsGroupBox);
+
+        controlLayout->addWidget(DisplayParamsWidget);
+
+        auto* VerticalSpacer2 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+        DisplayParamsLayout->addItem(VerticalSpacer2);
+
+        DisplayParamsWidget->setLayout(DisplayParamsLayout);
+
+        // rightWidget = new QWidget(splitter);
+        // logLayout = new QVBoxLayout(rightWidget);
+        // logTextEdit = new QTextEdit(rightWidget);
+        // logLayout->addWidget(logTextEdit);
+        // rightWidget->setLayout(logLayout);
+
+        chartWidget1 = new ChartWidget(splitter);
 
         splitter->addWidget(leftWidget);
-        splitter->addWidget(rightWidget);
+        splitter->addWidget(DisplayParamsWidget);
+        splitter->addWidget(chartWidget1);
         splitter->setStretchFactor(0, 1);
         splitter->setStretchFactor(1, 2);
+        splitter->setStretchFactor(2, 5);
 
         mainLayout->addWidget(splitter);
         centralwidget->setLayout(mainLayout);
