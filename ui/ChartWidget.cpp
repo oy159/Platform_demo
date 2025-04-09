@@ -7,6 +7,7 @@
 
 ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     resize(800, 600);
+    
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(5);
@@ -25,11 +26,13 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     // 初始化图表
     initChart();
 
-    auto* slider = new mSlider(this);
+    slider = new mSlider(this);
     slider->setOrientation(Qt::Horizontal);
     slider->setRange(0, 1000);
     slider->setTracking(true);
     slider->setPageStep(1);
+
+    connect(slider, &QSlider::valueChanged, this, &ChartWidget::onSliderValueChanged);
 
     // slider->setStyleSheet(
     //     "QSlider::groove:horizontal { "
@@ -55,7 +58,7 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     //     "}"
     // );
 
-
+    setCursor(Qt::ArrowCursor); // 恢复默认指针样式
 
     // 将控件添加到布局
     mainLayout->addWidget(counterLabel);
@@ -71,16 +74,40 @@ ChartWidget::~ChartWidget() {
     delete chartView;
 }
 
+void ChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
+{
+    mpeaks = peaks;
+    qDebug() << "Received peaks:" << mpeaks[0].position << mpeaks[0].value;
+    qDebug() << "Received peaks:" << mpeaks[1].position << mpeaks[1].value;
+
+    peakSeries->clear();
+
+    // 添加新的峰值点
+    peakSeries->append(peaks[0].position, peaks[0].value);
+    peakSeries->append(peaks[1].position, peaks[1].value);
+
+}
+
+void ChartWidget::onSliderValueChanged(int value) {
+    if (!axisX) return;
+
+    // 计算新的 X 轴范围
+    double range = axisX->max() - axisX->min();
+    double newMin = value;
+    double newMax = value + range;
+
+    // 更新 X 轴范围
+    axisX->setRange(newMin, newMax);
+}
 
 void ChartWidget::initChart() {
     chart = new QChart();
-    chart->setAnimationOptions(QChart::NoAnimation); // 禁用动画提高性能
+    chart->setAnimationOptions(QChart::NoAnimation); 
     chart->setMargins(QMargins(5, 5, 5, 5));
 
     series = new QLineSeries();
-    series->setUseOpenGL(true); // 必须开启OpenGL加速
+    series->setUseOpenGL(true); 
 
-    // 配置抗锯齿和线条样式
     QPen pen(Qt::cyan);
     pen.setWidthF(1.5);
     series->setPen(pen);
@@ -97,7 +124,8 @@ void ChartWidget::initChart() {
 
     axisY->setTitleText("幅值");
     axisY->setLabelFormat("%d");
-    axisY->setTickCount(20);
+    axisY->setTickCount(10);
+    axisY->setTickInterval(10); // 设置主刻度步长为10
 
     // 初始范围
     axisX->setRange(0, 100);
@@ -107,6 +135,14 @@ void ChartWidget::initChart() {
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisX);
     series->attachAxis(axisY);
+
+    peakSeries = new QScatterSeries();
+    peakSeries->setMarkerShape(QScatterSeries::MarkerShapeCircle); // 圆形标记
+    peakSeries->setMarkerSize(10.0); // 设置标记大小
+    peakSeries->setColor(Qt::red); // 设置标记颜色
+    chart->addSeries(peakSeries);
+    peakSeries->attachAxis(axisX);
+    peakSeries->attachAxis(axisY);
 
     chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing, true);
@@ -134,6 +170,9 @@ void ChartWidget::updateWaveformData(const QVector<QPointF> &newData)
     // 批量替换数据
     series->clear();
     series->replace(newData);
+    
+    slider->setRange(newData.first().x(), newData.last().x());
+    
 
     updateCount++;
     updateCounterLabel();
@@ -144,7 +183,6 @@ void ChartWidget::updateWaveformData(const QVector<QPointF> &newData)
         firstDataReceived = false;
     }
 }
-
 
 
 void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
@@ -168,12 +206,16 @@ void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
 
     if (axisX) axisX->setRange(minX, maxX);
     if (axisY) axisY->setRange(minY - yMargin, maxY + yMargin);
+
+    slider->setValue(data.first().x());
+    qDebug() << "Slider range:" << slider->value();
 }
 
 void ChartWidget::AdjustAxisXRange(double min, double max)
 {
     // 获取现有轴并更新范围
     QValueAxis *axisX = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).constFirst());
+    slider->setValue(min);
 
     if (axisX) axisX->setRange(min, max);
 }
@@ -203,16 +245,130 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
     }else{
         // 普通滚轮，调整 Y 轴范围
         QValueAxis *yAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Vertical).first());
-        if (event->angleDelta().y() > 0) {
-            // 放大 Y 轴（缩小范围）
-            yAxis->setRange(yAxis->min() * 1.2, yAxis->max() * 1.2);
-        } else {
-            // 缩小 Y 轴（放大范围）
-            yAxis->setRange(yAxis->min() * 0.8, yAxis->max() * 0.8);
+        if (yAxis) {
+            double rangeMin = yAxis->min();
+            double rangeMax = yAxis->max();
+            double range = rangeMax - rangeMin;
+
+            if (event->angleDelta().y() > 0) {
+                // 放大 Y 轴（缩小范围）
+                yAxis->setRange(rangeMin, rangeMax * 0.8);
+            } else {
+                // 缩小 Y 轴（放大范围）
+                yAxis->setRange(rangeMin, rangeMax * 1.25);
+            }
+
+            // 动态调整主刻度数量
+            range = yAxis->max() - yAxis->min();
+            int tickCount = static_cast<int>(range / 10) + 1; // 根据范围计算主刻度数量
+            yAxis->setTickInterval(10); // 主刻度步长为10
+            yAxis->setTickCount(tickCount); // 设置主刻度数量
         }
 
     }
     event->accept();
+}
+
+void ChartWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (!chart || !series) return;
+
+    // 将鼠标点击位置转换为图表坐标
+    QPointF chartPos = chartView->mapToScene(event->pos());
+    QPointF valuePos = chart->mapToValue(chartPos, series);
+
+    // 查找最近的曲线点
+    QPointF closestPoint;
+    double minDistance = std::numeric_limits<double>::max();
+    for (const QPointF &point : series->points()) {
+        double distance = std::hypot(point.x() - valuePos.x(), point.y() - valuePos.y());
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+        }
+    }
+
+    // 显示选中点的坐标
+    if (minDistance < 10.0) { // 设置一个阈值，避免误选
+        showPointCoordinates(closestPoint);
+    }
+
+    QWidget::mousePressEvent(event);
+}
+
+void ChartWidget::mouseMoveEvent(QMouseEvent *event) {
+    if (!chart || !series) return;
+
+    // 将鼠标位置转换为图表坐标
+    QPointF chartPos = chartView->mapToScene(event->pos());
+    QPointF valuePos = chart->mapToValue(chartPos, series);
+
+    // 查找最近的曲线点
+    double minDistance = std::numeric_limits<double>::max();
+    for (const QPointF &point : series->points()) {
+        double distance = std::hypot(point.x() - valuePos.x(), point.y() - valuePos.y());
+        if (distance < minDistance) {
+            minDistance = distance;
+        }
+    }
+
+    // 如果鼠标接近某个点，改变指针样式
+    if (minDistance < 1.0) { // 设置一个阈值
+        setCursor(Qt::PointingHandCursor); // 更改为手型指针
+    } else {
+        setCursor(Qt::ArrowCursor); // 恢复默认指针
+    }
+
+    QWidget::mouseMoveEvent(event);
+}
+
+void ChartWidget::keyPressEvent(QKeyEvent *event) {
+    if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_F) {
+        // 弹出输入框，获取用户输入的 X 值
+        bool ok;
+        double targetX = QInputDialog::getInt(this, "查找点", "请输入 X 坐标值：", 0, -10000, 10000, 2, &ok);
+
+        if (ok) {
+            // 查找对应点
+            QPointF closestPoint;
+            double minDistance = std::numeric_limits<double>::max();
+
+            for (const QPointF &point : series->points()) {
+                double distance = std::abs(point.x() - targetX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            }
+
+            // 如果找到点，则标注坐标
+            if (minDistance < std::numeric_limits<double>::max()) {
+                showPointCoordinates(closestPoint);
+            } else {
+                QMessageBox::information(this, "查找点", "未找到对应的点！");
+            }
+        }
+    }
+
+    QWidget::keyPressEvent(event);
+}
+
+void ChartWidget::showPointCoordinates(const QPointF &point) {
+    // 删除之前的坐标显示
+    if (coordinateLabel) {
+        delete coordinateLabel;
+        coordinateLabel = nullptr;
+    }
+
+    // 创建一个 QLabel 显示坐标
+    coordinateLabel = new QLabel(this);
+    coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
+    coordinateLabel->setStyleSheet("QLabel { background-color: white; color: black; padding: 3px; }");
+
+    // 将坐标转换为图表上的位置
+    QPoint labelPos = chartView->mapFromScene(chart->mapToPosition(point, series));
+    coordinateLabel->move(labelPos.x(), labelPos.y() - 20); // 调整位置以避免遮挡点
+    coordinateLabel->show();
 }
 
 mSlider::mSlider(QWidget *parent)

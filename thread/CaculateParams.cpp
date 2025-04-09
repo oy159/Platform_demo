@@ -65,11 +65,7 @@ void CaculateParams::calculateParams() {
     double max_magnitude = fft_abs[fund_peakIndex];
     auto N = fft_abs.size();
 
-//    std::vector<Peak> peaks = findPeaks(fft_abs, -INFINITY, exclude_band);
-//    dc_amp = fft_abs[0];
-//
-//    std::sort(peaks.begin(), peaks.end(),
-//              [](const Peak& a, const Peak& b) { return a.value > b.value; });
+   
 //
 //    fund_peak = peaks[0];
 
@@ -90,7 +86,13 @@ void CaculateParams::calculateParams() {
         fft_db.push_back(20 * log10(fft_ab / max_magnitude));
     }
 
+    fft_db_peaks.clear();
+    fft_db_peaks = findPeaks(fft_db, -INFINITY, 20);
+    std::sort(fft_db_peaks.begin(), fft_db_peaks.end(),
+             [](const Peak& a, const Peak& b) { return a.value > b.value; });
+
     emit TransferFFTData(fft_db);
+    emit TransferPeakData(fft_db_peaks);
 }
 
 

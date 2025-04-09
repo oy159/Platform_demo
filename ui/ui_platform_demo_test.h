@@ -45,6 +45,9 @@ public:
     QPushButton *sendButton;
     QSpacerItem *verticalSpacer;
 
+    
+
+
     QWidget *DisplayParamsWidget;
     QVBoxLayout *DisplayParamsLayout;
     QGroupBox *DynamicParamsGroupBox;
@@ -56,9 +59,6 @@ public:
 
 
     ChartWidget *chartWidget1;
-    QWidget *rightWidget;
-    QVBoxLayout *logLayout;
-    QTextEdit *logTextEdit;
     QMenuBar *menubar;
     QStatusBar *statusbar;
     QMenu *menuSettings;
@@ -146,12 +146,6 @@ public:
         DisplayParamsLayout->addItem(VerticalSpacer2);
 
         DisplayParamsWidget->setLayout(DisplayParamsLayout);
-
-        // rightWidget = new QWidget(splitter);
-        // logLayout = new QVBoxLayout(rightWidget);
-        // logTextEdit = new QTextEdit(rightWidget);
-        // logLayout->addWidget(logTextEdit);
-        // rightWidget->setLayout(logLayout);
 
         chartWidget1 = new ChartWidget(splitter);
 

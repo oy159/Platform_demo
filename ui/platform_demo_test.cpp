@@ -50,6 +50,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     chartWidget1 = ui->chartWidget1;
 
+    connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &ChartWidget::handleRefreshPeakData);
+
     mCaculateParams->setData(Adc_data2);
     mCalculateThread->start();
     QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
@@ -93,7 +95,8 @@ void platform_demo_test::handleSendButton() {
     if (!message.isEmpty()) {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     } else {
-        ui->logTextEdit->append("Message is empty");
+        // ui->logTextEdit->append("Message is empty");
+        qDebug() << "Message is empty";
     }
 }
 
@@ -104,10 +107,8 @@ void platform_demo_test::handleMessageReceived(const QByteArray &message) {
         std::vector<double> dataArray;
         // 处理函数
         for (int i = 0; i < AdcDataArray.size(); ++i) {
-//            qDebug() << AdcDataArray[i];
             dataArray.push_back((double) AdcDataArray[i]);
         }
-
 
         mCaculateParams->setData(dataArray);
         mCalculateThread->start();
@@ -116,7 +117,6 @@ void platform_demo_test::handleMessageReceived(const QByteArray &message) {
         transFinished = false;
         AdcDataArray.clear();
     }
-
 //    qDebug() << message;
     // todo: 处理数据
 }
@@ -126,15 +126,20 @@ void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double 
     qDebug() << "THD: " << THD;
     qDebug() << "SNR: " << SNR;
     qDebug() << "ENOB: " << ENOB;
+    ui->SFDRLabel->setText("SFDR:   " + QString::number(SFDR, 'f', 2) + " dB");
+    ui->THDLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
+    ui->SNRLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
+    ui->ENOBLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
     mCalculateThread->quit();
     mCalculateThread->wait();
 }
 
 
 void platform_demo_test::handleErrorOccurred(const QString &error) {
-    ui->logTextEdit->append("Error: " + error);
+    // ui->logTextEdit->append("Error: " + error);
     qDebug() << "Error: " << error;
 }
+
 
 void platform_demo_test::handleShowChartPanel1() {
     if (!chartWidget1) {
@@ -148,8 +153,8 @@ void platform_demo_test::handleShowChartPanel1() {
     } else {
         chartWidget1->show();
     }
-
 }
+
 
 QVector<double> platform_demo_test::generateWaveformData(int count)
 {
@@ -191,9 +196,9 @@ QVector<double> platform_demo_test::generateWaveformData(int count)
 
         data.append( quantized);
     }
-
     return data;
 }
+
 
 void platform_demo_test::handleRefreshChart1(std::vector<double> data) {
     QVector<QPointF> chart_data;
@@ -203,3 +208,4 @@ void platform_demo_test::handleRefreshChart1(std::vector<double> data) {
 
     chartWidget1->updateWaveformData(chart_data);
 }
+

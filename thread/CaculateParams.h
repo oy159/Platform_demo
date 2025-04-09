@@ -32,6 +32,7 @@ public:
 signals:
     void paramsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
     void TransferFFTData(const std::vector<double>& fftData);
+    void TransferPeakData(const std::vector<Peak>& peaks);
 
 public slots:
     void setData(const std::vector<double>& data) {
@@ -54,6 +55,8 @@ private:
 
     int fund_peakIndex = 0;
     int exulude_len;
+
+    std::vector<Peak> fft_db_peaks;
 
     Peak fund_peak = {0,0};
     Peak spur_peak = {0,0};
