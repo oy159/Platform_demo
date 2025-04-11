@@ -7,14 +7,16 @@
 #define BIG_LITTLE_SWAP16(x)        ( (((*(short int *)&x) & 0xff00) >> 8) | \
                                       (((*(short int *)&x) & 0x00ff) << 8) )
 
-bool transFinished = false;
-void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array) {
+
+void platform_demo_test::convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array) {
     int size = buffer.size();
     if (size % 2 != 0 ) {
         size -= 1; // Ignore the last byte if the size is odd
         transFinished = true;
     }else if(u16Array.size()*2 + size == 65532*2){
         transFinished = true;
+        // emit is_framehead==false
+        QMetaObject::invokeMethod(mUdpWorker, "handleTransferFinished", Qt::QueuedConnection);
     }
     for (int i = 0; i < size; i += 2) {
         uint16_t value = (uint16_t)buffer[i] << 8 | (uint16_t)buffer[i + 1];
@@ -96,8 +98,8 @@ platform_demo_test::~platform_demo_test() {
 void platform_demo_test::handleConnectButton() {
     if (ui->connectButton->isChecked()) {
         ui->connectButton->setText("连接中...");
-        QString ip = ui->ipLineEdit->text();
-        int remote_port = ui->portLineEdit->text().toInt();
+        QString ip = ui->connectSettings->ipLineEdit->text();
+        int remote_port = ui->connectSettings->portLineEdit->text().toInt();
         int local_port = 11451;
         QMetaObject::invokeMethod(mUdpWorker, "connectToHost", Qt::QueuedConnection, Q_ARG(QString, ip), Q_ARG(int, remote_port), Q_ARG(int, local_port));
     } else {
@@ -108,7 +110,7 @@ void platform_demo_test::handleConnectButton() {
 }
 
 void platform_demo_test::handleSendButton() {
-    QString message = ui->messageLineEdit->text();
+    QString message = "Hello, World!"; 
     if (!message.isEmpty()) {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     } else {
@@ -134,8 +136,6 @@ void platform_demo_test::handleMessageReceived(const QByteArray &message) {
         transFinished = false;
         AdcDataArray.clear();
     }
-//    qDebug() << message;
-    // todo: 处理数据
 }
 
 void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB) {

@@ -25,7 +25,7 @@ signals:
     void    sendConnectSettings(const QString &target_ip,
                     const uint16_t remote_port);
 
-private:
+public:
     QString     target_ip;
     uint16_t    remote_port;
 

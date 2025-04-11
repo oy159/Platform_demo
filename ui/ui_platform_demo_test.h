@@ -18,6 +18,7 @@
 #include <QMenu>
 #include <QSpacerItem>
 #include <QStackedWidget>
+#include <QComboBox>
 #include <ChartWidget.h>
 #include <ConnectSettings.h>
 
@@ -31,20 +32,25 @@ public:
     QSplitter *splitter;
     QWidget *leftWidget;
     QVBoxLayout *controlLayout;
+
+
     QGroupBox *ipGroupBox;
     QVBoxLayout *ipGroupBoxLayout;
-    QHBoxLayout *ipLayout;
-    QLabel *ipLabel;
-    QLineEdit *ipLineEdit;
-    QHBoxLayout *portLayout;
-    QLabel *portLabel;
-    QLineEdit *portLineEdit;
     QPushButton *connectButton;
+
+
     QGroupBox *messageGroupBox;
     QVBoxLayout *messageGroupBoxLayout;
-    QLabel *messageLabel;
-    QLineEdit *messageLineEdit;
     QPushButton *sendButton;
+
+
+    // 参数测试按钮
+    QGroupBox *paramTestGroupBox;
+    QVBoxLayout *paramTestGroupBoxLayout;
+    QPushButton *dynamicparamTestButton;
+    QPushButton *staticparamTestButton;
+
+
     QPushButton *switchWidgetButton;  // 新增切换按钮
     QSpacerItem *verticalSpacer;
 
@@ -53,12 +59,27 @@ public:
     // ADC参数显示部件
     QWidget *DisplayADCParamsWidget;
     QVBoxLayout *DisplayADCParamsLayout;
+
     QGroupBox *DynamicParamsADCGroupBox;
     QVBoxLayout *DynamicParamsADCGroupBoxLayout;
     QLabel *SFDRADCLabel;
     QLabel *SNRADCLabel;
     QLabel *THDADCLabel;
     QLabel *ENOBADCLabel;
+    QPushButton *FindPeakButton;
+    QPushButton *FindNextButton;
+
+    QGroupBox *StaticParamsADCGroupBox;
+    QVBoxLayout *StaticParamsADCGroupBoxLayout;
+    QLabel *DNLADCLabel;
+    QLabel *INLADCLabel;
+    QLabel *OffsetADCLabel;
+
+    QGroupBox *WindowsFuncGroupBox;
+    QVBoxLayout *WindowsFuncGroupBoxLayout;
+    QLabel *WindowsFuncLabel;
+    QComboBox *WindowsFuncCombox;
+
 
     // DAC参数显示部件
     QWidget *DisplayDACParamsWidget;
@@ -94,45 +115,34 @@ public:
         leftWidget = new QWidget(splitter);
         controlLayout = new QVBoxLayout(leftWidget);
 
-        ipGroupBox = new QGroupBox("IP and Port Settings", leftWidget);
+        ipGroupBox = new QGroupBox("设备连接测试", leftWidget);
         ipGroupBoxLayout = new QVBoxLayout(ipGroupBox);
 
-        ipLayout = new QHBoxLayout();
-        ipLabel = new QLabel("IP Address:", ipGroupBox);
-        ipLineEdit = new QLineEdit(ipGroupBox);
-        ipLineEdit->setText("192.168.1.10");
-        ipLayout->addWidget(ipLabel);
-        ipLayout->addWidget(ipLineEdit);
-
-        portLayout = new QHBoxLayout();
-        portLabel = new QLabel("Port:", ipGroupBox);
-        portLineEdit = new QLineEdit(ipGroupBox);
-        portLineEdit->setText("12345");
-        portLayout->addWidget(portLabel);
-        portLayout->addWidget(portLineEdit);
-
-        ipGroupBoxLayout->addLayout(ipLayout);
-        ipGroupBoxLayout->addLayout(portLayout);
-
-        connectButton = new QPushButton("点击连接设备", ipGroupBox);
+        connectButton = new QPushButton("连接设备", ipGroupBox);
         connectButton->setCheckable(true);
         ipGroupBoxLayout->addWidget(connectButton);
 
-        messageGroupBox = new QGroupBox("Message Settings", leftWidget);
+        messageGroupBox = new QGroupBox("仪器资源检测", leftWidget);
         messageGroupBoxLayout = new QVBoxLayout(messageGroupBox);
-        messageLabel = new QLabel("Message:", messageGroupBox);
-        messageLineEdit = new QLineEdit(messageGroupBox);
-        sendButton = new QPushButton("Send", messageGroupBox);
+        sendButton = new QPushButton("检测仪器", messageGroupBox);
 
-        messageGroupBoxLayout->addWidget(messageLabel);
-        messageGroupBoxLayout->addWidget(messageLineEdit);
         messageGroupBoxLayout->addWidget(sendButton);
+
+        // 添加参数测试按钮组
+        paramTestGroupBox = new QGroupBox("参数测试", leftWidget);
+        paramTestGroupBoxLayout = new QVBoxLayout(paramTestGroupBox);
+        dynamicparamTestButton = new QPushButton("动态参数测试", paramTestGroupBox);
+        staticparamTestButton = new QPushButton("静态参数测试", paramTestGroupBox);
+        paramTestGroupBoxLayout->addWidget(dynamicparamTestButton);
+        paramTestGroupBoxLayout->addWidget(staticparamTestButton);
+
 
         // 添加切换按钮
         switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
         
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
+        controlLayout->addWidget(paramTestGroupBox);  // 添加参数测试按钮组
         controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -154,13 +164,42 @@ public:
         SNRADCLabel = new QLabel("SNR: ", DynamicParamsADCGroupBox);
         THDADCLabel = new QLabel("THD: ", DynamicParamsADCGroupBox);
         ENOBADCLabel = new QLabel("ENOB: ", DynamicParamsADCGroupBox);
+        FindPeakButton = new QPushButton("Find Peak", DynamicParamsADCGroupBox);
+        FindNextButton = new QPushButton("Find Next", DynamicParamsADCGroupBox);
         
         DynamicParamsADCGroupBoxLayout->addWidget(SFDRADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(SNRADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(THDADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(ENOBADCLabel);
+        DynamicParamsADCGroupBoxLayout->addWidget(FindPeakButton);
+        DynamicParamsADCGroupBoxLayout->addWidget(FindNextButton);
+
+        StaticParamsADCGroupBox = new QGroupBox("ADC Static Parameters", DisplayADCParamsWidget);
+        StaticParamsADCGroupBoxLayout = new QVBoxLayout(StaticParamsADCGroupBox);
+
+        DNLADCLabel = new QLabel("DNL: ", StaticParamsADCGroupBox);
+        INLADCLabel = new QLabel("INL: ", StaticParamsADCGroupBox);
+        OffsetADCLabel = new QLabel("Offset: ", StaticParamsADCGroupBox);
+
+        StaticParamsADCGroupBoxLayout->addWidget(DNLADCLabel);
+        StaticParamsADCGroupBoxLayout->addWidget(INLADCLabel);
+        StaticParamsADCGroupBoxLayout->addWidget(OffsetADCLabel);
+
+
+        WindowsFuncGroupBox = new QGroupBox("Window Function", DisplayADCParamsWidget);
+        WindowsFuncGroupBoxLayout = new QVBoxLayout(WindowsFuncGroupBox);
+        WindowsFuncLabel = new QLabel("Window Function: ", WindowsFuncGroupBox);
+        WindowsFuncCombox = new QComboBox(WindowsFuncGroupBox);
+        WindowsFuncCombox->addItem("Hanning Window");
+        WindowsFuncCombox->addItem("Hamming Window");
+
+        WindowsFuncGroupBoxLayout->addWidget(WindowsFuncLabel);
+        WindowsFuncGroupBoxLayout->addWidget(WindowsFuncCombox);
+
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
+        DisplayADCParamsLayout->addWidget(StaticParamsADCGroupBox);
+        DisplayADCParamsLayout->addWidget(WindowsFuncGroupBox);
         DisplayADCParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayADCParamsWidget->setLayout(DisplayADCParamsLayout);
 
@@ -181,9 +220,11 @@ public:
         DynamicParamsDACGroupBoxLayout->addWidget(THDDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(ENOBDACLabel);
         
+        
         DisplayDACParamsLayout->addWidget(DynamicParamsDACGroupBox);
         DisplayDACParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayDACParamsWidget->setLayout(DisplayDACParamsLayout);
+
 
         // 将两个显示部件添加到堆叠部件中
         rightStackedWidget->addWidget(DisplayADCParamsWidget);

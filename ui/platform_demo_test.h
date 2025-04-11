@@ -30,6 +30,9 @@ private slots:
 
 private:
     QVector<double> generateWaveformData(int count);
+    void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array);
+
+    bool transFinished = false;
 
 
     Ui::platform_demo_test *ui;
