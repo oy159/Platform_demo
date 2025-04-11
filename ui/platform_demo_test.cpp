@@ -45,13 +45,24 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::TransferFFTData, this, &platform_demo_test::handleRefreshChart1);
 
 
-    // chartWidget1 = new ChartWidget();
-    // connect(ui->connectSetAction, &QAction::triggered, this, &platform_demo_test::handleShowChartPanel1);
     connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
         if (!ui->connectSettings) {
             ui->connectSettings = new ConnectSettings();
         }
         ui->connectSettings->show();
+    });
+
+
+    connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
+        int currentIndex = ui->rightStackedWidget->currentIndex();
+        int nextIndex = (currentIndex + 1) % ui->rightStackedWidget->count();
+        ui->rightStackedWidget->setCurrentIndex(nextIndex); 
+        // 更新按钮文本
+        if (nextIndex == 0) {
+            ui->switchWidgetButton->setText("切换到DAC参数");
+        } else {
+            ui->switchWidgetButton->setText("切换到ADC参数");
+        }
     });
 
     chartWidget1 = ui->chartWidget1;
@@ -132,10 +143,10 @@ void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double 
     qDebug() << "THD: " << THD;
     qDebug() << "SNR: " << SNR;
     qDebug() << "ENOB: " << ENOB;
-    ui->SFDRLabel->setText("SFDR:   " + QString::number(SFDR, 'f', 2) + " dB");
-    ui->THDLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
-    ui->SNRLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
-    ui->ENOBLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
+    // ui->SFDRADCLabel->setText("SFDR:   " + QString::number(SFDR, 'f', 2) + " dB");
+    // ui->THDADCLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
+    // ui->SNRADCLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
+    // ui->ENOBADCLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
     mCalculateThread->quit();
     mCalculateThread->wait();
 }

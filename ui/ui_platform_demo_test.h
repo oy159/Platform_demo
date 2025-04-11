@@ -17,6 +17,7 @@
 #include <QSplitter>
 #include <QMenu>
 #include <QSpacerItem>
+#include <QStackedWidget>
 #include <ChartWidget.h>
 #include <ConnectSettings.h>
 
@@ -44,20 +45,30 @@ public:
     QLabel *messageLabel;
     QLineEdit *messageLineEdit;
     QPushButton *sendButton;
+    QPushButton *switchWidgetButton;  // 新增切换按钮
     QSpacerItem *verticalSpacer;
 
+    QStackedWidget *rightStackedWidget;  // 主堆叠部件
     
+    // ADC参数显示部件
+    QWidget *DisplayADCParamsWidget;
+    QVBoxLayout *DisplayADCParamsLayout;
+    QGroupBox *DynamicParamsADCGroupBox;
+    QVBoxLayout *DynamicParamsADCGroupBoxLayout;
+    QLabel *SFDRADCLabel;
+    QLabel *SNRADCLabel;
+    QLabel *THDADCLabel;
+    QLabel *ENOBADCLabel;
 
-
-    QWidget *DisplayParamsWidget;
-    QVBoxLayout *DisplayParamsLayout;
-    QGroupBox *DynamicParamsGroupBox;
-    QVBoxLayout *DynamicParamsGroupBoxLayout;
-    QLabel *SFDRLabel;
-    QLabel *SNRLabel;
-    QLabel *THDLabel;
-    QLabel *ENOBLabel;
-
+    // DAC参数显示部件
+    QWidget *DisplayDACParamsWidget;
+    QVBoxLayout *DisplayDACParamsLayout;
+    QGroupBox *DynamicParamsDACGroupBox;
+    QVBoxLayout *DynamicParamsDACGroupBoxLayout;
+    QLabel *SFDRDACLabel;
+    QLabel *SNRDACLabel;
+    QLabel *THDDACLabel;
+    QLabel *ENOBDACLabel;
 
     ChartWidget *chartWidget1;
     QMenuBar *menubar;
@@ -89,7 +100,6 @@ public:
         ipLayout = new QHBoxLayout();
         ipLabel = new QLabel("IP Address:", ipGroupBox);
         ipLineEdit = new QLineEdit(ipGroupBox);
-//        ipLineEdit->setPlaceholderText("192.168.1.10");
         ipLineEdit->setText("192.168.1.10");
         ipLayout->addWidget(ipLabel);
         ipLayout->addWidget(ipLineEdit);
@@ -118,43 +128,72 @@ public:
         messageGroupBoxLayout->addWidget(messageLineEdit);
         messageGroupBoxLayout->addWidget(sendButton);
 
+        // 添加切换按钮
+        switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
+        
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
+        controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
         controlLayout->addItem(verticalSpacer);
 
         leftWidget->setLayout(controlLayout);
 
-        DisplayParamsWidget = new QWidget(splitter);
-        DisplayParamsLayout = new QVBoxLayout(DisplayParamsWidget);
+        // 创建主堆叠部件
+        rightStackedWidget = new QStackedWidget(splitter);
 
-        DynamicParamsGroupBox = new QGroupBox("Dynamic Parameters", DisplayParamsWidget);
-        DynamicParamsGroupBoxLayout = new QVBoxLayout(DynamicParamsGroupBox);
-        DisplayParamsLayout->addWidget(DynamicParamsGroupBox);
+        // 创建并设置ADC参数显示部件
+        DisplayADCParamsWidget = new QWidget();
+        DisplayADCParamsLayout = new QVBoxLayout(DisplayADCParamsWidget);
 
-        SFDRLabel = new QLabel("SFDR: ", DynamicParamsGroupBox);
-        SNRLabel = new QLabel("SNR: ", DynamicParamsGroupBox);
-        THDLabel = new QLabel("THD: ", DynamicParamsGroupBox);
-        ENOBLabel = new QLabel("ENOB: ", DynamicParamsGroupBox);
-        DynamicParamsGroupBoxLayout->addWidget(SFDRLabel);
-        DynamicParamsGroupBoxLayout->addWidget(SNRLabel);
-        DynamicParamsGroupBoxLayout->addWidget(THDLabel);
-        DynamicParamsGroupBoxLayout->addWidget(ENOBLabel);
+        DynamicParamsADCGroupBox = new QGroupBox("ADC Dynamic Parameters", DisplayADCParamsWidget);
+        DynamicParamsADCGroupBoxLayout = new QVBoxLayout(DynamicParamsADCGroupBox);
+        
+        SFDRADCLabel = new QLabel("SFDR: ", DynamicParamsADCGroupBox);
+        SNRADCLabel = new QLabel("SNR: ", DynamicParamsADCGroupBox);
+        THDADCLabel = new QLabel("THD: ", DynamicParamsADCGroupBox);
+        ENOBADCLabel = new QLabel("ENOB: ", DynamicParamsADCGroupBox);
+        
+        DynamicParamsADCGroupBoxLayout->addWidget(SFDRADCLabel);
+        DynamicParamsADCGroupBoxLayout->addWidget(SNRADCLabel);
+        DynamicParamsADCGroupBoxLayout->addWidget(THDADCLabel);
+        DynamicParamsADCGroupBoxLayout->addWidget(ENOBADCLabel);
+        
+        DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
+        DisplayADCParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        DisplayADCParamsWidget->setLayout(DisplayADCParamsLayout);
 
-        DisplayParamsLayout->addWidget(DynamicParamsGroupBox);
+        // 创建并设置DAC参数显示部件
+        DisplayDACParamsWidget = new QWidget();
+        DisplayDACParamsLayout = new QVBoxLayout(DisplayDACParamsWidget);
 
-        controlLayout->addWidget(DisplayParamsWidget);
+        DynamicParamsDACGroupBox = new QGroupBox("DAC Dynamic Parameters", DisplayDACParamsWidget);
+        DynamicParamsDACGroupBoxLayout = new QVBoxLayout(DynamicParamsDACGroupBox);
+        
+        SFDRDACLabel = new QLabel("SFDR: ", DynamicParamsDACGroupBox);
+        SNRDACLabel = new QLabel("SNR: ", DynamicParamsDACGroupBox);
+        THDDACLabel = new QLabel("THD: ", DynamicParamsDACGroupBox);
+        ENOBDACLabel = new QLabel("ENOB: ", DynamicParamsDACGroupBox);
+        
+        DynamicParamsDACGroupBoxLayout->addWidget(SFDRDACLabel);
+        DynamicParamsDACGroupBoxLayout->addWidget(SNRDACLabel);
+        DynamicParamsDACGroupBoxLayout->addWidget(THDDACLabel);
+        DynamicParamsDACGroupBoxLayout->addWidget(ENOBDACLabel);
+        
+        DisplayDACParamsLayout->addWidget(DynamicParamsDACGroupBox);
+        DisplayDACParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        DisplayDACParamsWidget->setLayout(DisplayDACParamsLayout);
 
-        auto* VerticalSpacer2 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        DisplayParamsLayout->addItem(VerticalSpacer2);
-
-        DisplayParamsWidget->setLayout(DisplayParamsLayout);
+        // 将两个显示部件添加到堆叠部件中
+        rightStackedWidget->addWidget(DisplayADCParamsWidget);
+        rightStackedWidget->addWidget(DisplayDACParamsWidget);
+        rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
 
         chartWidget1 = new ChartWidget(splitter);
 
         splitter->addWidget(leftWidget);
-        splitter->addWidget(DisplayParamsWidget);
+        splitter->addWidget(rightStackedWidget);  // 使用堆叠部件替换原来的DisplayADCParamsWidget
         splitter->addWidget(chartWidget1);
         splitter->setStretchFactor(0, 1);
         splitter->setStretchFactor(1, 2);
@@ -173,9 +212,6 @@ public:
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
         menubar->addAction(menuFile->menuAction());
-
-        // add a choice to the menu
-
 
         menuSettings = new QMenu(menubar);
         menuSettings->setObjectName("menuSettings");
@@ -197,6 +233,7 @@ public:
         platform_demo_test->setWindowTitle(QCoreApplication::translate("platform_demo_test", "platform_demo_test", nullptr));
         menuFile->setTitle(QCoreApplication::translate("platform_demo_test", "File", nullptr));
         menuSettings->setTitle(QCoreApplication::translate("platform_demo_test", "Settings", nullptr));
+        switchWidgetButton->setText(QCoreApplication::translate("platform_demo_test", "切换显示部件 (ADC/DAC)", nullptr));
     } // retranslateUi
 
 };

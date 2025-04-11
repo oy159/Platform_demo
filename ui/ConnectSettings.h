@@ -36,9 +36,14 @@ private:
     QLineEdit   *portLineEdit;
     QLineEdit   *SpectrumResourceLineEdit;
     QLineEdit   *GeneratorResourceLineEdit;
+    QLineEdit   *GeneratorResourceLineEdit2;
+    QLineEdit   *VoltmeterResourceLineEdit;
+    
 
     QPushButton *DetectSpectrumBtn;
     QPushButton *DetectGeneratorBtn;
+    QPushButton *DetectGeneratorBtn2;
+    QPushButton *DetectVoltmeterBtn;
 
 };
 
