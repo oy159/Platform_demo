@@ -18,6 +18,7 @@
 #include <QMenu>
 #include <QSpacerItem>
 #include <ChartWidget.h>
+#include <ConnectSettings.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -61,8 +62,11 @@ public:
     ChartWidget *chartWidget1;
     QMenuBar *menubar;
     QStatusBar *statusbar;
+    QMenu *menuFile;
     QMenu *menuSettings;
-    QAction *ClickChart1;
+    QAction *connectSetAction;
+
+    ConnectSettings *connectSettings;
 
     void setupUi(QMainWindow *platform_demo_test)
     {
@@ -166,11 +170,18 @@ public:
         menubar->setGeometry(QRect(0, 0, 800, 21));
         platform_demo_test->setMenuBar(menubar);
 
+        menuFile = new QMenu(menubar);
+        menuFile->setObjectName("menuFile");
+        menubar->addAction(menuFile->menuAction());
+
+        // add a choice to the menu
+
+
         menuSettings = new QMenu(menubar);
         menuSettings->setObjectName("menuSettings");
         menubar->addAction(menuSettings->menuAction());
-        // add a choice to the menu
-        ClickChart1 = menuSettings->addAction("Charts");
+
+        connectSetAction = menuSettings->addAction("Connect");
 
         statusbar = new QStatusBar(platform_demo_test);
         statusbar->setObjectName("statusbar");
@@ -184,6 +195,7 @@ public:
     void retranslateUi(QMainWindow *platform_demo_test)
     {
         platform_demo_test->setWindowTitle(QCoreApplication::translate("platform_demo_test", "platform_demo_test", nullptr));
+        menuFile->setTitle(QCoreApplication::translate("platform_demo_test", "File", nullptr));
         menuSettings->setTitle(QCoreApplication::translate("platform_demo_test", "Settings", nullptr));
     } // retranslateUi
 

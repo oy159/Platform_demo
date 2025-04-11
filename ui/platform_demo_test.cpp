@@ -46,7 +46,13 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
 
     // chartWidget1 = new ChartWidget();
-    // connect(ui->ClickChart1, &QAction::triggered, this, &platform_demo_test::handleShowChartPanel1);
+    // connect(ui->connectSetAction, &QAction::triggered, this, &platform_demo_test::handleShowChartPanel1);
+    connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
+        if (!ui->connectSettings) {
+            ui->connectSettings = new ConnectSettings();
+        }
+        ui->connectSettings->show();
+    });
 
     chartWidget1 = ui->chartWidget1;
 
