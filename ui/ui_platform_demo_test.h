@@ -129,21 +129,18 @@ public:
         messageGroupBoxLayout->addWidget(sendButton);
 
         // 添加参数测试按钮组
-        paramTestGroupBox = new QGroupBox("参数测试", leftWidget);
-        paramTestGroupBoxLayout = new QVBoxLayout(paramTestGroupBox);
-        dynamicparamTestButton = new QPushButton("动态参数测试", paramTestGroupBox);
-        staticparamTestButton = new QPushButton("静态参数测试", paramTestGroupBox);
-        paramTestGroupBoxLayout->addWidget(dynamicparamTestButton);
-        paramTestGroupBoxLayout->addWidget(staticparamTestButton);
-
+        
 
         // 添加切换按钮
         switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
+
+        connectSettings = new ConnectSettings(leftWidget);
         
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
-        controlLayout->addWidget(paramTestGroupBox);  // 添加参数测试按钮组
+        // controlLayout->addWidget(paramTestGroupBox);  // 添加参数测试按钮组
         controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
+        controlLayout->addWidget(connectSettings);  // 添加连接设置部件
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
         controlLayout->addItem(verticalSpacer);
@@ -196,10 +193,19 @@ public:
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncLabel);
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncCombox);
 
+
+        paramTestGroupBox = new QGroupBox("参数测试", DisplayADCParamsWidget);
+        paramTestGroupBoxLayout = new QVBoxLayout(paramTestGroupBox);
+        dynamicparamTestButton = new QPushButton("动态参数测试", paramTestGroupBox);
+        staticparamTestButton = new QPushButton("静态参数测试", paramTestGroupBox);
+        paramTestGroupBoxLayout->addWidget(dynamicparamTestButton);
+        paramTestGroupBoxLayout->addWidget(staticparamTestButton);
+
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(StaticParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(WindowsFuncGroupBox);
+        DisplayADCParamsLayout->addWidget(paramTestGroupBox);
         DisplayADCParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayADCParamsWidget->setLayout(DisplayADCParamsLayout);
 
@@ -236,9 +242,9 @@ public:
         splitter->addWidget(leftWidget);
         splitter->addWidget(rightStackedWidget);  // 使用堆叠部件替换原来的DisplayADCParamsWidget
         splitter->addWidget(chartWidget1);
-        splitter->setStretchFactor(0, 1);
-        splitter->setStretchFactor(1, 2);
-        splitter->setStretchFactor(2, 5);
+        splitter->setStretchFactor(0, 300);
+        splitter->setStretchFactor(1, 1);
+        splitter->setStretchFactor(2, 500);
 
         mainLayout->addWidget(splitter);
         centralwidget->setLayout(mainLayout);

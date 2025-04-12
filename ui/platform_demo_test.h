@@ -19,26 +19,24 @@ public:
     explicit platform_demo_test(QWidget *parent = nullptr);
     ~platform_demo_test() override;
 
+signals:
+    void clearADCData();
+
 private slots:
     void handleConnectButton();
     void handleSendButton();
-    void handleMessageReceived(const QByteArray &message);
     void handleErrorOccurred(const QString &error);
     void handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
-    void handleShowChartPanel1();
     void handleRefreshChart1(std::vector<double> data);
+    void handleADCDataCaculate(std::vector<uint16_t> data);
 
 private:
     QVector<double> generateWaveformData(int count);
-    void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array);
-
-    bool transFinished = false;
 
 
     Ui::platform_demo_test *ui;
 
     QThread *mUdpThread;
-    std::vector<uint16_t> AdcDataArray;
     UdpWorker *mUdpWorker;
 
     QThread *mCalculateThread;

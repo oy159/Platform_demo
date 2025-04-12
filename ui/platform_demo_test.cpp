@@ -4,25 +4,6 @@
 #include "testdata.h"
 #include <vector>
 
-#define BIG_LITTLE_SWAP16(x)        ( (((*(short int *)&x) & 0xff00) >> 8) | \
-                                      (((*(short int *)&x) & 0x00ff) << 8) )
-
-
-void platform_demo_test::convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array) {
-    int size = buffer.size();
-    if (size % 2 != 0 ) {
-        size -= 1; // Ignore the last byte if the size is odd
-        transFinished = true;
-    }else if(u16Array.size()*2 + size == 65532*2){
-        transFinished = true;
-        // emit is_framehead==false
-        QMetaObject::invokeMethod(mUdpWorker, "handleTransferFinished", Qt::QueuedConnection);
-    }
-    for (int i = 0; i < size; i += 2) {
-        uint16_t value = (uint16_t)buffer[i] << 8 | (uint16_t)buffer[i + 1];
-        u16Array.push_back(BIG_LITTLE_SWAP16(value));
-    }
-}
 
 platform_demo_test::platform_demo_test(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::platform_demo_test) {
@@ -35,8 +16,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mUdpThread = new QThread(this);
     mUdpWorker->moveToThread(mUdpThread);
 
-    connect(mUdpWorker, &UdpWorker::messageReceived, this, &platform_demo_test::handleMessageReceived);
+    connect(mUdpWorker, &UdpWorker::ADCDataReady, this, &platform_demo_test::handleADCDataCaculate);
     connect(mUdpWorker, &UdpWorker::errorOccurred, this, &platform_demo_test::handleErrorOccurred);
+    connect(this, &platform_demo_test::clearADCData, mUdpWorker, &UdpWorker::handleClearADCData);
 
     mUdpThread->start();
 
@@ -46,13 +28,10 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::paramsCalculateFinished, this, &platform_demo_test::handleCaculateFinished);
     connect(mCaculateParams, &CaculateParams::TransferFFTData, this, &platform_demo_test::handleRefreshChart1);
 
-
-    connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
-        if (!ui->connectSettings) {
-            ui->connectSettings = new ConnectSettings();
-        }
-        ui->connectSettings->show();
-    });
+    // ui->connectSettings = new ConnectSettings();
+    // connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
+    //     ui->connectSettings->show();
+    // });
 
 
     connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
@@ -119,34 +98,16 @@ void platform_demo_test::handleSendButton() {
     }
 }
 
-void platform_demo_test::handleMessageReceived(const QByteArray &message) {
-//    ui->logTextEdit->append(message);
-    convertBufferToU16Array(message, AdcDataArray);
-    if(transFinished){
-        std::vector<double> dataArray;
-        // 处理函数
-        for (int i = 0; i < AdcDataArray.size(); ++i) {
-            dataArray.push_back((double) AdcDataArray[i]);
-        }
-
-        mCaculateParams->setData(dataArray);
-        mCalculateThread->start();
-        QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
-
-        transFinished = false;
-        AdcDataArray.clear();
-    }
-}
 
 void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB) {
     qDebug() << "sfdr_db: " << SFDR;
     qDebug() << "THD: " << THD;
     qDebug() << "SNR: " << SNR;
     qDebug() << "ENOB: " << ENOB;
-    // ui->SFDRADCLabel->setText("SFDR:   " + QString::number(SFDR, 'f', 2) + " dB");
-    // ui->THDADCLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
-    // ui->SNRADCLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
-    // ui->ENOBADCLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
+    ui->SFDRADCLabel->setText("SFDR:   " + QString::number(SFDR, 'f', 2) + " dB");
+    ui->THDADCLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
+    ui->SNRADCLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
+    ui->ENOBADCLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
     mCalculateThread->quit();
     mCalculateThread->wait();
 }
@@ -155,21 +116,6 @@ void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double 
 void platform_demo_test::handleErrorOccurred(const QString &error) {
     // ui->logTextEdit->append("Error: " + error);
     qDebug() << "Error: " << error;
-}
-
-
-void platform_demo_test::handleShowChartPanel1() {
-    if (!chartWidget1) {
-        chartWidget1 = new ChartWidget(this);
-    }
-
-    // 如果窗口已显示则激活，否则显示
-    if (chartWidget1->isVisible()) {
-        chartWidget1->activateWindow();
-        chartWidget1->raise();
-    } else {
-        chartWidget1->show();
-    }
 }
 
 
@@ -226,3 +172,16 @@ void platform_demo_test::handleRefreshChart1(std::vector<double> data) {
     chartWidget1->updateWaveformData(chart_data);
 }
 
+
+void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
+    // 处理接收到的ADC数据
+    std::vector<double> dataArray;
+    for (int i = 0; i < data.size(); ++i) {
+        dataArray.push_back((double) data[i]);
+    }
+
+    mCaculateParams->setData(dataArray);
+    mCalculateThread->start();
+    QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
+    emit clearADCData();
+}

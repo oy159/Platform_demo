@@ -47,11 +47,6 @@ void UdpWorker::sendMessage(const QString &message) {
     }
 }
 
-void UdpWorker::handleTransferFinished() {
-    // 处理传输完成的逻辑
-    is_framehead = false;
-}
-
 
 void UdpWorker::handleReadyRead() {
     while (udpSocket->hasPendingDatagrams()) {
@@ -72,7 +67,6 @@ void UdpWorker::handleReadyRead() {
 
         // if(is_framehead)
         // if(is_dataframe)
-        emit messageReceived(datagram);
 
         emit dataReceived(datagram);
 
@@ -83,18 +77,7 @@ void UdpWorker::handleDataReceived(const QByteArray &data) {
     // 处理接收到的数据
     convertBufferToU16Array(data, AdcDataArray);
     if(transFinished){
-        std::vector<double> dataArray;
-        // 处理函数
-        for (int i = 0; i < AdcDataArray.size(); ++i) {
-            dataArray.push_back((double) AdcDataArray[i]);
-        }
-
-        // mCaculateParams->setData(dataArray);
-        // mCalculateThread->start();
-        // QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
-
-        transFinished = false;
-        AdcDataArray.clear();
+        emit ADCDataReady(AdcDataArray);
     }
 }
 
@@ -105,11 +88,16 @@ void UdpWorker::convertBufferToU16Array(const QByteArray &buffer, std::vector<ui
         transFinished = true;
     }else if(u16Array.size()*2 + size == 65532*2){
         transFinished = true;
-        // emit is_framehead==false
-        // QMetaObject::invokeMethod(mUdpWorker, "handleTransferFinished", Qt::QueuedConnection);
-    }
+
+        is_framehead = false;
+    } 
     for (int i = 0; i < size; i += 2) {
         uint16_t value = (uint16_t)buffer[i] << 8 | (uint16_t)buffer[i + 1];
         u16Array.push_back(BIG_LITTLE_SWAP16(value));
     }
+}
+
+void UdpWorker::handleClearADCData(){
+    transFinished = false;
+    AdcDataArray.clear();
 }

@@ -20,17 +20,18 @@ public slots:
     void connectToHost(const QString &ip, int remote_port, int local_port);
     void disconnectFromHost();
     void sendMessage(const QString &message);
-    void handleTransferFinished();
+    void handleClearADCData();
 
 
 signals:
-    void messageReceived(const QByteArray &message);
     void errorOccurred(const QString &error);
     void dataReceived(const QByteArray &data);
+    void ADCDataReady(const std::vector<uint16_t> &data);
 
 private slots:
     void handleReadyRead();
     void handleDataReceived(const QByteArray &data);
+    
 
 private:
     void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array);
@@ -52,6 +53,14 @@ private:
 
 #define BIG_LITTLE_SWAP16(x)        ( (((*(short int *)&x) & 0xff00) >> 8) | \
                                       (((*(short int *)&x) & 0x00ff) << 8) )
+
+
+// typedef enum{
+//     ADC_DYNAMIC_MODE = 0,
+//     ADC_STATIC_MODE = 1,
+//     DAC_DYNAMIC_MODE = 2,
+//     DAC_STATIC_MODE = 3
+// }CaculateMode;
 
 
 #endif // UDPWORKER_H
