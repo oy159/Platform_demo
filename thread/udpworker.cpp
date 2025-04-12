@@ -2,7 +2,6 @@
 
 UdpWorker::UdpWorker(QObject *parent) : QObject(parent) {
     udpSocket = new QUdpSocket(this);
-    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
     connect(this,&UdpWorker::dataReceived,this,&UdpWorker::handleDataReceived);
 }
 
@@ -26,11 +25,22 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
     this->remote_port = remote_port;
     this->local_port = local_port;
     qDebug() << "udp start bind";
+
+
+    // todo: 获取固件版本
+
+
+
+
+
+    // 再打开数据处理
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 }
 
 void UdpWorker::disconnectFromHost() {
     udpSocket->disconnectFromHost();
     udpSocket->close();
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 }
 
 void UdpWorker::sendMessage(const QString &message) {

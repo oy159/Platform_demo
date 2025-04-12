@@ -41,6 +41,7 @@ public slots:
     void updateWaveformData(const QVector<QPointF> &newData);
     void handleRefreshPeakData(const std::vector<Peak>& peaks);
     void onSliderValueChanged(int value);
+    void handleRefreshSpectrum(std::vector<double> fft_data);
 
     // 清空图表数据
 //    void clearWaveformData();

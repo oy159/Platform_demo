@@ -58,7 +58,7 @@ void CaculateParams::calculateFFT() {
     fftw_free(out);
 }
 
-void CaculateParams::calculateParams() {
+void CaculateParams::caculateDynamicParamsADC() {
     calculateFFT();
 
     // Calculate sfdr_db, THD, SNR, ENOB
@@ -231,4 +231,8 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
         spur_amp = -std::numeric_limits<double>::infinity();
         sfdr_db = std::numeric_limits<double>::infinity();
     }
+}
+
+void CaculateParams::caculateStaticParamsADC() {
+
 }

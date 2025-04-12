@@ -7,6 +7,15 @@
 #include "ThreadPool.h"
 #include "CaculateParams.h"
 #include "ChartWidget.h"
+#include "InstrumentSourceManager.h"
+
+typedef enum{
+    ADC_DYNAMIC_MODE = 0,
+    ADC_STATIC_MODE = 1,
+    DAC_DYNAMIC_MODE = 2,
+    DAC_STATIC_MODE = 3,
+} CACULATE_MODE;
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class platform_demo_test; }
@@ -27,8 +36,9 @@ private slots:
     void handleSendButton();
     void handleErrorOccurred(const QString &error);
     void handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
-    void handleRefreshChart1(std::vector<double> data);
     void handleADCDataCaculate(std::vector<uint16_t> data);
+    void handleDynamicADCTest();
+    void handleStaticADCTest();
 
 private:
     QVector<double> generateWaveformData(int count);
@@ -42,7 +52,15 @@ private:
     QThread *mCalculateThread;
     CaculateParams *mCaculateParams;
 
+    CACULATE_MODE mCaculateMode;
+    bool adcStaticTestStop = false;
+
     ChartWidget *chartWidget1;
+
+    InstrumentSourceManager *mInstrumentSourceManager;
 };
+
+
+
 
 #endif //PLATFORM_DEMO_PLATFORM_DEMO_TEST_H

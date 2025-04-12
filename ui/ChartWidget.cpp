@@ -371,6 +371,14 @@ void ChartWidget::showPointCoordinates(const QPointF &point) {
     coordinateLabel->show();
 }
 
+void ChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
+    QVector<QPointF> chart_data;
+    for (size_t i = 0; i < fft_data.size(); ++i) {
+        chart_data.append(QPointF(i, fft_data[i]));
+    }
+    this->updateWaveformData(chart_data);
+}
+
 mSlider::mSlider(QWidget *parent)
 {
 

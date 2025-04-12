@@ -38,7 +38,8 @@ public slots:
     void setData(const std::vector<double>& data) {
         mData = data;
     }
-    void calculateParams();
+    void caculateDynamicParamsADC();
+    void caculateStaticParamsADC();
 
 private:
     void calculateFFT();
@@ -54,21 +55,13 @@ private:
     double sample_rate = 5e8;
 
     int fund_peakIndex = 0;
-    int exulude_len;
 
     std::vector<Peak> fft_db_peaks;
-
-    Peak fund_peak = {0,0};
-    Peak spur_peak = {0,0};
 
     double fund_amp = 0;
     double fund_freq = 0;
 
-    double spur_peakIndex = 0;
-    double spur_freq = 0;
     double spur_amp = 0;
-
-    double dc_amp = 0;
 
     double fund_energy;
     double noise_energy;

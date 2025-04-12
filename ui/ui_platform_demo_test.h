@@ -44,13 +44,6 @@ public:
     QPushButton *sendButton;
 
 
-    // 参数测试按钮
-    QGroupBox *paramTestGroupBox;
-    QVBoxLayout *paramTestGroupBoxLayout;
-    QPushButton *dynamicparamTestButton;
-    QPushButton *staticparamTestButton;
-
-
     QPushButton *switchWidgetButton;  // 新增切换按钮
     QSpacerItem *verticalSpacer;
 
@@ -80,6 +73,12 @@ public:
     QLabel *WindowsFuncLabel;
     QComboBox *WindowsFuncCombox;
 
+    // 参数测试按钮
+    QGroupBox *paramTestADCGroupBox;
+    QVBoxLayout *paramTestADCGroupBoxLayout;
+    QPushButton *dynamicParamsADCTestButton;
+    QPushButton *staticParamsADCTestButton;
+
 
     // DAC参数显示部件
     QWidget *DisplayDACParamsWidget;
@@ -90,6 +89,13 @@ public:
     QLabel *SNRDACLabel;
     QLabel *THDDACLabel;
     QLabel *ENOBDACLabel;
+
+
+    // 参数测试按钮
+    QGroupBox *paramTestDACGroupBox;
+    QVBoxLayout *paramTestDACGroupBoxLayout;
+    QPushButton *dynamicParamsDACTestButton;
+    QPushButton *staticParamsDACTestButton;
 
     ChartWidget *chartWidget1;
     QMenuBar *menubar;
@@ -138,7 +144,7 @@ public:
         
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
-        // controlLayout->addWidget(paramTestGroupBox);  // 添加参数测试按钮组
+        // controlLayout->addWidget(paramTestADCGroupBox);  // 添加参数测试按钮组
         controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
         controlLayout->addWidget(connectSettings);  // 添加连接设置部件
 
@@ -194,18 +200,18 @@ public:
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncCombox);
 
 
-        paramTestGroupBox = new QGroupBox("参数测试", DisplayADCParamsWidget);
-        paramTestGroupBoxLayout = new QVBoxLayout(paramTestGroupBox);
-        dynamicparamTestButton = new QPushButton("动态参数测试", paramTestGroupBox);
-        staticparamTestButton = new QPushButton("静态参数测试", paramTestGroupBox);
-        paramTestGroupBoxLayout->addWidget(dynamicparamTestButton);
-        paramTestGroupBoxLayout->addWidget(staticparamTestButton);
+        paramTestADCGroupBox = new QGroupBox("参数测试", DisplayADCParamsWidget);
+        paramTestADCGroupBoxLayout = new QVBoxLayout(paramTestADCGroupBox);
+        dynamicParamsADCTestButton = new QPushButton("动态参数测试", paramTestADCGroupBox);
+        staticParamsADCTestButton = new QPushButton("静态参数测试", paramTestADCGroupBox);
+        paramTestADCGroupBoxLayout->addWidget(dynamicParamsADCTestButton);
+        paramTestADCGroupBoxLayout->addWidget(staticParamsADCTestButton);
 
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(StaticParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(WindowsFuncGroupBox);
-        DisplayADCParamsLayout->addWidget(paramTestGroupBox);
+        DisplayADCParamsLayout->addWidget(paramTestADCGroupBox);
         DisplayADCParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayADCParamsWidget->setLayout(DisplayADCParamsLayout);
 
@@ -225,9 +231,18 @@ public:
         DynamicParamsDACGroupBoxLayout->addWidget(SNRDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(THDDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(ENOBDACLabel);
-        
-        
+
+
+        paramTestDACGroupBox = new QGroupBox("参数测试", DisplayDACParamsWidget);
+        paramTestDACGroupBoxLayout = new QVBoxLayout(paramTestDACGroupBox);
+        dynamicParamsDACTestButton = new QPushButton("动态参数测试", paramTestDACGroupBox);
+        staticParamsDACTestButton = new QPushButton("静态参数测试", paramTestDACGroupBox);
+
+        paramTestDACGroupBoxLayout->addWidget(dynamicParamsDACTestButton);
+        paramTestDACGroupBoxLayout->addWidget(staticParamsDACTestButton);
+
         DisplayDACParamsLayout->addWidget(DynamicParamsDACGroupBox);
+        DisplayDACParamsLayout->addWidget(paramTestDACGroupBox);
         DisplayDACParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayDACParamsWidget->setLayout(DisplayDACParamsLayout);
 

@@ -26,7 +26,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mCalculateThread = new QThread(this);
     mCaculateParams->moveToThread(mCalculateThread);
     connect(mCaculateParams, &CaculateParams::paramsCalculateFinished, this, &platform_demo_test::handleCaculateFinished);
-    connect(mCaculateParams, &CaculateParams::TransferFFTData, this, &platform_demo_test::handleRefreshChart1);
 
     // ui->connectSettings = new ConnectSettings();
     // connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
@@ -48,11 +47,19 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     chartWidget1 = ui->chartWidget1;
 
+    connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &ChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &ChartWidget::handleRefreshPeakData);
+
 
     mCaculateParams->setData(Adc_data2);
     mCalculateThread->start();
-    QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+
+
+
+    mInstrumentSourceManager = new InstrumentSourceManager();
+
+    connect(ui->dynamicParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicADCTest);
 
     /** test code **/
     // create timer
@@ -63,7 +70,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         std::vector<double> vecdata(data.begin(), data.end());
         mCaculateParams->setData(vecdata);
         mCalculateThread->start();
-        QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
     });
 //    timer->start(1000); // 每秒更新一次
 }
@@ -89,13 +96,10 @@ void platform_demo_test::handleConnectButton() {
 }
 
 void platform_demo_test::handleSendButton() {
-    QString message = "Hello, World!"; 
-    if (!message.isEmpty()) {
-        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-    } else {
-        // ui->logTextEdit->append("Message is empty");
-        qDebug() << "Message is empty";
-    }
+//    QString message = "Hello, World!";
+//    if (!message.isEmpty()) {
+//        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+//    }
 }
 
 
@@ -163,25 +167,51 @@ QVector<double> platform_demo_test::generateWaveformData(int count)
 }
 
 
-void platform_demo_test::handleRefreshChart1(std::vector<double> data) {
-    QVector<QPointF> chart_data;
-    for (size_t i = 0; i < data.size(); ++i) {
-        chart_data.append(QPointF(i, data[i]));
-    }
-
-    chartWidget1->updateWaveformData(chart_data);
-}
-
-
 void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
     // 处理接收到的ADC数据
     std::vector<double> dataArray;
-    for (int i = 0; i < data.size(); ++i) {
-        dataArray.push_back((double) data[i]);
+    for (unsigned short i : data) {
+        dataArray.push_back((double) i);
     }
 
     mCaculateParams->setData(dataArray);
     mCalculateThread->start();
-    QMetaObject::invokeMethod(mCaculateParams, "calculateParams", Qt::QueuedConnection);
+    if(mCaculateMode == ADC_DYNAMIC_MODE) {
+        QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+    } else if (mCaculateMode == ADC_STATIC_MODE  && !adcStaticTestStop) {
+        QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
+
+        // todo:计算获取的数据总量是否满足置信度要求，决定是否关闭循环
+
+
+        // todo:再获取一次数据（计算完后执行，signal&slot）
+
+    }
     emit clearADCData();
+}
+
+void platform_demo_test::handleDynamicADCTest() {
+    // 第一步，验证当前固件为ADC，且已打开udp
+
+
+
+    // 2.获取adc数据 计算动态参数
+    QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+    if (!message.isEmpty()) {
+        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    }
+    mCaculateMode = ADC_DYNAMIC_MODE;
+}
+
+void platform_demo_test::handleStaticADCTest() {
+    // 1.验证当前固件为ADC，且已打开udp
+
+
+    // todo: 2.获取第一次adc数据
+
+
+    // todo: 3.设置标志位使计算完成后循环直至达到条件
+
+    mCaculateMode = ADC_STATIC_MODE;
+    adcStaticTestStop = false;
 }
