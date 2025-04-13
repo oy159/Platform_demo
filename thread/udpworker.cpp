@@ -28,12 +28,32 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
 
 
     // todo: 获取固件版本
+    uint32_t command = 0xff7fff7f;
+    QByteArray data;
+    data.append((char)((command >> 24) & 0xFF));
+    data.append((char)((command >> 16) & 0xFF));
+    data.append((char)((command >> 8) & 0xFF));
+    data.append((char)(command & 0xFF));
 
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
 
-
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+        qDebug() << "get firmware version" << datagram;
+    }
 
 
     // 再打开数据处理
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 }
 
@@ -50,7 +70,7 @@ void UdpWorker::sendMessage(const QString &message) {
         if(bytesSent == -1){
             qDebug() << "error for send data";
         }else{
-            qDebug() << "send data" << bytesSent << "Bytes into" << target_ip << ":" << remote_port;
+//            qDebug() << "send data" << bytesSent << "Bytes into" << target_ip << ":" << remote_port;
         }
     } else {
         emit errorOccurred("Message is empty");

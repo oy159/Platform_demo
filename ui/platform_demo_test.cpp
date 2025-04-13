@@ -97,7 +97,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
 
     connect(ui->dynamicParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicADCTest);
-
+    connect(ui->staticParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticADCTest);
     /** test code **/
     // create timer
     QTimer *timer = new QTimer(this);
@@ -215,16 +215,31 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
     mCalculateThread->start();
     if(mCaculateMode == ADC_DYNAMIC_MODE) {
         QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+        emit clearADCData();
     } else if (mCaculateMode == ADC_STATIC_MODE  && !adcStaticTestStop) {
+        ui->staticParamsADCTestButton->setEnabled(false);
         QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
 
         // todo:计算获取的数据总量是否满足置信度要求，决定是否关闭循环
+        staticDataSize += dataArray.size();
 
+        emit clearADCData();
+        if(staticDataSize >= 65532*1000) {
+            adcStaticTestStop = true;
+            qDebug() << "ADC Static Test Stop" << "now data size = " << staticDataSize;
+            staticDataSize = 0;
+            ui->staticParamsADCTestButton->setEnabled(true);
+            return;
+        }
 
         // todo:再获取一次数据（计算完后执行，signal&slot）
+        QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+        if (!message.isEmpty()) {
+            QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+        }
 
     }
-    emit clearADCData();
+
 }
 
 void platform_demo_test::handleDynamicADCTest() {
@@ -238,6 +253,7 @@ void platform_demo_test::handleDynamicADCTest() {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     }
     mCaculateMode = ADC_DYNAMIC_MODE;
+    adcStaticTestStop = false;
 }
 
 void platform_demo_test::handleStaticADCTest() {
@@ -248,7 +264,10 @@ void platform_demo_test::handleStaticADCTest() {
 
 
     // todo: 3.设置标志位使计算完成后循环直至达到条件
-
+    QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+    if (!message.isEmpty()) {
+        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    }
     mCaculateMode = ADC_STATIC_MODE;
     adcStaticTestStop = false;
 }

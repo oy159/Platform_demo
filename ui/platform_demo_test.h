@@ -57,6 +57,7 @@ private:
 
     CACULATE_MODE mCaculateMode;
     bool adcStaticTestStop = false;
+    uint32_t staticDataSize = 0;
 
     ChartWidget *chartWidget1;
 
