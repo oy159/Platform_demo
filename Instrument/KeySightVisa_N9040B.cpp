@@ -17,7 +17,7 @@ KeySightVisa_N9040B::~KeySightVisa_N9040B() {
     }
 }
 
-void KeySightVisa_N9040B::connect(const std::string& resourceString) {
+bool KeySightVisa_N9040B::connect(const std::string& resourceString) {
     if (m_session != VI_NULL) {
         viClose(m_session);
         m_session = VI_NULL;
@@ -27,6 +27,7 @@ void KeySightVisa_N9040B::connect(const std::string& resourceString) {
                              VI_NULL, VI_NULL, &m_session);
     if (status < VI_SUCCESS) {
         qDebug() << "Failed to open VISA session to instrument" << status;
+        return false;
     }
 
     status = viSetAttribute(m_session, VI_ATTR_TMO_VALUE, 3000);
@@ -34,7 +35,10 @@ void KeySightVisa_N9040B::connect(const std::string& resourceString) {
         viClose(m_session);
         m_session = VI_NULL;
         qDebug() << "Failed to set VISA timeout" << status;
+        return false;
     }
+
+    return true;
 }
 
 void KeySightVisa_N9040B::disconnect() {

@@ -8,6 +8,7 @@
 #include "QObject"
 #include "KeySightVisa_N9040B.h"
 #include "RhodeSchwarzVisa_SMA100B.h"
+#include "TCPInstrument.h"
 #include "QDebug"
 
 class InstrumentSourceManager : public QObject{
@@ -17,10 +18,14 @@ public:
     ~InstrumentSourceManager();
 
 public slots:
-    void connectToN9040B(const std::string &VisaAddress);
+    bool connectToN9040B(const std::string &VisaAddress);
     void disconnectFromN9040B();
-    void connectToSMA100B(const std::string &VisaAddress);
+    bool connectToSMA100B(const std::string &VisaAddress);
     void disconnectFromSMA100B();
+    bool connectTo3458A(const std::string &VisaAddress);
+    void disconnectFrom3458A();
+    bool connectTo3362A(const std::string &VisaAddress);
+    void disconnectFrom3362A();
 
 private:
     std::vector<std::string> findAllVisaResources();
@@ -29,6 +34,7 @@ private:
 
     KeySightVisa_N9040B     *n9040B;
     RhodeSchwarzVisa_SMA100B *sma100B;
+    TCPInstrument *tcpInstrument;
 };
 
 

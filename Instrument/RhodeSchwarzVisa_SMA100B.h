@@ -11,7 +11,7 @@ public:
     RhodeSchwarzVisa_SMA100B();
     ~RhodeSchwarzVisa_SMA100B();
 
-    void connect(const std::string& resourceString);
+    bool connect(const std::string& resourceString);
     void disconnect();
     std::string sendCommand(const std::string& command);
     void sendCommandWrite(const std::string& command);

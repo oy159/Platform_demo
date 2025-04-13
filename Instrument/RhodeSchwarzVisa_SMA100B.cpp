@@ -18,7 +18,7 @@ RhodeSchwarzVisa_SMA100B::~RhodeSchwarzVisa_SMA100B() {
     }
 }
 
-void RhodeSchwarzVisa_SMA100B::connect(const std::string& resourceString) {
+bool RhodeSchwarzVisa_SMA100B::connect(const std::string& resourceString) {
     if (m_session != VI_NULL) {
         viClose(m_session);
         m_session = VI_NULL;
@@ -28,6 +28,7 @@ void RhodeSchwarzVisa_SMA100B::connect(const std::string& resourceString) {
                              VI_NULL, VI_NULL, &m_session);
     if (status < VI_SUCCESS) {
         qDebug() << "Failed to open VISA session to instrument" << status;
+        return false;
     }
 
     status = viSetAttribute(m_session, VI_ATTR_TMO_VALUE, 1000);
@@ -35,7 +36,10 @@ void RhodeSchwarzVisa_SMA100B::connect(const std::string& resourceString) {
         viClose(m_session);
         m_session = VI_NULL;
         qDebug() << "Failed to set VISA timeout" << status;
+        return false;
     }
+
+    return true;
 }
 
 void RhodeSchwarzVisa_SMA100B::disconnect() {

@@ -27,10 +27,51 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mCaculateParams->moveToThread(mCalculateThread);
     connect(mCaculateParams, &CaculateParams::paramsCalculateFinished, this, &platform_demo_test::handleCaculateFinished);
 
-    // ui->connectSettings = new ConnectSettings();
-    // connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
-    //     ui->connectSettings->show();
-    // });
+    mInstrumentSourceManager = new InstrumentSourceManager();
+    mInstrumentManagerThread = new QThread(this);
+    mInstrumentSourceManager->moveToThread(mInstrumentManagerThread);
+
+    mInstrumentManagerThread->start();
+    connect(ui->connectSettings->DetectSpectrumBtn, &QPushButton::clicked, this, [=]() {
+        QString ip = ui->connectSettings->SpectrumResourceLineEdit->text();
+        bool status = mInstrumentSourceManager->connectToN9040B(ip.toStdString());
+        if (status) {
+            ui->connectSettings->DetectSpectrumBtn->setText("连接成功");
+        } else {
+            ui->connectSettings->DetectSpectrumBtn->setText("连接失败");
+        }
+    });
+
+    connect(ui->connectSettings->DetectGeneratorBtn, &QPushButton::clicked, this, [=]() {
+        QString ip = ui->connectSettings->GeneratorResourceLineEdit->text();
+        bool status = mInstrumentSourceManager->connectToSMA100B(ip.toStdString());
+        if (status) {
+            ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
+        } else {
+            ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
+        }
+    });
+
+    connect(ui->connectSettings->DetectVoltmeterBtn, &QPushButton::clicked, this, [=]() {
+        QString ip = ui->connectSettings->VoltmeterResourceLineEdit->text();
+        bool status = mInstrumentSourceManager->connectTo3458A(ip.toStdString());
+        if (status) {
+            ui->connectSettings->DetectVoltmeterBtn->setText("连接成功");
+        } else {
+            ui->connectSettings->DetectVoltmeterBtn->setText("连接失败");
+        }
+    });
+
+    connect(ui->connectSettings->DetectGeneratorBtn2, &QPushButton::clicked, this, [=]() {
+        QString ip = ui->connectSettings->GeneratorResourceLineEdit2->text();
+        bool status = mInstrumentSourceManager->connectTo3362A(ip.toStdString());
+        if (status) {
+            ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
+        } else {
+            ui->connectSettings->DetectGeneratorBtn2->setText("连接失败");
+        }
+    });
+
 
 
     connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
@@ -54,10 +95,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mCaculateParams->setData(Adc_data2);
     mCalculateThread->start();
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
-
-
-
-    mInstrumentSourceManager = new InstrumentSourceManager();
 
     connect(ui->dynamicParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicADCTest);
 

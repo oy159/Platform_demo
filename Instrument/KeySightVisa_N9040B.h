@@ -12,7 +12,7 @@ public:
     KeySightVisa_N9040B();
     ~KeySightVisa_N9040B();
 
-    void connect(const std::string& resourceString);
+    bool connect(const std::string& resourceString);
     void disconnect();
     void sendCommandWrite(const std::string& command) const;
     std::string sendCommandQuery(const std::string& command) const;

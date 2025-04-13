@@ -52,6 +52,9 @@ private:
     QThread *mCalculateThread;
     CaculateParams *mCaculateParams;
 
+    QThread *mInstrumentManagerThread;
+    InstrumentSourceManager *mInstrumentManager;
+
     CACULATE_MODE mCaculateMode;
     bool adcStaticTestStop = false;
 

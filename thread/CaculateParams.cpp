@@ -159,7 +159,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
     for (int i = 0; i <= dc_bin_width; ++i) {
         dc_sum += fft_mag[i];
     }
-    dc_amp = 20 * log10(dc_sum / (dc_bin_width + 1) / max_mag);
+    double dc_amp = 20 * log10(dc_sum / (dc_bin_width + 1) / max_mag);
 
     // 寻找基波频率（跳过直流区域）
     int search_start = dc_bin_width + 1;
@@ -178,7 +178,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
     int exclude_end = std::min(static_cast<int>(fft_mag.size()) - 1,
                                static_cast<int>(ceil((fund_freq + exclude_band) * nfft / sample_rate)));
 
-    exulude_len = (exclude_end - exclude_start + 1)/2;
+    int exulude_len = (exclude_end - exclude_start + 1)/2;
 
     // 考虑谐波区域
     fund_energy = 0;
@@ -209,7 +209,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 
     // 寻找最大杂散
     spur_amp = -std::numeric_limits<double>::infinity();
-    spur_freq = NAN;
+    double spur_freq = NAN;
     auto spur_bin = -1;
     noise_energy = 0.0;
 
@@ -222,7 +222,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
             noise_energy += fft_mag[i] * fft_mag[i];
         }
     }
-    spur_peakIndex = spur_bin;
+    int spur_peakIndex = spur_bin;
 
     if (spur_amp > 0) {
         spur_amp = 20 * log10(spur_amp / max_mag);
