@@ -85,19 +85,6 @@ void UdpWorker::handleReadyRead() {
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
 
-        // if(!is_framehead){
-        //     // todo: 处理特殊帧头
-        //     if(datagram.size() < 10){
-        //         is_framehead = true;
-        //         // 判断是数据帧还是固件版本信息回传
-
-        //         return;
-        //     }
-        // }
-
-        // if(is_framehead)
-        // if(is_dataframe)
-
         emit dataReceived(datagram);
 
     }

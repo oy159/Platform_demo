@@ -15,6 +15,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include "thread/CaculateParams.h"
+#include <QRubberBand>
 
 
 
@@ -57,8 +58,13 @@ private:
     void showPointCoordinates(const QPointF &point);
 
     void wheelEvent(QWheelEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;   
+
+    // void updateMarkerInfo();
+    // void resizeEvent(QResizeEvent *event) override;
+    // void mousePressEvent(QMouseEvent *event) override;
+    // void mouseMoveEvent(QMouseEvent *event) override;
+    // void mouseReleaseEvent(QMouseEvent *event) override;
+    
     void keyPressEvent(QKeyEvent *event) override;
 //    void mouseReleaseEvent(QMouseEvent *event) override;
     void updateCounterLabel();

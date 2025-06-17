@@ -1,7 +1,6 @@
 #include <QRandomGenerator>
 #include "platform_demo_test.h"
 #include "ui_platform_demo_test.h"
-#include "testdata.h"
 #include <vector>
 
 
@@ -25,7 +24,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mCaculateParams = new CaculateParams();
     mCalculateThread = new QThread(this);
     mCaculateParams->moveToThread(mCalculateThread);
-    connect(mCaculateParams, &CaculateParams::paramsCalculateFinished, this, &platform_demo_test::handleCaculateFinished);
+    connect(mCaculateParams, &CaculateParams::dynamicParamsCalculateFinished, this, &platform_demo_test::handleDynamicCaculateFinished);
+    connect(mCaculateParams, &CaculateParams::staticParamsCalculateFinished, this, &platform_demo_test::handleStaticCaculateFinished);
 
     mInstrumentSourceManager = new InstrumentSourceManager();
     mInstrumentManagerThread = new QThread(this);
@@ -140,7 +140,7 @@ void platform_demo_test::handleSendButton() {
 }
 
 
-void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB) {
+void platform_demo_test::handleDynamicCaculateFinished(double SFDR, double THD, double SNR, double ENOB) {
     qDebug() << "sfdr_db: " << SFDR;
     qDebug() << "THD: " << THD;
     qDebug() << "SNR: " << SNR;
@@ -153,6 +153,15 @@ void platform_demo_test::handleCaculateFinished(double SFDR, double THD, double 
     mCalculateThread->wait();
 }
 
+void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxINL)
+{
+    qDebug() << "maxDNL: " << maxDNL;
+    qDebug() << "maxINL: " << maxINL;
+    ui->DNLADCLabel->setText("DNL:   " + QString::number(maxDNL, 'f', 2) + " LSB");
+    ui->INLADCLabel->setText("INL:   " + QString::number(maxINL, 'f', 2) + " LSB");
+    mCalculateThread->quit();
+    mCalculateThread->wait();
+}
 
 void platform_demo_test::handleErrorOccurred(const QString &error) {
     // ui->logTextEdit->append("Error: " + error);
@@ -218,7 +227,7 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         emit clearADCData();
     } else if (mCaculateMode == ADC_STATIC_MODE  && !adcStaticTestStop) {
         ui->staticParamsADCTestButton->setEnabled(false);
-        QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(mCaculateParams, "caculateStaticDataHistogram", Qt::QueuedConnection);
 
         // todo:计算获取的数据总量是否满足置信度要求，决定是否关闭循环
         staticDataSize += dataArray.size();
@@ -227,6 +236,9 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         if(staticDataSize >= 65532*1000) {
             adcStaticTestStop = true;
             qDebug() << "ADC Static Test Stop" << "now data size = " << staticDataSize;
+            
+            QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
+
             staticDataSize = 0;
             ui->staticParamsADCTestButton->setEnabled(true);
             return;
@@ -253,7 +265,7 @@ void platform_demo_test::handleDynamicADCTest() {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     }
     mCaculateMode = ADC_DYNAMIC_MODE;
-    adcStaticTestStop = false;
+
 }
 
 void platform_demo_test::handleStaticADCTest() {

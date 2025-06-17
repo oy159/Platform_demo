@@ -5,7 +5,8 @@
 #include "CaculateParams.h"
 
 CaculateParams::CaculateParams(QObject *parent) : QObject(parent)  {
-
+    StaticDataHistogram.resize(65536, 0); // 初始化直方图
+    ADCStaticDataLength = 0;
 }
 
 CaculateParams::~CaculateParams() {
@@ -78,7 +79,7 @@ void CaculateParams::caculateDynamicParamsADC() {
     double SNDR = 10 * log10((fund_energy)/(noise_energy + harmonic_energy));
     ENOB = (SNDR - 1.76) / 6.02;
 
-    emit paramsCalculateFinished(sfdr_db, THD, SNR, ENOB);
+    emit dynamicParamsCalculateFinished(sfdr_db, THD, SNR, ENOB);
 
     std::vector<double> fft_db;
     fft_db.reserve(fft_abs.size());
@@ -235,4 +236,55 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 
 void CaculateParams::caculateStaticParamsADC() {
 
+    // 判断ADC数据是12位还是16位
+    if(StaticDataHistogram[4096] > 0) {
+        ADC_BITS = 16; // 16位ADC
+        HsineWave.resize(65536, 0);
+        LSBCodeWidth.resize(65536, 0);
+        DNL.resize(65536, 0);
+        INL.resize(65536, 0);
+    } else {
+        ADC_BITS = 12;
+        // 12位ADC
+        HsineWave.resize(4096, 0);
+        LSBCodeWidth.resize(4096, 0);
+        DNL.resize(4096, 0);
+        INL.resize(4096, 0);
+    }
+
+    double C1 = cos(M_PI * StaticDataHistogram[0] / (ADCStaticDataLength));
+    double C2 = cos(M_PI * StaticDataHistogram[2^(ADC_BITS) - 1] / (ADCStaticDataLength));
+
+    staticOffset = (C2-C1) / (C2+C1) * (2^(ADC_BITS - 1) - 1);
+    staticPeak = ((double)(2^(ADC_BITS - 1)) - 1 - staticOffset ) / C1;
+
+    for(int i = 1; i < 2^(ADC_BITS) - 1 ; ++i) {
+        HsineWave[i] = ADCStaticDataLength / M_PI * (asin((i + 1 - (double)(2^(ADC_BITS - 1)) - staticOffset) / staticPeak) -
+                                                      asin((i - (double)(2^(ADC_BITS - 1)) - staticOffset) / staticPeak));
+        LSBCodeWidth[i] = StaticDataHistogram[i] / HsineWave[i - 1];
+        DNL[i] = LSBCodeWidth[i] - 1.0;
+    }
+
+    // 计算积分非线性
+    INL[0] = DNL[0];
+    for(int i = 1; i < 2^(ADC_BITS) - 1; ++i) {
+        INL[i] = INL[i - 1] + DNL[i];
+    }
+
+    // max INL, DNL
+    maxINL = *std::max_element(INL.begin(), INL.end());
+    maxDNL = *std::max_element(DNL.begin(), DNL.end());
+
+    emit staticParamsCalculateFinished(maxDNL, maxINL);
+}
+
+void CaculateParams::caculateStaticDataHistogram()
+{
+    for(const auto& value : mData) {
+        int index = static_cast<int>(value);
+        if (index >= 0 && index < StaticDataHistogram.size()) {
+            StaticDataHistogram[index]++;
+            ADCStaticDataLength++;
+        }
+    }
 }

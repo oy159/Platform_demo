@@ -45,7 +45,7 @@ void InstrumentSourceManager::disconnectFromSMA100B() {
 
 bool InstrumentSourceManager::connectTo3458A(const std::string &VisaAddress)
 {
-
+    
 }
 
 void InstrumentSourceManager::disconnectFrom3458A() {

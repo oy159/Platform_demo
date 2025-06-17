@@ -8,6 +8,7 @@
 #include "CaculateParams.h"
 #include "ChartWidget.h"
 #include "InstrumentSourceManager.h"
+#include "testdata.h"
 
 typedef enum{
     ADC_DYNAMIC_MODE = 0,
@@ -35,7 +36,8 @@ private slots:
     void handleConnectButton();
     void handleSendButton();
     void handleErrorOccurred(const QString &error);
-    void handleCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
+    void handleDynamicCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
+    void handleStaticCaculateFinished(double maxDNL, double maxINL);
     void handleADCDataCaculate(std::vector<uint16_t> data);
     void handleDynamicADCTest();
     void handleStaticADCTest();

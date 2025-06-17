@@ -1,13 +1,25 @@
 #include <QApplication>
 #include "platform_demo_test.h"
 #include "fftw3.h"
+#include "NewChart.h"
+#include "testdata.h"
 
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     platform_demo_test w;
     w.show();
+
+    ChartWidget w2;
+    w2.handleRefreshSpectrum(Adc_data2);
+    w2.show();
+    
+    SpectrumChartView viewer;
+    viewer.resize(800, 600);
+    viewer.show();
+    
     return a.exec();
+
 }
 
 // todo: 添加识别当前设备功能

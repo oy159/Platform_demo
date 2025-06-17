@@ -26,6 +26,8 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     // 初始化图表
     initChart();
 
+    setCursor(Qt::ArrowCursor); // 恢复默认指针样式
+
     slider = new mSlider(this);
     slider->setOrientation(Qt::Horizontal);
     slider->setRange(0, 1000);
@@ -34,31 +36,6 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
 
     connect(slider, &QSlider::valueChanged, this, &ChartWidget::onSliderValueChanged);
 
-    // slider->setStyleSheet(
-    //     "QSlider::groove:horizontal { "
-    //     "    height: 12px; "
-    //     "    left: 0px; "
-    //     "    right: 0px; "
-    //     "    border: 0px; "
-    //     "    border-radius: 6px; "
-    //     "    background: rgb(34, 173, 143); "
-    //     "} "
-
-    //     "QSlider::handle:horizontal { "
-    //     "    width: 50px; "
-    //     "    height: 50px; "
-    //     "    margin-top: -20px; "
-    //     "    margin-left: 0px; "
-    //     "    margin-bottom: -20px; "
-    //     "    margin-right: 0px; "
-    //     "    border-image: url(:/res/images/setting_slider_handle.png); "
-    //     "} "
-    //     "QSlider::sub-page:horizontal { "
-    //     "    background: rgb(48, 84, 112); "
-    //     "}"
-    // );
-
-    setCursor(Qt::ArrowCursor); // 恢复默认指针样式
 
     // 将控件添加到布局
     mainLayout->addWidget(counterLabel);
@@ -128,8 +105,6 @@ void ChartWidget::initChart() {
     axisY->setTickInterval(10); // 设置主刻度步长为10
 
     // 初始范围
-    axisX->setRange(0, 100);
-    axisY->setRange(-1.5, 1.5);
 
     chart->addAxis(axisX, Qt::AlignBottom);
     chart->addAxis(axisY, Qt::AlignLeft);
@@ -147,10 +122,7 @@ void ChartWidget::initChart() {
     chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing, true);
     chartView->setRenderHint(QPainter::SmoothPixmapTransform, true);
-
     chartView->setDragMode(QGraphicsView::ScrollHandDrag); // 允许拖动
-    chartView->setRenderHint(QPainter::Antialiasing, true);
-    chartView->setRenderHint(QPainter::SmoothPixmapTransform, true);
 
     // 允许缩放
     chartView->setMouseTracking(true);
@@ -190,7 +162,7 @@ void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
     double minX = data.first().x();
     double maxX = data.last().x();
     double minY = data.first().y();
-    double maxY = data.first().y();
+    double maxY = data.last().y();
 
     for (const auto &point : data) {
         minY = qMin(minY, point.y());
@@ -267,59 +239,6 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
 
     }
     event->accept();
-}
-
-void ChartWidget::mousePressEvent(QMouseEvent *event)
-{
-    if (!chart || !series) return;
-
-    // 将鼠标点击位置转换为图表坐标
-    QPointF chartPos = chartView->mapToScene(event->pos());
-    QPointF valuePos = chart->mapToValue(chartPos, series);
-
-    // 查找最近的曲线点
-    QPointF closestPoint;
-    double minDistance = std::numeric_limits<double>::max();
-    for (const QPointF &point : series->points()) {
-        double distance = std::hypot(point.x() - valuePos.x(), point.y() - valuePos.y());
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = point;
-        }
-    }
-
-    // 显示选中点的坐标
-    if (minDistance < 10.0) { // 设置一个阈值，避免误选
-        showPointCoordinates(closestPoint);
-    }
-
-    QWidget::mousePressEvent(event);
-}
-
-void ChartWidget::mouseMoveEvent(QMouseEvent *event) {
-    if (!chart || !series) return;
-
-    // 将鼠标位置转换为图表坐标
-    QPointF chartPos = chartView->mapToScene(event->pos());
-    QPointF valuePos = chart->mapToValue(chartPos, series);
-
-    // 查找最近的曲线点
-    double minDistance = std::numeric_limits<double>::max();
-    for (const QPointF &point : series->points()) {
-        double distance = std::hypot(point.x() - valuePos.x(), point.y() - valuePos.y());
-        if (distance < minDistance) {
-            minDistance = distance;
-        }
-    }
-
-    // 如果鼠标接近某个点，改变指针样式
-    if (minDistance < 1.0) { // 设置一个阈值
-        setCursor(Qt::PointingHandCursor); // 更改为手型指针
-    } else {
-        setCursor(Qt::ArrowCursor); // 恢复默认指针
-    }
-
-    QWidget::mouseMoveEvent(event);
 }
 
 void ChartWidget::keyPressEvent(QKeyEvent *event) {
@@ -402,6 +321,6 @@ void mSlider::mousePressEvent(QMouseEvent *ev)
      //设定滑动条位置
      this->setValue(value);
   
-     //滑动条移动事件等事件也用到了mousePressEvent,加这句话是为了不对其产生影响，是的Slider能正常相应其他鼠标事件
+     //滑动条移动事件等事件也用到了mousePressEvent
      QSlider::mousePressEvent(ev);
 }

@@ -30,9 +30,11 @@ public:
     double getENOB() const { return ENOB; }
 
 signals:
-    void paramsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
+    void dynamicParamsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
     void TransferFFTData(const std::vector<double>& fftData);
     void TransferPeakData(const std::vector<Peak>& peaks);
+
+    void staticParamsCalculateFinished(double maxDNL, double maxINL);
 
 public slots:
     void setData(const std::vector<double>& data) {
@@ -40,6 +42,7 @@ public slots:
     }
     void caculateDynamicParamsADC();
     void caculateStaticParamsADC();
+    void caculateStaticDataHistogram();
 
 private:
     void calculateFFT();
@@ -71,6 +74,21 @@ private:
     double THD;
     double SNR;
     double ENOB;
+
+    std::vector<uint32_t> StaticDataHistogram;
+    uint32_t ADCStaticDataLength = 0;
+
+    int ADC_BITS = 12; // 假设ADC是12位的
+
+    double staticOffset = 0.0;
+    double staticPeak = 0.0;
+    std::vector<double> HsineWave; // 理想正弦波分布
+    std::vector<double> LSBCodeWidth; // LSB代码宽度
+    std::vector<double> DNL; // 差分非线性
+    std::vector<double> INL; // 积分非线性
+    double maxDNL = 0.0;
+    double maxINL = 0.0;
+
 };
 
 
