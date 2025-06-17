@@ -88,8 +88,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     chartWidget1 = ui->chartWidget1;
 
-    connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &ChartWidget::handleRefreshSpectrum);
-    connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &ChartWidget::handleRefreshPeakData);
+    connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
 
 
     mCaculateParams->setData(Adc_data2);

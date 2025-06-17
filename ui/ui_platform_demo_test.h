@@ -19,7 +19,8 @@
 #include <QSpacerItem>
 #include <QStackedWidget>
 #include <QComboBox>
-#include <ChartWidget.h>
+#include <SpectrumChartWidget.h>
+#include <ChartWidgetsManager.h>
 #include <ConnectSettings.h>
 
 QT_BEGIN_NAMESPACE
@@ -97,7 +98,11 @@ public:
     QPushButton *dynamicParamsDACTestButton;
     QPushButton *staticParamsDACTestButton;
 
-    ChartWidget *chartWidget1;
+    ChartWidgetsManager *chartGridWidget;  // 新增图表网格部件
+    SpectrumChartWidget *chartWidget1;
+    SpectrumChartWidget *chartWidget2;
+    SpectrumChartWidget *chartWidget3;
+    SpectrumChartWidget *chartWidget4;
     QMenuBar *menubar;
     QStatusBar *statusbar;
     QMenu *menuFile;
@@ -252,12 +257,22 @@ public:
         rightStackedWidget->addWidget(DisplayDACParamsWidget);
         rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
 
-        chartWidget1 = new ChartWidget(splitter);
+        chartGridWidget = new ChartWidgetsManager(splitter);
+        chartWidget1 = new SpectrumChartWidget;
+        chartWidget2 = new SpectrumChartWidget; // 可以添加更多图表
+        chartWidget3 = new SpectrumChartWidget;
+        chartWidget4 = new SpectrumChartWidget;
+        chartGridWidget->addChart(chartWidget1);
+        chartGridWidget->addChart(chartWidget2);
+        chartGridWidget->addChart(chartWidget3);
+        chartGridWidget->addChart(chartWidget4);
+
+        chartGridWidget->reorganizeCharts(); // 初始化图表布局
 
         splitter->addWidget(leftWidget);
         splitter->addWidget(rightStackedWidget);  // 使用堆叠部件替换原来的DisplayADCParamsWidget
-        splitter->addWidget(chartWidget1);
-        splitter->setStretchFactor(0, 300);
+        splitter->addWidget(chartGridWidget);
+        splitter->setStretchFactor(0, 30);
         splitter->setStretchFactor(1, 1);
         splitter->setStretchFactor(2, 500);
 

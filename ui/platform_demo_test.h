@@ -6,7 +6,7 @@
 #include "udpworker.h"
 #include "ThreadPool.h"
 #include "CaculateParams.h"
-#include "ChartWidget.h"
+#include "SpectrumChartWidget.h"
 #include "InstrumentSourceManager.h"
 #include "testdata.h"
 
@@ -61,7 +61,7 @@ private:
     bool adcStaticTestStop = false;
     uint32_t staticDataSize = 0;
 
-    ChartWidget *chartWidget1;
+    SpectrumChartWidget *chartWidget1;
 
     InstrumentSourceManager *mInstrumentSourceManager;
 };

@@ -2,8 +2,8 @@
 // Created by oycr on 2025/4/4.
 //
 
-#ifndef PLATFORM_DEMO_CHARTWIDGET_H
-#define PLATFORM_DEMO_CHARTWIDGET_H
+#ifndef PLATFORM_DEMO_SPECTRUMCHARTWIDGET_H
+#define PLATFORM_DEMO_SPECTRUMCHARTWIDGET_H
 
 #include <QWidget>
 #include <QLineSeries>
@@ -30,12 +30,12 @@ private:
 };
 
 
-class ChartWidget: public QWidget{
+class SpectrumChartWidget: public QWidget{
     Q_OBJECT
 public:
 public:
-    explicit ChartWidget(QWidget *parent = nullptr);
-    ~ChartWidget();
+    explicit SpectrumChartWidget(QWidget *parent = nullptr);
+    ~SpectrumChartWidget();
 
 public slots:
     // 接收新数据并更新图表
@@ -82,7 +82,7 @@ private:
 
     std::vector<Peak> mpeaks;
 
-    QLabel *counterLabel;  // 新增：计数标签
+    // QLabel *counterLabel;  // 新增：计数标签
     int updateCount = 0;   // 新增：更新计数器
     QLabel *coordinateLabel;
     mSlider* slider;

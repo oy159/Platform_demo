@@ -3,9 +3,9 @@
 //
 
 #include <QVBoxLayout>
-#include "ChartWidget.h"
+#include "SpectrumChartWidget.h"
 
-ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
+SpectrumChartWidget::SpectrumChartWidget(QWidget *parent) : QWidget(parent){
     resize(800, 600);
     
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -13,15 +13,15 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     mainLayout->setSpacing(5);
 
     // 创建计数标签
-    counterLabel = new QLabel(this);
-    counterLabel->setAlignment(Qt::AlignCenter);
-    counterLabel->setStyleSheet("QLabel {"
-                                "background-color: rgba(50, 50, 50, 150);"
-                                "color: white;"
-                                "padding: 5px;"
-                                "border-radius: 5px;"
-                                "}");
-    updateCounterLabel();  // 初始化标签文本
+    // counterLabel = new QLabel(this);
+    // counterLabel->setAlignment(Qt::AlignCenter);
+    // counterLabel->setStyleSheet("QLabel {"
+    //                             "background-color: rgba(50, 50, 50, 150);"
+    //                             "color: white;"
+    //                             "padding: 5px;"
+    //                             "border-radius: 5px;"
+    //                             "}");
+    // updateCounterLabel();  // 初始化标签文本
 
     // 初始化图表
     initChart();
@@ -34,16 +34,16 @@ ChartWidget::ChartWidget(QWidget *parent) : QWidget(parent){
     slider->setTracking(true);
     slider->setPageStep(1);
 
-    connect(slider, &QSlider::valueChanged, this, &ChartWidget::onSliderValueChanged);
+    connect(slider, &QSlider::valueChanged, this, &SpectrumChartWidget::onSliderValueChanged);
 
 
     // 将控件添加到布局
-    mainLayout->addWidget(counterLabel);
+    // mainLayout->addWidget(counterLabel);
     mainLayout->addWidget(chartView);
     mainLayout->addWidget(slider);
 }
 
-ChartWidget::~ChartWidget() {
+SpectrumChartWidget::~SpectrumChartWidget() {
     delete chart;
     delete series;
     delete axisX;
@@ -51,7 +51,7 @@ ChartWidget::~ChartWidget() {
     delete chartView;
 }
 
-void ChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
+void SpectrumChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
 {
     mpeaks = peaks;
     qDebug() << "Received peaks:" << mpeaks[0].position << mpeaks[0].value;
@@ -65,7 +65,7 @@ void ChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
 
 }
 
-void ChartWidget::onSliderValueChanged(int value) {
+void SpectrumChartWidget::onSliderValueChanged(int value) {
     if (!axisX) return;
 
     // 计算新的 X 轴范围
@@ -77,7 +77,7 @@ void ChartWidget::onSliderValueChanged(int value) {
     axisX->setRange(newMin, newMax);
 }
 
-void ChartWidget::initChart() {
+void SpectrumChartWidget::initChart() {
     chart = new QChart();
     chart->setAnimationOptions(QChart::NoAnimation); 
     chart->setMargins(QMargins(5, 5, 5, 5));
@@ -131,11 +131,11 @@ void ChartWidget::initChart() {
     chart->legend()->hide();
 }
 
-void ChartWidget::updateCounterLabel() {
-    counterLabel->setText(QString("频谱图：第 %1 张").arg(updateCount));
+void SpectrumChartWidget::updateCounterLabel() {
+    // counterLabel->setText(QString("频谱图：第 %1 张").arg(updateCount));
 }
 
-void ChartWidget::updateWaveformData(const QVector<QPointF> &newData)
+void SpectrumChartWidget::updateWaveformData(const QVector<QPointF> &newData)
 {
     if (newData.isEmpty()) return;
 
@@ -157,7 +157,7 @@ void ChartWidget::updateWaveformData(const QVector<QPointF> &newData)
 }
 
 
-void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
+void SpectrumChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
 {
     double minX = data.first().x();
     double maxX = data.last().x();
@@ -183,7 +183,7 @@ void ChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
     qDebug() << "Slider range:" << slider->value();
 }
 
-void ChartWidget::AdjustAxisXRange(double min, double max)
+void SpectrumChartWidget::AdjustAxisXRange(double min, double max)
 {
     // 获取现有轴并更新范围
     QValueAxis *axisX = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).constFirst());
@@ -192,7 +192,7 @@ void ChartWidget::AdjustAxisXRange(double min, double max)
     if (axisX) axisX->setRange(min, max);
 }
 
-void ChartWidget::wheelEvent(QWheelEvent *event) {
+void SpectrumChartWidget::wheelEvent(QWheelEvent *event) {
     if (event->modifiers() & Qt::ControlModifier) {
         // Ctrl + 滚轮，调整 X 轴范围
         QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
@@ -241,7 +241,7 @@ void ChartWidget::wheelEvent(QWheelEvent *event) {
     event->accept();
 }
 
-void ChartWidget::keyPressEvent(QKeyEvent *event) {
+void SpectrumChartWidget::keyPressEvent(QKeyEvent *event) {
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_F) {
         // 弹出输入框，获取用户输入的 X 值
         bool ok;
@@ -272,7 +272,7 @@ void ChartWidget::keyPressEvent(QKeyEvent *event) {
     QWidget::keyPressEvent(event);
 }
 
-void ChartWidget::showPointCoordinates(const QPointF &point) {
+void SpectrumChartWidget::showPointCoordinates(const QPointF &point) {
     // 删除之前的坐标显示
     if (coordinateLabel) {
         delete coordinateLabel;
@@ -290,7 +290,7 @@ void ChartWidget::showPointCoordinates(const QPointF &point) {
     coordinateLabel->show();
 }
 
-void ChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
+void SpectrumChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
     QVector<QPointF> chart_data;
     for (size_t i = 0; i < fft_data.size(); ++i) {
         chart_data.append(QPointF(i, fft_data[i]));

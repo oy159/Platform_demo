@@ -10,6 +10,7 @@
 #include <string>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QPushButton>
 
 using namespace std;
 
