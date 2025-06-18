@@ -109,7 +109,7 @@ void UdpWorker::convertBufferToU16Array(const QByteArray &buffer, std::vector<ui
         is_framehead = false;
     } 
     for (int i = 0; i < size; i += 2) {
-        uint16_t value = (uint16_t)buffer[i] << 8 | (uint16_t)buffer[i + 1];
+        uint16_t value = (((uint16_t)buffer[i] << 8)&0xff00) | ((uint16_t)buffer[i + 1] & 0x00ff);
         u16Array.push_back(BIG_LITTLE_SWAP16(value));
     }
 }

@@ -33,12 +33,16 @@ signals:
     void dynamicParamsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
     void TransferFFTData(const std::vector<double>& fftData);
     void TransferPeakData(const std::vector<Peak>& peaks);
+    void TransferADCData(const std::vector<double>& data);
 
     void staticParamsCalculateFinished(double maxDNL, double maxINL);
+    void TransferDNLData(const std::vector<double>& DNL);
+    void TransferINLData(const std::vector<double>& INL);
 
 public slots:
     void setData(const std::vector<double>& data) {
         mData = data;
+        emit TransferADCData(data);
     }
     void caculateDynamicParamsADC();
     void caculateStaticParamsADC();

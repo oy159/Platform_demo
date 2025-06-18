@@ -154,6 +154,7 @@ void SpectrumChartWidget::updateWaveformData(const QVector<QPointF> &newData)
         optimizeAxisRanges(newData);
         firstDataReceived = false;
     }
+//    optimizeAxisRanges(newData);
 }
 
 

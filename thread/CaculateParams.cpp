@@ -72,7 +72,7 @@ void CaculateParams::caculateDynamicParamsADC() {
 
     calculateSFDRdb();
 
-    THD = 10 * log10(harmonic_energy / (fund_energy));
+    THD = - 10 * log10(harmonic_energy / (fund_energy));
 
 // 4. 计算 SNR 和 ENOB
     SNR = 10 * log10((fund_energy)/ noise_energy);
@@ -253,21 +253,21 @@ void CaculateParams::caculateStaticParamsADC() {
     }
 
     double C1 = cos(M_PI * StaticDataHistogram[0] / (ADCStaticDataLength));
-    double C2 = cos(M_PI * StaticDataHistogram[2^(ADC_BITS) - 1] / (ADCStaticDataLength));
+    double C2 = cos(M_PI * StaticDataHistogram[qPow(2,ADC_BITS) - 1] / (ADCStaticDataLength));
 
-    staticOffset = (C2-C1) / (C2+C1) * (2^(ADC_BITS - 1) - 1);
-    staticPeak = ((double)(2^(ADC_BITS - 1)) - 1 - staticOffset ) / C1;
+    staticOffset = (C2-C1) / (C2+C1) * (qPow(2,ADC_BITS - 1) - 1);
+    staticPeak = ((double)(qPow(2,ADC_BITS - 1)) - 1 - staticOffset ) / C1;
 
-    for(int i = 1; i < 2^(ADC_BITS) - 1 ; ++i) {
-        HsineWave[i] = ADCStaticDataLength / M_PI * (asin((i + 1 - (double)(2^(ADC_BITS - 1)) - staticOffset) / staticPeak) -
-                                                      asin((i - (double)(2^(ADC_BITS - 1)) - staticOffset) / staticPeak));
-        LSBCodeWidth[i] = StaticDataHistogram[i] / HsineWave[i - 1];
+    for(int i = 1; i < qPow(2,ADC_BITS) - 1 ; ++i) {
+        HsineWave[i] = ADCStaticDataLength / M_PI * (asin((i + 1 - (double)(qPow(2,ADC_BITS - 1)) - staticOffset) / staticPeak) -
+                                                      asin((i - (double)(qPow(2,ADC_BITS - 1)) - staticOffset) / staticPeak));
+        LSBCodeWidth[i] = StaticDataHistogram[i] / HsineWave[i];
         DNL[i] = LSBCodeWidth[i] - 1.0;
     }
 
     // 计算积分非线性
     INL[0] = DNL[0];
-    for(int i = 1; i < 2^(ADC_BITS) - 1; ++i) {
+    for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i) {
         INL[i] = INL[i - 1] + DNL[i];
     }
 
@@ -276,6 +276,8 @@ void CaculateParams::caculateStaticParamsADC() {
     maxDNL = *std::max_element(DNL.begin(), DNL.end());
 
     emit staticParamsCalculateFinished(maxDNL, maxINL);
+    emit TransferDNLData(DNL);
+    emit TransferINLData(INL);
 }
 
 void CaculateParams::caculateStaticDataHistogram()

@@ -87,12 +87,20 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     });
 
     chartWidget1 = ui->chartWidget1;
+    chartWidget2 = ui->chartWidget2;
+    chartWidget3 = ui->chartWidget3;
+    chartWidget4 = ui->chartWidget4;
 
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
 
+    connect(mCaculateParams, &CaculateParams::TransferADCData, chartWidget2, &SpectrumChartWidget::handleRefreshSpectrum);
 
-    mCaculateParams->setData(Adc_data2);
+    connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
+
+
+    mCaculateParams->setData(adc16Data);
     mCalculateThread->start();
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
 
@@ -232,7 +240,7 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         // todo:计算获取的数据总量是否满足置信度要求，决定是否关闭循环
         staticDataSize += dataArray.size();
 
-        emit clearADCData();
+
         if(staticDataSize >= 65532*1000) {
             adcStaticTestStop = true;
             qDebug() << "ADC Static Test Stop" << "now data size = " << staticDataSize;
@@ -243,6 +251,7 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
             ui->staticParamsADCTestButton->setEnabled(true);
             return;
         }
+        emit clearADCData();
 
         // todo:再获取一次数据（计算完后执行，signal&slot）
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令

@@ -62,6 +62,9 @@ private:
     uint32_t staticDataSize = 0;
 
     SpectrumChartWidget *chartWidget1;
+    SpectrumChartWidget *chartWidget2;
+    SpectrumChartWidget *chartWidget3;
+    SpectrumChartWidget *chartWidget4;
 
     InstrumentSourceManager *mInstrumentSourceManager;
 };
