@@ -67,6 +67,7 @@ private:
 
     double fund_amp = 0;
     double fund_freq = 0;
+    int fund_bin = 0;
 
     double spur_amp = 0;
 

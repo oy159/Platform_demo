@@ -62,15 +62,12 @@ void CaculateParams::calculateFFT() {
 void CaculateParams::caculateDynamicParamsADC() {
     calculateFFT();
 
+    calculateSFDRdb();
+
     // Calculate sfdr_db, THD, SNR, ENOB
-    double max_magnitude = fft_abs[fund_peakIndex];
+    double max_magnitude = fft_abs[fund_bin];
     auto N = fft_abs.size();
 
-   
-//
-//    fund_peak = peaks[0];
-
-    calculateSFDRdb();
 
     THD = - 10 * log10(harmonic_energy / (fund_energy));
 
@@ -164,7 +161,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 
     // 寻找基波频率（跳过直流区域）
     int search_start = dc_bin_width + 1;
-    auto fund_bin = search_start;
+    fund_bin = search_start;
     for (size_t i = search_start; i < fft_mag.size(); ++i) {
         if (fft_mag[i] > fft_mag[fund_bin]) {
             fund_bin = static_cast<int>(i);

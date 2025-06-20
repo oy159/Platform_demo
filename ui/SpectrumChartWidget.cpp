@@ -28,19 +28,19 @@ SpectrumChartWidget::SpectrumChartWidget(QWidget *parent) : QWidget(parent){
 
     setCursor(Qt::ArrowCursor); // 恢复默认指针样式
 
-    slider = new mSlider(this);
-    slider->setOrientation(Qt::Horizontal);
-    slider->setRange(0, 1000);
-    slider->setTracking(true);
-    slider->setPageStep(1);
+    // slider = new mSlider(this);
+    // slider->setOrientation(Qt::Horizontal);
+    // slider->setRange(0, 1000);
+    // slider->setTracking(true);
+    // slider->setPageStep(1);
 
-    connect(slider, &QSlider::valueChanged, this, &SpectrumChartWidget::onSliderValueChanged);
+    // connect(slider, &QSlider::valueChanged, this, &SpectrumChartWidget::onSliderValueChanged);
 
 
     // 将控件添加到布局
     // mainLayout->addWidget(counterLabel);
     mainLayout->addWidget(chartView);
-    mainLayout->addWidget(slider);
+    // mainLayout->addWidget(slider);
 }
 
 SpectrumChartWidget::~SpectrumChartWidget() {
@@ -85,6 +85,16 @@ void SpectrumChartWidget::initChart() {
     series = new QLineSeries();
     series->setUseOpenGL(true); 
 
+    series->setMarkerSize(16);
+    series->setLightMarker(circle(16, Qt::red));
+    series->setSelectedLightMarker(circle(16, Qt::red));
+
+    QObject::connect(series, &QXYSeries::clicked, series, [=](const QPointF &point) {
+        int index = series->points().indexOf(point);
+        if (index != -1)
+            series->toggleSelection({index});
+    });
+
     QPen pen(Qt::cyan);
     pen.setWidthF(1.5);
     series->setPen(pen);
@@ -97,7 +107,7 @@ void SpectrumChartWidget::initChart() {
 
     axisX->setTitleText("点数");
     axisX->setLabelFormat("%d");
-    axisX->setTickCount(11); // 主刻度数量
+    axisX->setTickCount(10); // 主刻度数量
 
     axisY->setTitleText("幅值");
     axisY->setLabelFormat("%d");
@@ -116,19 +126,60 @@ void SpectrumChartWidget::initChart() {
     peakSeries->setMarkerSize(10.0); // 设置标记大小
     peakSeries->setColor(Qt::red); // 设置标记颜色
     chart->addSeries(peakSeries);
-    peakSeries->attachAxis(axisX);
-    peakSeries->attachAxis(axisY);
+    // chart->createDefaultAxes();
+    // peakSeries->attachAxis(axisX);
+    // peakSeries->attachAxis(axisY);
 
-    chartView = new QChartView(chart);
+    chartView = new NavigationChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing, true);
     chartView->setRenderHint(QPainter::SmoothPixmapTransform, true);
-    chartView->setDragMode(QGraphicsView::ScrollHandDrag); // 允许拖动
+    // chartView->setDragMode(QGraphicsView::ScrollHandDrag); // 允许拖动
 
     // 允许缩放
     chartView->setMouseTracking(true);
-
+    chartView->setRubberBand(QChartView::RectangleRubberBand);
+    
     // 隐藏图例
     chart->legend()->hide();
+
+    connect(series, &QLineSeries::clicked, this, &SpectrumChartWidget::keepCallout);
+    connect(series, &QLineSeries::hovered, this, &SpectrumChartWidget::tooltip);
+
+
+    m_coordX = new QGraphicsSimpleTextItem(chart);
+    m_coordX->setText("X: ");
+    m_coordY = new QGraphicsSimpleTextItem(chart);
+    m_coordY->setText("Y: ");
+}
+
+void SpectrumChartWidget::keepCallout()
+{
+    m_callouts.append(m_tooltip);
+    m_tooltip = new Callout(chart);
+}
+
+void SpectrumChartWidget::tooltip(QPointF point, bool state)
+{
+    if (!m_tooltip)
+        m_tooltip = new Callout(chart);
+
+    if (state) {
+        m_tooltip->setText(QString("X: %1 \nY: %2 ").arg(point.x()).arg(point.y()));
+        m_tooltip->setAnchor(point);
+        m_tooltip->setZValue(11);
+        m_tooltip->updateGeometry();
+        m_tooltip->show();
+    } else {
+        m_tooltip->hide();
+    }
+}
+
+void SpectrumChartWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    m_coordX->setText(QString("X: %1").arg(chart->mapToValue(event->pos()).x()));
+    m_coordY->setText(QString("Y: %1").arg(chart->mapToValue(event->pos()).y()));
+
+    QWidget::mouseMoveEvent(event);
 }
 
 void SpectrumChartWidget::updateCounterLabel() {
@@ -143,7 +194,7 @@ void SpectrumChartWidget::updateWaveformData(const QVector<QPointF> &newData)
     series->clear();
     series->replace(newData);
     
-    slider->setRange(newData.first().x(), newData.last().x());
+    // slider->setRange(newData.first().x(), newData.last().x());
     
 
     updateCount++;
@@ -180,67 +231,83 @@ void SpectrumChartWidget::optimizeAxisRanges(const QVector<QPointF> &data)
     if (axisX) axisX->setRange(minX, maxX);
     if (axisY) axisY->setRange(minY - yMargin, maxY + yMargin);
 
-    slider->setValue(data.first().x());
-    qDebug() << "Slider range:" << slider->value();
+    // slider->setValue(data.first().x());
+    // qDebug() << "Slider range:" << slider->value();
 }
+
+QImage SpectrumChartWidget::circle(qreal imageSize, const QColor &color)
+{
+    QImage image(imageSize, imageSize, QImage::Format_ARGB32);
+    image.fill(QColor(0, 0, 0, 0));
+    QPainter paint;
+    paint.begin(&image);
+    paint.setBrush(color);
+    QPen pen = paint.pen();
+    pen.setWidth(0);
+    paint.setPen(pen);
+    paint.drawEllipse(0, 0, imageSize * 0.9, imageSize * 0.9);
+    paint.end();
+    return image;
+}
+
 
 void SpectrumChartWidget::AdjustAxisXRange(double min, double max)
 {
     // 获取现有轴并更新范围
     QValueAxis *axisX = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).constFirst());
-    slider->setValue(min);
+    // slider->setValue(min);
 
     if (axisX) axisX->setRange(min, max);
 }
 
-void SpectrumChartWidget::wheelEvent(QWheelEvent *event) {
-    if (event->modifiers() & Qt::ControlModifier) {
-        // Ctrl + 滚轮，调整 X 轴范围
-        QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
-        if (event->angleDelta().y() > 0) {
-            // 放大 X 轴（缩小范围）
-            xAxis->setRange(xAxis->min(), xAxis->max() * 0.8);
-        } else {
-            // 缩小 X 轴（放大范围）
-            xAxis->setRange(xAxis->min(), xAxis->max() * 1.25);
-        }
-    } else if(event->modifiers() & Qt::ShiftModifier) {
-        QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
-        int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
-        // 调整 X 轴范围
-        if (event->angleDelta().y() > 0) {
-            // 往右移动
-            xAxis->setRange(xAxis->min() + step, xAxis->max() + step);
-        } else {
-            // 往左移动
-            xAxis->setRange(xAxis->min() - step, xAxis->max() - step);
-        }
-    }else{
-        // 普通滚轮，调整 Y 轴范围
-        QValueAxis *yAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Vertical).first());
-        if (yAxis) {
-            double rangeMin = yAxis->min();
-            double rangeMax = yAxis->max();
-            double range = rangeMax - rangeMin;
+// void SpectrumChartWidget::wheelEvent(QWheelEvent *event) {
+//     if (event->modifiers() & Qt::ControlModifier) {
+//         // Ctrl + 滚轮，调整 X 轴范围
+//         QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
+//         if (event->angleDelta().y() > 0) {
+//             // 放大 X 轴（缩小范围）
+//             xAxis->setRange(xAxis->min(), xAxis->max() * 0.8);
+//         } else {
+//             // 缩小 X 轴（放大范围）
+//             xAxis->setRange(xAxis->min(), xAxis->max() * 1.25);
+//         }
+//     } else if(event->modifiers() & Qt::ShiftModifier) {
+//         QValueAxis *xAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Horizontal).first());
+//         int step = (xAxis->max() - xAxis->min()) / 100; // 每次移动1%
+//         // 调整 X 轴范围
+//         if (event->angleDelta().y() > 0) {
+//             // 往右移动
+//             xAxis->setRange(xAxis->min() + step, xAxis->max() + step);
+//         } else {
+//             // 往左移动
+//             xAxis->setRange(xAxis->min() - step, xAxis->max() - step);
+//         }
+//     }else{
+//         // 普通滚轮，调整 Y 轴范围
+//         QValueAxis *yAxis = qobject_cast<QValueAxis*>(chart->axes(Qt::Vertical).first());
+//         if (yAxis) {
+//             double rangeMin = yAxis->min();
+//             double rangeMax = yAxis->max();
+//             double range = rangeMax - rangeMin;
 
-            if (event->angleDelta().y() > 0) {
-                // 放大 Y 轴（缩小范围）
-                yAxis->setRange(rangeMin, rangeMax * 0.8);
-            } else {
-                // 缩小 Y 轴（放大范围）
-                yAxis->setRange(rangeMin, rangeMax * 1.25);
-            }
+//             if (event->angleDelta().y() > 0) {
+//                 // 放大 Y 轴（缩小范围）
+//                 yAxis->setRange(rangeMin, rangeMax * 0.8);
+//             } else {
+//                 // 缩小 Y 轴（放大范围）
+//                 yAxis->setRange(rangeMin, rangeMax * 1.25);
+//             }
 
-            // 动态调整主刻度数量
-            range = yAxis->max() - yAxis->min();
-            int tickCount = static_cast<int>(range / 10) + 1; // 根据范围计算主刻度数量
-            yAxis->setTickInterval(10); // 主刻度步长为10
-            yAxis->setTickCount(tickCount); // 设置主刻度数量
-        }
+//             // 动态调整主刻度数量
+//             range = yAxis->max() - yAxis->min();
+//             int tickCount = static_cast<int>(range / 10) + 1; // 根据范围计算主刻度数量
+//             yAxis->setTickInterval(10); // 主刻度步长为10
+//             yAxis->setTickCount(tickCount); // 设置主刻度数量
+//         }
 
-    }
-    event->accept();
-}
+//     }
+//     event->accept();
+// }
 
 void SpectrumChartWidget::keyPressEvent(QKeyEvent *event) {
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_F) {
@@ -297,6 +364,15 @@ void SpectrumChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
         chart_data.append(QPointF(i, fft_data[i]));
     }
     this->updateWaveformData(chart_data);
+}
+
+void SpectrumChartWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        // 复位缩放
+        chart->zoomReset();
+    }
+    QWidget::mouseDoubleClickEvent(event);
 }
 
 mSlider::mSlider(QWidget *parent)
