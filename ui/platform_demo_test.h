@@ -15,7 +15,14 @@ typedef enum{
     ADC_STATIC_MODE = 1,
     DAC_DYNAMIC_MODE = 2,
     DAC_STATIC_MODE = 3,
+    AUTO_CALI_MODE = 4,
 } CACULATE_MODE;
+
+typedef enum{
+    N9040B = 0,
+    KS3362A = 1,
+    SMA100B = 2,
+} InstrumentType;
 
 
 QT_BEGIN_NAMESPACE
@@ -41,6 +48,7 @@ private slots:
     void handleADCDataCaculate(std::vector<uint16_t> data);
     void handleDynamicADCTest();
     void handleStaticADCTest();
+    void handleAutoCaliInstrument();
 
 private:
     QVector<double> generateWaveformData(int count);
@@ -67,6 +75,7 @@ private:
     SpectrumChartWidget *chartWidget4;
 
     InstrumentSourceManager *mInstrumentSourceManager;
+    InstrumentType mInstrumentType = KS3362A;
 };
 
 

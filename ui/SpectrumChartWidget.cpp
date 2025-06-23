@@ -60,8 +60,8 @@ void SpectrumChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
     peakSeries->clear();
 
     // 添加新的峰值点
-    peakSeries->append((double)peaks[0].position/sampleNum/2*sampleRate/1e6, peaks[0].value);
-    peakSeries->append((double)peaks[1].position/sampleNum/2*sampleRate/1e6, peaks[1].value);
+    // peakSeries->append((double)peaks[0].position/sampleNum/2*sampleRate/1e6, peaks[0].value);
+    // peakSeries->append((double)peaks[1].position/sampleNum/2*sampleRate/1e6, peaks[1].value);
 
 }
 
@@ -79,6 +79,26 @@ void SpectrumChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
         }
     }
     this->updateWaveformData(chart_data);
+}
+
+void SpectrumChartWidget::handleFindPeak()
+{
+    peakSeries->clear();
+    peakSeries->append((double)mpeaks[0].position/sampleNum/2*sampleRate/1e6, mpeaks[0].value);
+    updateCoordText(QPointF((double)mpeaks[0].position/sampleNum/2*sampleRate/1e6, mpeaks[0].value));
+    peakCnt = 0;
+}
+
+void SpectrumChartWidget::handleFindNextPeak()
+{
+    peakCnt++;
+    if (peakCnt >= mpeaks.size()) {
+        peakCnt = 0; // 重置计数器
+    }else {
+        peakSeries->clear();
+        peakSeries->append((double)mpeaks[peakCnt].position/sampleNum/2*sampleRate/1e6, mpeaks[peakCnt].value);
+        updateCoordText(QPointF((double)mpeaks[peakCnt].position/sampleNum/2*sampleRate/1e6, mpeaks[peakCnt].value));
+    }
 }
 
 void SpectrumChartWidget::onSliderValueChanged(int value) {

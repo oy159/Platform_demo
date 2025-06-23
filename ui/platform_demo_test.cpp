@@ -122,6 +122,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         }
     });
 
+    
+
     chartWidget1 = ui->chartWidget1;
     chartWidget2 = ui->chartWidget2;
     chartWidget3 = ui->chartWidget3;
@@ -129,6 +131,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
+    connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartWidget::handleFindPeak);
+    connect(ui->FindNextButton, &QPushButton::clicked, chartWidget1, &SpectrumChartWidget::handleFindNextPeak);
 
     connect(mCaculateParams, &CaculateParams::TransferADCData, chartWidget2, &SpectrumChartWidget::handleRefreshSpectrum);
 
@@ -272,6 +276,30 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         dataArray.push_back((double) i);
     }
 
+    if(mCaculateMode == AUTO_CALI_MODE){
+        auto [minIt, maxIt] = std::minmax_element(dataArray.begin(), dataArray.end());
+        double minValue = *minIt;
+        double maxValue = *maxIt;
+
+        int minCount = std::count(dataArray.begin(), dataArray.end(), minValue);
+        int maxCount = std::count(dataArray.begin(), dataArray.end(), maxValue);
+        qDebug() << "Min: " << minValue << ", count: " << minCount;
+        qDebug() << "Max: " << maxValue << ", count: " << maxCount;
+
+        // 调整输出幅度
+
+
+        if(maxValue == 65535 && minValue == 0)
+            return;
+
+        QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+        if (!message.isEmpty()) {
+            QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+        }
+
+        return;
+    }
+
     mCaculateParams->setData(dataArray);
     mCalculateThread->start();
     if(mCaculateMode == ADC_DYNAMIC_MODE) {
@@ -335,4 +363,23 @@ void platform_demo_test::handleStaticADCTest() {
     }
     mCaculateMode = ADC_STATIC_MODE;
     adcStaticTestStop = false;
+}
+
+
+
+void platform_demo_test::handleAutoCaliInstrument() {
+    // 第一步，验证当前固件为ADC，且已打开udp
+
+
+    // 判断使用仪器类型
+
+
+    mInstrumentType = KS3362A;
+    // 2.获取adc数据 计算动态参数
+    QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+    if (!message.isEmpty()) {
+        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    }
+    mCaculateMode = AUTO_CALI_MODE;
+
 }

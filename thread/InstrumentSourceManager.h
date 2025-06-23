@@ -8,6 +8,7 @@
 #include "QObject"
 #include "KeySightVisa_N9040B.h"
 #include "RhodeSchwarzVisa_SMA100B.h"
+#include "KSVisa_33622A.h"
 #include "TCPInstrument.h"
 #include "QDebug"
 
@@ -36,6 +37,7 @@ private:
 
     KeySightVisa_N9040B     *n9040B;
     RhodeSchwarzVisa_SMA100B *sma100B;
+    KeySightVisa_33622A     *ks33622A;
     TCPInstrument *tcpInstrument;
 };
 

@@ -42,6 +42,8 @@ public slots:
     void handleRefreshPeakData(const std::vector<Peak>& peaks);
     void onSliderValueChanged(int value);
     void handleRefreshSpectrum(std::vector<double> fft_data);
+    void handleFindPeak();
+    void handleFindNextPeak();
 
     // 清空图表数据
 //    void clearWaveformData();
@@ -70,6 +72,8 @@ private:
     double sampleRate = 1e8; // 默认采样率
     bool set_freq = false; // 是否设置了频率
     int sampleNum = 0; // 采样点数
+
+    int peakCnt = 0; // 峰值计数器
 
 
     NavigationChartView *chartView;

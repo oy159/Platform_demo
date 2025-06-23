@@ -52,7 +52,7 @@ void CaculateParams::calculateFFT() {
         }
     }
 
-    qDebug() << max_input;
+    qDebug() << "最大幅度为" << max_input;
     // Clean up
     fftw_destroy_plan(p);
     fftw_free(in);
