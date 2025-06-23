@@ -7,9 +7,45 @@
 platform_demo_test::platform_demo_test(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::platform_demo_test) {
     ui->setupUi(this);
+    setStyleSheet("QGroupBox {"
+                  "font-weight: bold;"
+                  "border: 1px solid #ccc;"
+                  "margin-top: 10px;"
+                  "}"
+                  "QGroupBox::title {"
+                  "subcontrol-origin: margin;"
+                  "subcontrol-position: top left;"
+                  "padding: 0 3px;"
+                  "}"
+                  "QPushButton {"
+                  "background-color: #ffffff;"
+                  "border: 1px solid #ccc;"
+                  "padding: 5px;"
+                  "border-radius: 6px;"  // Add this line to make buttons rounded
+                  "}"
+                  "QPushButton:hover {"
+                  "background-color: #a0e0e0;"
+                  "}"
+                  "QComboBox {"
+                  "padding: 3px;"
+                  "border: 1px solid #ccc;"
+                  "combobox-popup:0;"
+                  "}"
+                  );
+
+    connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
+        if (state == Qt::Checked) {
+            ui->ADCChannel2CheckBox->setChecked(false);
+        }
+    });
+    connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
+        if (state == Qt::Checked) {
+            ui->ADCChannel1CheckBox->setChecked(false);
+        }
+    });
 
     connect(ui->connectButton, &QPushButton::clicked, this, &platform_demo_test::handleConnectButton);
-    connect(ui->sendButton, &QPushButton::clicked, this, &platform_demo_test::handleSendButton);
+    connect(ui->instrumentDetectBtn, &QPushButton::clicked, this, &platform_demo_test::handleInstrumentDetectBtn);
 
     mUdpWorker = new UdpWorker();
     mUdpThread = new QThread(this);
@@ -101,6 +137,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
 
     mCaculateParams->setData(adc16Data);
+    chartWidget1->setSampleRate(1e8); // 设置采样率
     mCalculateThread->start();
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
 
@@ -129,22 +166,29 @@ platform_demo_test::~platform_demo_test() {
 void platform_demo_test::handleConnectButton() {
     if (ui->connectButton->isChecked()) {
         ui->connectButton->setText("连接中...");
+        ui->connectButton->setStyleSheet("background-color: green; color: black;");
         QString ip = ui->connectSettings->ipLineEdit->text();
         int remote_port = ui->connectSettings->portLineEdit->text().toInt();
         int local_port = 11451;
         QMetaObject::invokeMethod(mUdpWorker, "connectToHost", Qt::QueuedConnection, Q_ARG(QString, ip), Q_ARG(int, remote_port), Q_ARG(int, local_port));
     } else {
         ui->connectButton->setText("连接设备");
+        ui->connectButton->setStyleSheet("QPushButton {"
+                                            "background-color: #ffffff;"
+                                            "border: 1px solid #ccc;"
+                                            "padding: 5px;"
+                                            "border-radius: 6px;"  // Add this line to make buttons rounded
+                                            "}"
+                                            "QPushButton:hover {"
+                                            "background-color: #a0e0e0;"
+                                            "}");
         // disconnect
         QMetaObject::invokeMethod(mUdpWorker, "disconnectFromHost", Qt::QueuedConnection);
     }
 }
 
-void platform_demo_test::handleSendButton() {
-//    QString message = "Hello, World!";
-//    if (!message.isEmpty()) {
-//        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-//    }
+void platform_demo_test::handleInstrumentDetectBtn() {
+    mInstrumentManager->findAllVisaResources();
 }
 
 

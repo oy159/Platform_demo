@@ -17,6 +17,8 @@ public:
     explicit InstrumentSourceManager(QObject *parent = nullptr);
     ~InstrumentSourceManager();
 
+    std::vector<std::string> findAllVisaResources();
+
 public slots:
     bool connectToN9040B(const std::string &VisaAddress);
     void disconnectFromN9040B();
@@ -28,7 +30,7 @@ public slots:
     void disconnectFrom3362A();
 
 private:
-    std::vector<std::string> findAllVisaResources();
+    
 
     std::vector<std::string> Instrument_Resources;
 

@@ -19,6 +19,7 @@
 #include <QSpacerItem>
 #include <QStackedWidget>
 #include <QComboBox>
+#include <QCheckBox>
 #include <SpectrumChartWidget.h>
 #include <ChartWidgetsManager.h>
 #include <ConnectSettings.h>
@@ -42,7 +43,7 @@ public:
 
     QGroupBox *messageGroupBox;
     QVBoxLayout *messageGroupBoxLayout;
-    QPushButton *sendButton;
+    QPushButton *instrumentDetectBtn;
 
 
     QPushButton *switchWidgetButton;  // 新增切换按钮
@@ -73,6 +74,13 @@ public:
     QVBoxLayout *WindowsFuncGroupBoxLayout;
     QLabel *WindowsFuncLabel;
     QComboBox *WindowsFuncCombox;
+
+    // ADC通道选择部件
+    QGroupBox *ADCChannelChoiceGroupBox;
+    QHBoxLayout *ADCChannelChoiceGroupBoxLayout;
+    QLabel *ADCChannelChoiceLabel;
+    QCheckBox *ADCChannel1CheckBox;
+    QCheckBox *ADCChannel2CheckBox;
 
     // 参数测试按钮
     QGroupBox *paramTestADCGroupBox;
@@ -135,9 +143,9 @@ public:
 
         messageGroupBox = new QGroupBox("仪器资源检测", leftWidget);
         messageGroupBoxLayout = new QVBoxLayout(messageGroupBox);
-        sendButton = new QPushButton("检测仪器", messageGroupBox);
+        instrumentDetectBtn = new QPushButton("检测仪器", messageGroupBox);
 
-        messageGroupBoxLayout->addWidget(sendButton);
+        messageGroupBoxLayout->addWidget(instrumentDetectBtn);
 
         // 添加参数测试按钮组
         
@@ -204,6 +212,18 @@ public:
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncLabel);
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncCombox);
 
+        ADCChannelChoiceGroupBox = new QGroupBox("ADC Channel Selection", DisplayADCParamsWidget);
+        ADCChannelChoiceGroupBoxLayout = new QHBoxLayout(ADCChannelChoiceGroupBox);
+        ADCChannelChoiceLabel = new QLabel("通道选择: ", ADCChannelChoiceGroupBox);
+        ADCChannel1CheckBox = new QCheckBox("通道1", ADCChannelChoiceGroupBox);
+        ADCChannel2CheckBox = new QCheckBox("通道2", ADCChannelChoiceGroupBox);
+        ADCChannel1CheckBox->setChecked(true);  // 默认选中通道1
+        ADCChannel2CheckBox->setChecked(false); // 默认不选中通道2
+
+        ADCChannelChoiceGroupBoxLayout->addWidget(ADCChannelChoiceLabel);
+        ADCChannelChoiceGroupBoxLayout->addWidget(ADCChannel1CheckBox);
+        ADCChannelChoiceGroupBoxLayout->addWidget(ADCChannel2CheckBox);
+
 
         paramTestADCGroupBox = new QGroupBox("参数测试", DisplayADCParamsWidget);
         paramTestADCGroupBoxLayout = new QVBoxLayout(paramTestADCGroupBox);
@@ -216,6 +236,7 @@ public:
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(StaticParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(WindowsFuncGroupBox);
+        DisplayADCParamsLayout->addWidget(ADCChannelChoiceGroupBox);
         DisplayADCParamsLayout->addWidget(paramTestADCGroupBox);
         DisplayADCParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayADCParamsWidget->setLayout(DisplayADCParamsLayout);

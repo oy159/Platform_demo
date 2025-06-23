@@ -34,7 +34,7 @@ signals:
 
 private slots:
     void handleConnectButton();
-    void handleSendButton();
+    void handleInstrumentDetectBtn();
     void handleErrorOccurred(const QString &error);
     void handleDynamicCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
     void handleStaticCaculateFinished(double maxDNL, double maxINL);
