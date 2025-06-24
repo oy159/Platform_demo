@@ -20,6 +20,10 @@ public:
 
     std::vector<std::string> findAllVisaResources();
 
+
+    KeySightVisa_N9040B     *n9040B;
+    RhodeSchwarzVisa_SMA100B *sma100B;
+    KeySightVisa_33622A     *ks33622A;
 public slots:
     bool connectToN9040B(const std::string &VisaAddress);
     void disconnectFromN9040B();
@@ -35,9 +39,7 @@ private:
 
     std::vector<std::string> Instrument_Resources;
 
-    KeySightVisa_N9040B     *n9040B;
-    RhodeSchwarzVisa_SMA100B *sma100B;
-    KeySightVisa_33622A     *ks33622A;
+
     TCPInstrument *tcpInstrument;
 };
 

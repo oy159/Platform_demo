@@ -83,6 +83,10 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         bool status = mInstrumentSourceManager->connectToSMA100B(ip.toStdString());
         if (status) {
             ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
+//            handleAutoCaliInstrument();
+            mInstrumentSourceManager->sma100B->setExternalClock();
+//            mInstrumentSourceManager->sma100B->SetFrequency((int)
+//                        (1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value()));
         } else {
             ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
         }
@@ -139,7 +143,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
 
-
+//    chartWidget3->adjustaxisX();
     mCaculateParams->setData(adc16Data);
     chartWidget1->setSampleRate(1e8); // 设置采样率
     mCalculateThread->start();
@@ -159,6 +163,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
     });
 //    timer->start(1000); // 每秒更新一次
+
+
 }
 
 platform_demo_test::~platform_demo_test() {
@@ -269,6 +275,8 @@ QVector<double> platform_demo_test::generateWaveformData(int count)
 }
 
 
+
+
 void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
     // 处理接收到的ADC数据
     std::vector<double> dataArray;
@@ -287,10 +295,21 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         qDebug() << "Max: " << maxValue << ", count: " << maxCount;
 
         // 调整输出幅度
+        sma100b_amp += 0.1;
+        mInstrumentSourceManager->sma100B->setAMP(sma100b_amp);
 
 
-        if(maxValue == 65535 && minValue == 0)
+        emit clearADCData();
+        if(maxValue > 36635*0.95){
+            qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
             return;
+        }
+
+//        QThread::msleep(100);
+
+        if(sma100b_amp > 15)
+            return;
+
 
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
         if (!message.isEmpty()) {
@@ -375,6 +394,13 @@ void platform_demo_test::handleAutoCaliInstrument() {
 
 
     mInstrumentType = KS3362A;
+    mInstrumentSourceManager->sma100B->SetOutput1Status(false);
+    mInstrumentSourceManager->sma100B->setAMP(0);
+    sma100b_amp = 0;
+//    QThread::msleep(100);
+    mInstrumentSourceManager->sma100B->SetOutput1Status(true);
+
+
     // 2.获取adc数据 计算动态参数
     QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
     if (!message.isEmpty()) {

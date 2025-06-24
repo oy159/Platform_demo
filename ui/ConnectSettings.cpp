@@ -60,11 +60,42 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
 
     auto *GeneratorResourceLabel = new QLabel("信号发生器资源:", GeneratorResourceGroupBox);
     GeneratorResourceLineEdit = new QLineEdit(GeneratorResourceGroupBox);
-    GeneratorResourceLineEdit->setText("TCPIP::192.168.1.5::hislip0::INSTR");
+    GeneratorResourceLineEdit->setText("TCPIP::192.168.1.7::hislip0::INSTR");
     DetectGeneratorBtn = new QPushButton("Detect", GeneratorResourceGroupBox);
+
+    auto *GeneratorResourceFreqHBoxLayout = new QHBoxLayout(GeneratorResourceGroupBox);
+    auto *GeneratorResourceFreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
+    GeneratorResourceFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
+    GeneratorResourceFreqSpinBox->setDecimals(1);
+    GeneratorResourceFreqSpinBox->setValue(10.0);
+    auto *GeneratorResourceFreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
+    auto *QSpacerItem1 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+
+    GeneratorResourceFreqHBoxLayout->addWidget(GeneratorResourceFreqLabel);
+    GeneratorResourceFreqHBoxLayout->addWidget(GeneratorResourceFreqSpinBox);
+    GeneratorResourceFreqHBoxLayout->addWidget(GeneratorResourceFreqUnitLabel);
+    GeneratorResourceFreqHBoxLayout->addItem(QSpacerItem1);
+
+    auto *GeneratorResourceExternalClockFreqHBoxLayout = new QHBoxLayout(GeneratorResourceGroupBox);
+    auto *GeneratorResourceExternalClockFreqLabel = new QLabel("外部时钟频率设置:", GeneratorResourceGroupBox);
+    GeneratorResourceExternalClockFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
+    GeneratorResourceExternalClockFreqSpinBox->setDecimals(1);
+    GeneratorResourceExternalClockFreqSpinBox->setValue(10.0);
+    auto *GeneratorResourceExternalClockFreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
+    auto *QSpacerItem2 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    GeneratorResourceExternalClockFreqCheckBox = new QCheckBox("外部时钟",GeneratorResourceGroupBox);
+
+    GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqLabel);
+    GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqSpinBox);
+    GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqUnitLabel);
+    GeneratorResourceExternalClockFreqHBoxLayout->addItem(QSpacerItem2);
+    GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqCheckBox);
 
     GeneratorResourceLayout->addWidget(GeneratorResourceLabel);
     GeneratorResourceLayout->addWidget(GeneratorResourceLineEdit);
+    GeneratorResourceLayout->addLayout(GeneratorResourceFreqHBoxLayout);
+    GeneratorResourceLayout->addLayout(GeneratorResourceExternalClockFreqHBoxLayout);
     GeneratorResourceLayout->addWidget(DetectGeneratorBtn);
 
     GeneratorResourceGroupBoxLayout->addLayout(GeneratorResourceLayout);
@@ -76,6 +107,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
 
     auto *GeneratorResourceLabel2 = new QLabel("低频信号发生器资源:", GeneratorResourceGroupBox2);
     GeneratorResourceLineEdit2 = new QLineEdit(GeneratorResourceGroupBox2);
+    GeneratorResourceLineEdit2->setText("TCPIP0::A-33600-00000.local::inst0::INSTR");
     DetectGeneratorBtn2 = new QPushButton("Detect", GeneratorResourceGroupBox2);
 
     GeneratorResourceLayout2->addWidget(GeneratorResourceLabel2);

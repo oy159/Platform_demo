@@ -65,6 +65,10 @@ bool InstrumentSourceManager::connectTo3362A(const std::string &VisaAddress) {
     bool status = ks33622A->connect(VisaAddress);
     if (status) {
         qDebug() << "Connected to " << ks33622A->getID().c_str();
+        ks33622A->setFrequency(1,123456);
+        ks33622A->setFunc(1,"SIN");
+        ks33622A->setVoltage(1,1.0);
+
     } else {
         qDebug() << "Failed to connect to 3362A";
     }

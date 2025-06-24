@@ -210,8 +210,8 @@ void SpectrumChartWidget::resizeEvent(QResizeEvent *event)
 
 void SpectrumChartWidget::keepCallout()
 {
-    m_callouts.append(m_tooltip);
-    m_tooltip = new Callout(chart);
+//    m_callouts.append(m_tooltip);
+//    m_tooltip = new Callout(chart);
 }
 
 void SpectrumChartWidget::tooltip(QPointF point, bool state)
@@ -421,4 +421,9 @@ void SpectrumChartWidget::mouseDoubleClickEvent(QMouseEvent *event)
         
     }
     QWidget::mouseDoubleClickEvent(event);
+}
+
+
+void SpectrumChartWidget::adjustaxisX(){
+    axisX->setLabelFormat("%.2f");
 }

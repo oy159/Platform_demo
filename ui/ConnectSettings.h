@@ -11,6 +11,8 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QDoubleSpinBox>
+#include <QCheckBox>
 
 using namespace std;
 
@@ -45,6 +47,10 @@ public:
     QPushButton *DetectGeneratorBtn;
     QPushButton *DetectGeneratorBtn2;
     QPushButton *DetectVoltmeterBtn;
+
+    QDoubleSpinBox *GeneratorResourceFreqSpinBox;
+    QDoubleSpinBox *GeneratorResourceExternalClockFreqSpinBox;
+    QCheckBox *GeneratorResourceExternalClockFreqCheckBox;
 
 };
 

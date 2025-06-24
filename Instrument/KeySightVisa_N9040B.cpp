@@ -122,4 +122,21 @@ void KeySightVisa_N9040B::peakSearch() {
     //        :CALCulate:Marker1:maximum:NEXT\n
     //        :CALCulate:Marker1:maximum:RIGHt\n
     //        :CALCulate:Marker1:maximum:LEFT\n
+
+
+    //        :SENSe:BANDwidth:RESoulution:AUTO 0/1
+    //        :SENSe:BANDwidth:RESoulution 30000       // RBW
+
+    //        :SENSe:BANDwidth:VIDeo:AUTO 0/1
+    //         :SENSe:BANDwidth:VIDeo 30000            //VBW
+
+    //          :SENSe:BANDwidth:VIDeo:RATio:AUTO 0/1
+    //          :SENSe:BANDwidth:VIDeo:RATio 1
+
+    //          :SENSe:FREQuency:SPAN:BANDwidth:RESolution:RATio:AUTO 0/1
+    //          :SENSe:FREQuency:SPAN:BANDwidth:RESolution:RATio 106
+
+    //          :SENSE:SWEep:POINts 2048        // 点数
+
+
 }

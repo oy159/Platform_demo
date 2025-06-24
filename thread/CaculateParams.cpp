@@ -269,8 +269,15 @@ void CaculateParams::caculateStaticParamsADC() {
     }
 
     // max INL, DNL
-    maxINL = *std::max_element(INL.begin(), INL.end());
-    maxDNL = *std::max_element(DNL.begin(), DNL.end());
+    auto INL_S = INL;
+    auto DNL_S = DNL;
+    for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i){
+        INL_S[i] = abs(INL_S[i]);
+        DNL_S[i] = abs(DNL_S[i]);
+    }
+
+    maxINL = *std::max_element(INL_S.begin(), INL_S.end());
+    maxDNL = *std::max_element(DNL_S.begin(), DNL_S.end());
 
     emit staticParamsCalculateFinished(maxDNL, maxINL);
     emit TransferDNLData(DNL);

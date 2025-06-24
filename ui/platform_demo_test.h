@@ -76,6 +76,8 @@ private:
 
     InstrumentSourceManager *mInstrumentSourceManager;
     InstrumentType mInstrumentType = KS3362A;
+
+    double sma100b_amp = 0;
 };
 
 

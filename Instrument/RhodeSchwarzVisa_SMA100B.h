@@ -20,6 +20,11 @@ public:
     void SetFrequency(int freq);
     void setAMP(double amp_dbm);
     void SetOutput1Status(bool on);
+    void setExternalClockAmp(double amp = 2.0);
+    void setExternalClockFreq(int freq);
+    void setExternalClockOffset(double volt = 1.57);
+    void setExternalClockState(bool state);
+    void setExternalClock();
 
 private:
     ViSession m_defaultRM;

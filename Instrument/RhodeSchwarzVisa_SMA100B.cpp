@@ -111,3 +111,29 @@ void RhodeSchwarzVisa_SMA100B::setAMP(double amp_dbm) {
 void RhodeSchwarzVisa_SMA100B::SetOutput1Status(bool on) {
     sendCommandWrite(":OUTPut1:STATe " + (on ? std::to_string(1) : std::to_string(0)) + "\n");
 }
+
+void RhodeSchwarzVisa_SMA100B::setExternalClockAmp(double amp){
+    sendCommandWrite(":CSYNthesis:OTYPe DSIN\n");
+    sendCommandWrite(":CSYNthesis:POWer " + std::to_string(amp) + "\n");
+}
+
+void RhodeSchwarzVisa_SMA100B::setExternalClockFreq(int freq){
+    sendCommandWrite(":CSYNthesis:FREQuency " + std::to_string(freq) + "\n");
+}
+
+void RhodeSchwarzVisa_SMA100B::setExternalClockOffset(double volt){
+    sendCommandWrite(":CSYNthesis:OFFset " + std::to_string(volt) + "\n");
+    sendCommandWrite(":CSYNthesis:OFFset:STATe 1\n");
+}
+
+void RhodeSchwarzVisa_SMA100B::setExternalClockState(bool state){
+    sendCommandWrite(":CSYNthesis:STATe " + (state ? std::to_string(1) : std::to_string(0)) + "\n");
+}
+
+
+void RhodeSchwarzVisa_SMA100B::setExternalClock(){
+    setExternalClockAmp();
+    setExternalClockFreq(1e8);
+    setExternalClockOffset();
+    setExternalClockState(true);
+}

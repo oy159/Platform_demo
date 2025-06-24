@@ -36,6 +36,8 @@ public:
         firstDataReceived = true;
     }
 
+    void adjustaxisX();
+
 public slots:
     // 接收新数据并更新图表
     void updateWaveformData(const QVector<QPointF> &newData);
