@@ -143,7 +143,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
             if(mDeviceType == DeviceType::AD9268){
-                QMetaObject::invokeMethod(mUdpWorker, "setADCChannel", Qt::QueuedConnection, Q_ARG(int, 1));
+                QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 1));
             }
             ui->ADCChannel2CheckBox->setChecked(false);
         }
@@ -151,7 +151,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
             if(mDeviceType == DeviceType::AD9268){
-                QMetaObject::invokeMethod(mUdpWorker, "setADCChannel", Qt::QueuedConnection, Q_ARG(int, 2));
+                QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 2));
             }
             ui->ADCChannel1CheckBox->setChecked(false);
         }
