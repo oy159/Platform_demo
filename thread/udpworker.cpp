@@ -7,7 +7,7 @@ UdpWorker::UdpWorker(QObject *parent) : QObject(parent) {
 
 UdpWorker::~UdpWorker() {
     delete udpSocket;
-    delete threadPool;
+    // delete threadPool;
 }
 
 void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port) {
@@ -49,6 +49,15 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
         qDebug() << "get firmware version" << datagram;
+
+        if(datagram.contains("AD9434")){
+            emit initializePlatform("AD9434");
+            mdeviceType = AD9434;
+        }else if (datagram.contains("AD9268")) {
+            emit initializePlatform("AD9268");
+            mdeviceType = AD9268;
+        }
+
     }
 
 
@@ -117,4 +126,205 @@ void UdpWorker::convertBufferToU16Array(const QByteArray &buffer, std::vector<ui
 void UdpWorker::handleClearADCData(){
     transFinished = false;
     AdcDataArray.clear();
+}
+
+void UdpWorker::handleSetAD9268Channel(int channel)
+{
+    if(mdeviceType != AD9268){
+        emit  errorOccurred("Now ADC is not AD9268, cannot set channel.");
+        return;
+    }
+
+    if (channel != 1 && channel != 2) {
+        emit errorOccurred("Set AD9268 Invalid channel number. Use 1 or 2.");
+        return;
+    }
+
+    current_command =  (channel == 1) ? CMD_SET_AD9268_CHANNEL1 : CMD_SET_AD9268_CHANNEL2;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+
+
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+
+        // datagram是否为"AD9268 Channel Set Success"的响应
+        if(datagram.contains("AD9268 Channel Set Success")){
+            qDebug() << "Set AD9268 Channel" << channel << "Success";
+        } else {
+            emit errorOccurred("Failed to set AD9268 channel");
+        }
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+}
+
+void UdpWorker::handleSetAD9518ExternalClock(int freq_Hz)
+{
+    current_command = CMD_ENABLE_AD9915_EXTERNAL_CLOCK;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+    data.append((char)((freq_Hz >> 24) & 0xFF));
+    data.append((char)((freq_Hz >> 16) & 0xFF));
+    data.append((char)((freq_Hz >> 8) & 0xFF));
+    data.append((char)(freq_Hz & 0xFF));
+
+
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+    
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+        
+        // todo: 解析datagram，判断是否设置成功
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+}
+
+void UdpWorker::handleSetAD9518InternalClock()
+{
+    current_command =  CMD_ENABLE_AD9915_INTERNAL_CLOCK;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+
+
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+    
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+        
+        // todo: 解析datagram，判断是否设置成功
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+}
+
+void UdpWorker::handleSetDDSFreq(int freq_Hz)
+{
+    if(mdeviceType == AD9268 || mdeviceType == AD9434){
+        emit  errorOccurred("Now is ADC device");
+        return;
+    }
+
+    current_command = CMD_SET_DDS_FREQ;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+    data.append((char)((freq_Hz >> 24) & 0xFF));
+    data.append((char)((freq_Hz >> 16) & 0xFF));
+    data.append((char)((freq_Hz >> 8) & 0xFF));
+    data.append((char)(freq_Hz & 0xFF));
+
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+    
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+        
+        // todo: 解析datagram，判断是否设置成功
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+
+}
+
+void UdpWorker::handleSetDACValue(int value)
+{
+    if(mdeviceType == AD9268 || mdeviceType == AD9434){
+        emit  errorOccurred("Now is ADC device");
+        return;
+    }
+
+    current_command = CMD_SET_DAC_VALUE;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+    data.append((char)((value >> 24) & 0xFF));
+    data.append((char)((value >> 16) & 0xFF));
+    data.append((char)((value >> 8) & 0xFF));
+    data.append((char)(value & 0xFF));
+
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+        // todo: 解析datagram，判断是否设置成功
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+
 }

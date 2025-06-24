@@ -233,21 +233,6 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 
 void CaculateParams::caculateStaticParamsADC() {
 
-    // 判断ADC数据是12位还是16位
-    if(StaticDataHistogram[4096] > 0) {
-        ADC_BITS = 16; // 16位ADC
-        HsineWave.resize(65536, 0);
-        LSBCodeWidth.resize(65536, 0);
-        DNL.resize(65536, 0);
-        INL.resize(65536, 0);
-    } else {
-        ADC_BITS = 12;
-        // 12位ADC
-        HsineWave.resize(4096, 0);
-        LSBCodeWidth.resize(4096, 0);
-        DNL.resize(4096, 0);
-        INL.resize(4096, 0);
-    }
 
     double C1 = cos(M_PI * StaticDataHistogram[0] / (ADCStaticDataLength));
     double C2 = cos(M_PI * StaticDataHistogram[qPow(2,ADC_BITS) - 1] / (ADCStaticDataLength));
@@ -269,17 +254,21 @@ void CaculateParams::caculateStaticParamsADC() {
     }
 
     // max INL, DNL
-    auto INL_S = INL;
-    auto DNL_S = DNL;
-    for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i){
-        INL_S[i] = abs(INL_S[i]);
-        DNL_S[i] = abs(DNL_S[i]);
-    }
+    // auto INL_S = INL;
+    // auto DNL_S = DNL;
+    // for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i){
+    //     INL_S[i] = abs(INL_S[i]);
+    //     DNL_S[i] = abs(DNL_S[i]);
+    // }
 
-    maxINL = *std::max_element(INL_S.begin(), INL_S.end());
-    maxDNL = *std::max_element(DNL_S.begin(), DNL_S.end());
+    maxINL = *std::max_element(INL.begin(), INL.end());
+    maxDNL = *std::max_element(DNL.begin(), DNL.end());
+    minINL = *std::min_element(INL.begin(), INL.end());
+    minDNL = *std::min_element(DNL.begin(), DNL.end());
 
-    emit staticParamsCalculateFinished(maxDNL, maxINL);
+    emit staticParamsCalculateFinished(maxDNL, maxINL, 
+                                       minDNL, minINL, 
+                                       staticOffset, staticPeak);
     emit TransferDNLData(DNL);
     emit TransferINLData(INL);
 }

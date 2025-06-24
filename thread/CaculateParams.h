@@ -28,6 +28,22 @@ public:
     double getTHD() const { return THD; }
     double getSNR() const { return SNR; }
     double getENOB() const { return ENOB; }
+    void setADCBits(int bits) {
+        ADC_BITS = bits;
+        if (ADC_BITS == 16) {
+            // 16位ADC
+            HsineWave.resize(65536, 0);
+            LSBCodeWidth.resize(65536, 0);
+            DNL.resize(65536, 0);
+            INL.resize(65536, 0);
+        } else {
+            // 12位ADC
+            HsineWave.resize(4096, 0);
+            LSBCodeWidth.resize(4096, 0);
+            DNL.resize(4096, 0);
+            INL.resize(4096, 0);
+        }
+    }
 
 signals:
     void dynamicParamsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
@@ -35,7 +51,9 @@ signals:
     void TransferPeakData(const std::vector<Peak>& peaks);
     void TransferADCData(const std::vector<double>& data);
 
-    void staticParamsCalculateFinished(double maxDNL, double maxINL);
+    void staticParamsCalculateFinished(double maxDNL, double maxINL, 
+                                       double minDNL, double minINL,
+                                       double staticOffset, double staticPeak);
     void TransferDNLData(const std::vector<double>& DNL);
     void TransferINLData(const std::vector<double>& INL);
 
@@ -93,6 +111,8 @@ private:
     std::vector<double> INL; // 积分非线性
     double maxDNL = 0.0;
     double maxINL = 0.0;
+    double minINL = 0.0;
+    double minDNL = 0.0;
 
 };
 

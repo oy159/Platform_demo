@@ -413,8 +413,6 @@ void SpectrumChartWidget::mouseDoubleClickEvent(QMouseEvent *event)
         if (axisX) axisX->setRange(axisX->min(), recoverX);
         if (axisY) axisY->setRange(axisY->min(), recoverY);
 
-        
-
         // 重置滚动距离
         chartView->resetScrollDistance();
 

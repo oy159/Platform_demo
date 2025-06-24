@@ -33,16 +33,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                   "}"
                   );
 
-    connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
-        if (state == Qt::Checked) {
-            ui->ADCChannel2CheckBox->setChecked(false);
-        }
-    });
-    connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
-        if (state == Qt::Checked) {
-            ui->ADCChannel1CheckBox->setChecked(false);
-        }
-    });
+    
 
     connect(ui->connectButton, &QPushButton::clicked, this, &platform_demo_test::handleConnectButton);
     connect(ui->instrumentDetectBtn, &QPushButton::clicked, this, &platform_demo_test::handleInstrumentDetectBtn);
@@ -53,6 +44,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(mUdpWorker, &UdpWorker::ADCDataReady, this, &platform_demo_test::handleADCDataCaculate);
     connect(mUdpWorker, &UdpWorker::errorOccurred, this, &platform_demo_test::handleErrorOccurred);
+    connect(mUdpWorker, &UdpWorker::initializePlatform, this, &platform_demo_test::handleInitializePlatform);
+
     connect(this, &platform_demo_test::clearADCData, mUdpWorker, &UdpWorker::handleClearADCData);
 
     mUdpThread->start();
@@ -62,6 +55,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mCaculateParams->moveToThread(mCalculateThread);
     connect(mCaculateParams, &CaculateParams::dynamicParamsCalculateFinished, this, &platform_demo_test::handleDynamicCaculateFinished);
     connect(mCaculateParams, &CaculateParams::staticParamsCalculateFinished, this, &platform_demo_test::handleStaticCaculateFinished);
+
+    
+
 
     mInstrumentSourceManager = new InstrumentSourceManager();
     mInstrumentManagerThread = new QThread(this);
@@ -143,6 +139,27 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
 
+
+    connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
+        if (state == Qt::Checked) {
+            if(mDeviceType == DeviceType::AD9268){
+                QMetaObject::invokeMethod(mUdpWorker, "setADCChannel", Qt::QueuedConnection, Q_ARG(int, 1));
+            }
+            ui->ADCChannel2CheckBox->setChecked(false);
+        }
+    });
+    connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
+        if (state == Qt::Checked) {
+            if(mDeviceType == DeviceType::AD9268){
+                QMetaObject::invokeMethod(mUdpWorker, "setADCChannel", Qt::QueuedConnection, Q_ARG(int, 2));
+            }
+            ui->ADCChannel1CheckBox->setChecked(false);
+        }
+    });
+
+
+
+
 //    chartWidget3->adjustaxisX();
     mCaculateParams->setData(adc16Data);
     chartWidget1->setSampleRate(1e8); // 设置采样率
@@ -168,15 +185,54 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 }
 
 platform_demo_test::~platform_demo_test() {
-    mUdpThread->quit();
-    mUdpThread->wait();
+    // mUdpThread->quit();
+    // mUdpThread->wait();
     delete ui;
+}
+
+void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
+    qDebug() << "Initialize platform with device: " << DeviceName;
+    if(DeviceName == "AD9434"){
+        mCaculateParams->setADCBits(12);
+        chartWidget1->setSampleRate(5e8); // 设置采样率
+        mDeviceType = DeviceType::AD9434;
+        mUdpStartFlag = true;
+    }else if(DeviceName == "AD9268"){
+        mCaculateParams->setADCBits(16);
+        chartWidget1->setSampleRate(1e8); // 设置采样率
+        mDeviceType = DeviceType::AD9268;
+        mUdpStartFlag = true;
+    }else{
+        qDebug() << "Unknown device type!";
+        mDeviceType = DeviceType::UnknownDevice;
+        mUdpStartFlag = true;
+        return;
+    }
+
+    ui->connectButton->setText("连接完成");
+    ui->connectButton->setStyleSheet("QPushButton {"
+                                        "background-color: green;"
+                                        "border: 1px solid #ccc;"
+                                        "padding: 5px;"
+                                        "border-radius: 6px;"  // Add this line to make buttons rounded
+                                        "}"
+                                        "QPushButton:hover {"
+                                        "background-color: #a0e0e0;"
+                                        "}");
 }
 
 void platform_demo_test::handleConnectButton() {
     if (ui->connectButton->isChecked()) {
         ui->connectButton->setText("连接中...");
-        ui->connectButton->setStyleSheet("background-color: green; color: black;");
+        ui->connectButton->setStyleSheet("QPushButton {"
+                                            "background-color: gray;"
+                                            "border: 1px solid #ccc;"
+                                            "padding: 5px;"
+                                            "border-radius: 6px;"  // Add this line to make buttons rounded
+                                            "}"
+                                            "QPushButton:hover {"
+                                            "background-color: #a0e0e0;"
+                                            "}");
         QString ip = ui->connectSettings->ipLineEdit->text();
         int remote_port = ui->connectSettings->portLineEdit->text().toInt();
         int local_port = 11451;
@@ -215,12 +271,21 @@ void platform_demo_test::handleDynamicCaculateFinished(double SFDR, double THD, 
     mCalculateThread->wait();
 }
 
-void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxINL)
+void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxINL, 
+                                       double minDNL, double minINL,
+                                       double staticOffset, double staticPeak)
 {
+    qDebug() << "minDNL: " << minDNL;
+    qDebug() << "minINL: " << minINL;
     qDebug() << "maxDNL: " << maxDNL;
     qDebug() << "maxINL: " << maxINL;
-    ui->DNLADCLabel->setText("DNL:   " + QString::number(maxDNL, 'f', 2) + " LSB");
-    ui->INLADCLabel->setText("INL:   " + QString::number(maxINL, 'f', 2) + " LSB");
+
+    ui->DNLADCLabel->setText("DNL:   " + QString::number(minDNL, 'f', 2) + " | " + QString::number(maxDNL, 'f', 2) + " LSB");
+    ui->INLADCLabel->setText("INL:   " + QString::number(minINL, 'f', 2) + " | " + QString::number(maxINL, 'f', 2) + " LSB");
+    ui->OffsetADCLabel->setText("Offset:   " + QString::number(staticOffset, 'f', 2));
+    ui->PeakADCLabel->setText("Peak:   " + QString::number(staticPeak, 'f', 2));
+
+
     mCalculateThread->quit();
     mCalculateThread->wait();
 }
@@ -228,6 +293,7 @@ void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxI
 void platform_demo_test::handleErrorOccurred(const QString &error) {
     // ui->logTextEdit->append("Error: " + error);
     qDebug() << "Error: " << error;
+    QMessageBox::warning(this, "Warning", error);
 }
 
 
@@ -300,10 +366,18 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
 
 
         emit clearADCData();
-        if(maxValue > 36635*0.95){
-            qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
-            return;
+        if(mDeviceType == AD9268){
+            if(maxValue > 65535*0.95){
+                qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
+                return;
+            }
+        }else if(mDeviceType == AD9434){
+            if(maxValue > 4095*0.95){
+                qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
+                return;
+            }
         }
+        
 
 //        QThread::msleep(100);
 
@@ -324,7 +398,7 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
     if(mCaculateMode == ADC_DYNAMIC_MODE) {
         QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
         emit clearADCData();
-    } else if (mCaculateMode == ADC_STATIC_MODE  && !adcStaticTestStop) {
+    } else if (mCaculateMode == ADC_STATIC_MODE) {
         ui->staticParamsADCTestButton->setEnabled(false);
         QMetaObject::invokeMethod(mCaculateParams, "caculateStaticDataHistogram", Qt::QueuedConnection);
 
@@ -333,13 +407,13 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
 
 
         if(staticDataSize >= 65532*1000) {
-            adcStaticTestStop = true;
             qDebug() << "ADC Static Test Stop" << "now data size = " << staticDataSize;
             
             QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
 
             staticDataSize = 0;
             ui->staticParamsADCTestButton->setEnabled(true);
+            emit clearADCData();
             return;
         }
         emit clearADCData();
@@ -356,6 +430,20 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
 
 void platform_demo_test::handleDynamicADCTest() {
     // 第一步，验证当前固件为ADC，且已打开udp
+    if(mUdpStartFlag == false) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        return;
+    }
 
 
 
@@ -370,6 +458,20 @@ void platform_demo_test::handleDynamicADCTest() {
 
 void platform_demo_test::handleStaticADCTest() {
     // 1.验证当前固件为ADC，且已打开udp
+    if(mUdpStartFlag == false) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        return;
+    }
 
 
     // todo: 2.获取第一次adc数据
@@ -389,6 +491,21 @@ void platform_demo_test::handleStaticADCTest() {
 void platform_demo_test::handleAutoCaliInstrument() {
     // 第一步，验证当前固件为ADC，且已打开udp
 
+    if(mUdpStartFlag == false) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行自动校准！");
+        return;
+    }
+
 
     // 判断使用仪器类型
 
@@ -398,7 +515,7 @@ void platform_demo_test::handleAutoCaliInstrument() {
     mInstrumentSourceManager->sma100B->setAMP(0);
     sma100b_amp = 0;
 //    QThread::msleep(100);
-    mInstrumentSourceManager->sma100B->SetOutput1Status(true);
+    mInstrumentSourceManager->sma100B->SetOutput1Status(true);  
 
 
     // 2.获取adc数据 计算动态参数

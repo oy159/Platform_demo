@@ -25,6 +25,8 @@ typedef enum{
 } InstrumentType;
 
 
+
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class platform_demo_test; }
 QT_END_NAMESPACE
@@ -40,11 +42,14 @@ signals:
     void clearADCData();
 
 private slots:
+    void handleInitializePlatform(const QString &DeviceName);
     void handleConnectButton();
     void handleInstrumentDetectBtn();
     void handleErrorOccurred(const QString &error);
     void handleDynamicCaculateFinished(double SFDR, double THD, double SNR, double ENOB);
-    void handleStaticCaculateFinished(double maxDNL, double maxINL);
+    void handleStaticCaculateFinished(double maxDNL, double maxINL, 
+                                       double minDNL, double minINL,
+                                       double staticOffset, double staticPeak);
     void handleADCDataCaculate(std::vector<uint16_t> data);
     void handleDynamicADCTest();
     void handleStaticADCTest();
@@ -76,8 +81,10 @@ private:
 
     InstrumentSourceManager *mInstrumentSourceManager;
     InstrumentType mInstrumentType = KS3362A;
+    DeviceType mDeviceType = UnknownDevice;
 
     double sma100b_amp = 0;
+    bool mUdpStartFlag = false;
 };
 
 

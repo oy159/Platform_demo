@@ -69,6 +69,7 @@ public:
     QLabel *DNLADCLabel;
     QLabel *INLADCLabel;
     QLabel *OffsetADCLabel;
+    QLabel *PeakADCLabel;
 
     QGroupBox *WindowsFuncGroupBox;
     QVBoxLayout *WindowsFuncGroupBoxLayout;
@@ -196,11 +197,12 @@ public:
         DNLADCLabel = new QLabel("DNL: ", StaticParamsADCGroupBox);
         INLADCLabel = new QLabel("INL: ", StaticParamsADCGroupBox);
         OffsetADCLabel = new QLabel("Offset: ", StaticParamsADCGroupBox);
+        PeakADCLabel = new QLabel("Peak: ", StaticParamsADCGroupBox);
 
         StaticParamsADCGroupBoxLayout->addWidget(DNLADCLabel);
         StaticParamsADCGroupBoxLayout->addWidget(INLADCLabel);
         StaticParamsADCGroupBoxLayout->addWidget(OffsetADCLabel);
-
+        StaticParamsADCGroupBoxLayout->addWidget(PeakADCLabel);
 
         WindowsFuncGroupBox = new QGroupBox("Window Function", DisplayADCParamsWidget);
         WindowsFuncGroupBoxLayout = new QVBoxLayout(WindowsFuncGroupBox);

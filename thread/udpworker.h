@@ -9,6 +9,24 @@
 #include <QEventLoop>
 #include <QDebug>
 
+
+// command list
+typedef enum{
+    CMD_GET_FIRMWARE_VERSION = 0xff7fff7f,
+    CMD_SET_AD9268_CHANNEL1 = 0xff7fff81,
+    CMD_SET_AD9268_CHANNEL2 = 0xff7fff82,
+    CMD_ENABLE_AD9915_EXTERNAL_CLOCK = 0xff7fff83,
+    CMD_ENABLE_AD9915_INTERNAL_CLOCK = 0xff7fff84,
+    CMD_SET_DDS_FREQ = 0xff7fff85,
+    CMD_SET_DAC_VALUE = 0xff7fff86,
+}DeviceCommand;
+
+typedef enum{
+    UnknownDevice = 0,
+    AD9434 = 1,
+    AD9268 = 2,
+} DeviceType;
+
 class UdpWorker : public QObject{
 Q_OBJECT
 
@@ -21,12 +39,18 @@ public slots:
     void disconnectFromHost();
     void sendMessage(const QString &message);
     void handleClearADCData();
+    void handleSetAD9268Channel(int channel);
+    void handleSetAD9518ExternalClock(int freq_Hz);
+    void handleSetAD9518InternalClock();
+    void handleSetDDSFreq(int freq_Hz);
+    void handleSetDACValue(int value);
 
 
 signals:
     void errorOccurred(const QString &error);
     void dataReceived(const QByteArray &data);
     void ADCDataReady(const std::vector<uint16_t> &data);
+    void initializePlatform(const QString &DeviceName);
 
 private slots:
     void handleReadyRead();
@@ -48,6 +72,8 @@ private:
     bool transFinished = false;
 
     bool is_framehead = false;
+    DeviceCommand current_command = CMD_GET_FIRMWARE_VERSION;
+    DeviceType mdeviceType = UnknownDevice;
 
 };
 
