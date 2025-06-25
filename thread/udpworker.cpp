@@ -56,6 +56,9 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         }else if (datagram.contains("AD9268")) {
             emit initializePlatform("AD9268");
             mdeviceType = AD9268;
+        }else if(datagram.contains("AD9142")){
+            emit initializePlatform("AD9142");
+            mdeviceType = AD9142;
         }
 
     }
@@ -165,7 +168,7 @@ void UdpWorker::handleSetAD9268Channel(int channel)
         udpSocket->readDatagram(datagram.data(), datagram.size());
 
         // datagram是否为"AD9268 Channel Set Success"的响应
-        if(datagram.contains("AD9268 Channel Set Success")){
+        if(datagram.contains("AD9268 Set Success")){
             qDebug() << "Set AD9268 Channel" << channel << "Success";
         } else {
             emit errorOccurred("Failed to set AD9268 channel");
@@ -198,16 +201,22 @@ void UdpWorker::handleSetAD9518ExternalClock(int freq_Hz)
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
-    timer.start(1000); // 设置超时时间为1秒
+    timer.start(5000); // 设置超时时间为1秒
     loop.exec();
 
     if (udpSocket->hasPendingDatagrams()){
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        
-        // todo: 解析datagram，判断是否设置成功
 
+        qDebug() << "get zynq return: " << datagram;
+        // todo: 解析datagram，判断是否设置成功
+        if(datagram.contains("Set Success")){
+            qDebug() << "External Clock Set success";
+        }
+
+    }else{
+        qDebug() << "Set Fail";
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
@@ -231,38 +240,56 @@ void UdpWorker::handleSetAD9518InternalClock()
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
-    timer.start(1000); // 设置超时时间为1秒
+    timer.start(5000); // 设置超时时间为1秒
     loop.exec();
 
     if (udpSocket->hasPendingDatagrams()){
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        
-        // todo: 解析datagram，判断是否设置成功
+
+        qDebug() << "get zynq return: " << datagram;
+        if(datagram.contains("Set Success")){
+            qDebug() << "Internal Clock Set success";
+        }
 
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 }
 
-void UdpWorker::handleSetDDSFreq(int freq_Hz)
+void UdpWorker::handleSetDDSFreq(int freq_Hz, int Mode)
 {
     if(mdeviceType == AD9268 || mdeviceType == AD9434){
         emit  errorOccurred("Now is ADC device");
         return;
     }
 
-    current_command = CMD_SET_DDS_FREQ;
     QByteArray data;
+    if(Mode == 1)
+    {
+        current_command = CMD_SET_DDS_FREQ;
+    } else{
+        current_command = CMD_SET_DDS_TWO_TONE;
+    }
+
+    auto freq = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * freq_Hz * qPow(2,16));
     data.append((char)((current_command >> 24) & 0xFF));
     data.append((char)((current_command >> 16) & 0xFF));
     data.append((char)((current_command >> 8) & 0xFF));
     data.append((char)(current_command & 0xFF));
-    data.append((char)((freq_Hz >> 24) & 0xFF));
-    data.append((char)((freq_Hz >> 16) & 0xFF));
-    data.append((char)((freq_Hz >> 8) & 0xFF));
-    data.append((char)(freq_Hz & 0xFF));
+    data.append((char)((freq >> 24) & 0xFF));
+    data.append((char)((freq >> 16) & 0xFF));
+    data.append((char)((freq >> 8) & 0xFF));
+    data.append((char)(freq & 0xFF));
+
+    if(Mode != 1){
+        auto freq2 = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * (freq_Hz + 1.0e6) * qPow(2,16));
+        data.append((char)((freq2 >> 24) & 0xFF));
+        data.append((char)((freq2 >> 16) & 0xFF));
+        data.append((char)((freq2 >> 8) & 0xFF));
+        data.append((char)(freq2 & 0xFF));
+    }
 
     disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
     udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
@@ -272,15 +299,18 @@ void UdpWorker::handleSetDDSFreq(int freq_Hz)
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
-    timer.start(1000); // 设置超时时间为1秒
+    timer.start(5000); // 设置超时时间为1秒
     loop.exec();
 
     if (udpSocket->hasPendingDatagrams()){
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        
-        // todo: 解析datagram，判断是否设置成功
+
+        qDebug() << "get zynq return: " << datagram;
+        if(datagram.contains("Set Success")){
+            qDebug() << "DDS Freq Set success";
+        }
 
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
@@ -292,6 +322,11 @@ void UdpWorker::handleSetDACValue(int value)
 {
     if(mdeviceType == AD9268 || mdeviceType == AD9434){
         emit  errorOccurred("Now is ADC device");
+        return;
+    }
+
+    if(value < 0 || value > 65535){
+//        emit errorOccurred("the DAC is 16bit，");
         return;
     }
 
@@ -314,15 +349,19 @@ void UdpWorker::handleSetDACValue(int value)
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
-    timer.start(1000); // 设置超时时间为1秒
+    timer.start(5000); // 设置超时时间为1秒
     loop.exec();
 
     if (udpSocket->hasPendingDatagrams()){
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        // todo: 解析datagram，判断是否设置成功
 
+        qDebug() << "get zynq return: " << datagram;
+        // todo: 解析datagram，判断是否设置成功
+        if(datagram.contains("Set Success")){
+            qDebug() << "DDS Value Set success";
+        }
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);

@@ -54,6 +54,7 @@ private slots:
     void handleDynamicADCTest();
     void handleStaticADCTest();
     void handleAutoCaliInstrument();
+    void handleSetConfigForGenerator();
 
 private:
     QVector<double> generateWaveformData(int count);

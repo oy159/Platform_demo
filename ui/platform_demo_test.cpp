@@ -64,6 +64,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         ui->connectSettings->show();
     });
 
+    connect(ui->connectSettings->SettingGeneratorResourceBtn, &QPushButton::clicked, this, &platform_demo_test::handleSetConfigForGenerator);
+
     connect(ui->connectButton, &QPushButton::clicked, this, &platform_demo_test::handleConnectButton);
     connect(ui->instrumentDetectBtn, &QPushButton::clicked, this, &platform_demo_test::handleInstrumentDetectBtn);
 
@@ -172,6 +174,10 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
             if(mDeviceType == DeviceType::AD9268){
+                if(!mUdpStartFlag) {
+                    QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+                    return;
+                }
                 QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 1));
             }
             ui->ADCChannel2CheckBox->setChecked(false);
@@ -180,12 +186,34 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
             if(mDeviceType == DeviceType::AD9268){
+                if(!mUdpStartFlag) {
+                    QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+                    return;
+                }
                 QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 2));
             }
             ui->ADCChannel1CheckBox->setChecked(false);
         }
     });
 
+
+    connect(ui->DACFrequencySetButton, &QPushButton::clicked, this, [=](){
+        int freq = (int)((double)ui->DACFrequencySpinBox->value() * 1e6);
+        if (!mUdpStartFlag) {
+            QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+            return;
+        }
+        if(mDeviceType == DeviceType::AD9142 || mDeviceType == DeviceType::AD9747) {
+
+            QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32767));
+
+            QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,2));
+
+        }else{
+            QMessageBox::warning(this, "Warning", "当前不是DAC！");
+            return;
+        }
+    });
 
 
 
@@ -231,6 +259,9 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
         mCaculateParams->setADCBits(16);
         chartWidget1->setSampleRate(1e8); // 设置采样率
         mDeviceType = DeviceType::AD9268;
+        mUdpStartFlag = true;
+    }else if(DeviceName == "AD9142"){
+        mDeviceType = DeviceType::AD9142;
         mUdpStartFlag = true;
     }else{
         qDebug() << "Unknown device type!";
@@ -460,7 +491,7 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
 
 void platform_demo_test::handleDynamicADCTest() {
     // 第一步，验证当前固件为ADC，且已打开udp
-    if(mUdpStartFlag == false) {
+    if(!mUdpStartFlag) {
         QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
         return;
     }
@@ -488,7 +519,7 @@ void platform_demo_test::handleDynamicADCTest() {
 
 void platform_demo_test::handleStaticADCTest() {
     // 1.验证当前固件为ADC，且已打开udp
-    if(mUdpStartFlag == false) {
+    if(!mUdpStartFlag) {
         QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
         return;
     }
@@ -521,7 +552,7 @@ void platform_demo_test::handleStaticADCTest() {
 void platform_demo_test::handleAutoCaliInstrument() {
     // 第一步，验证当前固件为ADC，且已打开udp
 
-    if(mUdpStartFlag == false) {
+    if(!mUdpStartFlag) {
         QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
         return;
     }
@@ -554,5 +585,26 @@ void platform_demo_test::handleAutoCaliInstrument() {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     }
     mCaculateMode = AUTO_CALI_MODE;
+
+}
+
+void platform_demo_test::handleSetConfigForGenerator() {
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+    if(ui->connectSettings->GeneratorResourceExternalClockFreqCheckBox->isChecked()){
+        if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+            QMessageBox::warning(this, "Warning", "当前不是ADC设备，默认不进行外部时钟设置");
+            return;
+        }
+        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518ExternalClock",Qt::QueuedConnection, Q_ARG(int, 10000));
+    }else{
+        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518InternalClock",Qt::QueuedConnection);
+    }
+
+    // todo:设置sma100b输出频率和外部时钟设置
+
+
 
 }

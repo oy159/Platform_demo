@@ -19,12 +19,15 @@ typedef enum{
     CMD_ENABLE_AD9915_INTERNAL_CLOCK = 0xff7fff84,
     CMD_SET_DDS_FREQ = 0xff7fff85,
     CMD_SET_DAC_VALUE = 0xff7fff86,
+    CMD_SET_DDS_TWO_TONE = 0xff7fff87,
 }DeviceCommand;
 
 typedef enum{
     UnknownDevice = 0,
     AD9434 = 1,
     AD9268 = 2,
+    AD9142 = 3,
+    AD9747 = 4,
 } DeviceType;
 
 class UdpWorker : public QObject{
@@ -42,7 +45,7 @@ public slots:
     void handleSetAD9268Channel(int channel);
     void handleSetAD9518ExternalClock(int freq_Hz);
     void handleSetAD9518InternalClock();
-    void handleSetDDSFreq(int freq_Hz);
+    void handleSetDDSFreq(int freq_Hz, int Mode = 1);
     void handleSetDACValue(int value);
 
 
@@ -61,8 +64,8 @@ private:
     void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array);
     QUdpSocket *udpSocket;
     QByteArray buffer;
-    QTimer *timer;
-    QThreadPool *threadPool;
+//    QTimer *timer;
+//    QThreadPool *threadPool;
     QEventLoop eventLoop;
     QString target_ip;
     uint16_t remote_port;

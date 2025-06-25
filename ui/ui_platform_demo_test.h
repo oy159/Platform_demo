@@ -270,7 +270,7 @@ public:
 
         DACFrequencyLabel = new QLabel("DAC频率设置: ", DynamicParamsDACGroupBox);
         DACFrequencySpinBox = new QDoubleSpinBox(DynamicParamsDACGroupBox);
-        DACFrequencySpinBox->setRange(0.1, 100.0); // 设置DAC频率范围为0.1MHz到1000MHz
+        DACFrequencySpinBox->setRange(0.1, 199.999); // 设置DAC频率范围为0.1MHz到100MHz
         DACFrequencySpinBox->setSingleStep(0.1); // 设置步长为0.1MHz
         DACFrequencySpinBox->setValue(10.0); // 默认值为10MHz
         DACFrequencySpinBox->setDecimals(3); // 设置小数点后保留3位
