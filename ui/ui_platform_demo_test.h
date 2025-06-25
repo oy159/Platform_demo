@@ -100,6 +100,18 @@ public:
     QLabel *THDDACLabel;
     QLabel *ENOBDACLabel;
 
+    QLabel *DACFrequencyLabel;
+    QDoubleSpinBox *DACFrequencySpinBox;
+    QPushButton *DACFrequencySetButton;
+
+    // DAC静态参数
+    QGroupBox *StaticParamsDACGroupBox;
+    QVBoxLayout *StaticParamsDACGroupBoxLayout;
+    QLabel *DNLDACLabel;
+    QLabel *INLDACLabel;
+    QLabel *OffsetDACLabel;
+    QLabel *PeakDACLabel;
+
 
     // 参数测试按钮
     QGroupBox *paramTestDACGroupBox;
@@ -112,6 +124,7 @@ public:
     SpectrumChartWidget *chartWidget2;
     SpectrumChartWidget *chartWidget3;
     SpectrumChartWidget *chartWidget4;
+    SpectrumChartWidget *chartWidget5;
     QMenuBar *menubar;
     QStatusBar *statusbar;
     QMenu *menuFile;
@@ -154,13 +167,13 @@ public:
         // 添加切换按钮
         switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
 
-        connectSettings = new ConnectSettings(leftWidget);
+        // connectSettings = new ConnectSettings(leftWidget);
         
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
         // controlLayout->addWidget(paramTestADCGroupBox);  // 添加参数测试按钮组
         controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
-        controlLayout->addWidget(connectSettings);  // 添加连接设置部件
+        // controlLayout->addWidget(connectSettings);  // 添加连接设置部件
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
         controlLayout->addItem(verticalSpacer);
@@ -254,11 +267,43 @@ public:
         SNRDACLabel = new QLabel("SNR: ", DynamicParamsDACGroupBox);
         THDDACLabel = new QLabel("THD: ", DynamicParamsDACGroupBox);
         ENOBDACLabel = new QLabel("ENOB: ", DynamicParamsDACGroupBox);
+
+        DACFrequencyLabel = new QLabel("DAC频率设置: ", DynamicParamsDACGroupBox);
+        DACFrequencySpinBox = new QDoubleSpinBox(DynamicParamsDACGroupBox);
+        DACFrequencySpinBox->setRange(0.1, 100.0); // 设置DAC频率范围为0.1MHz到1000MHz
+        DACFrequencySpinBox->setSingleStep(0.1); // 设置步长为0.1MHz
+        DACFrequencySpinBox->setValue(10.0); // 默认值为10MHz
+        DACFrequencySpinBox->setDecimals(3); // 设置小数点后保留3位
+        auto* DACFrequencyUnitLabel = new QLabel("MHz", DynamicParamsDACGroupBox);
+
+        auto* DACFrequencyLayout = new QHBoxLayout();
+        DACFrequencyLayout->addWidget(DACFrequencyLabel);
+        DACFrequencyLayout->addWidget(DACFrequencySpinBox);
+        DACFrequencyLayout->addWidget(DACFrequencyUnitLabel);
+
+        DACFrequencySetButton = new QPushButton("设置DAC频率", DynamicParamsDACGroupBox);
+
         
         DynamicParamsDACGroupBoxLayout->addWidget(SFDRDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(SNRDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(THDDACLabel);
         DynamicParamsDACGroupBoxLayout->addWidget(ENOBDACLabel);
+        DynamicParamsDACGroupBoxLayout->addLayout(DACFrequencyLayout); // 添加DAC频率设置布局
+        DynamicParamsDACGroupBoxLayout->addWidget(DACFrequencySetButton);
+
+
+        StaticParamsDACGroupBox =  new QGroupBox("DAC Static Parameters", DisplayDACParamsWidget);
+        StaticParamsDACGroupBoxLayout = new QVBoxLayout(StaticParamsDACGroupBox);
+
+        DNLDACLabel = new QLabel("DNL: ", StaticParamsDACGroupBox);
+        INLDACLabel = new QLabel("INL: ", StaticParamsDACGroupBox);
+        OffsetDACLabel = new QLabel("Offset: ", StaticParamsDACGroupBox);
+        PeakDACLabel = new QLabel("Peak: ", StaticParamsDACGroupBox);
+
+        StaticParamsDACGroupBoxLayout->addWidget(DNLDACLabel);
+        StaticParamsDACGroupBoxLayout->addWidget(INLDACLabel);
+        StaticParamsDACGroupBoxLayout->addWidget(OffsetDACLabel);
+        StaticParamsDACGroupBoxLayout->addWidget(PeakDACLabel);
 
 
         paramTestDACGroupBox = new QGroupBox("参数测试", DisplayDACParamsWidget);
@@ -270,6 +315,7 @@ public:
         paramTestDACGroupBoxLayout->addWidget(staticParamsDACTestButton);
 
         DisplayDACParamsLayout->addWidget(DynamicParamsDACGroupBox);
+        DisplayDACParamsLayout->addWidget(StaticParamsDACGroupBox);
         DisplayDACParamsLayout->addWidget(paramTestDACGroupBox);
         DisplayDACParamsLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
         DisplayDACParamsWidget->setLayout(DisplayDACParamsLayout);
@@ -285,10 +331,12 @@ public:
         chartWidget2 = new SpectrumChartWidget; // 可以添加更多图表
         chartWidget3 = new SpectrumChartWidget;
         chartWidget4 = new SpectrumChartWidget;
+        chartWidget5 = new SpectrumChartWidget;
         chartGridWidget->addChart(chartWidget1);
         chartGridWidget->addChart(chartWidget2);
         chartGridWidget->addChart(chartWidget3);
         chartGridWidget->addChart(chartWidget4);
+        chartGridWidget->addChart(chartWidget5);
 
         chartGridWidget->reorganizeCharts(); // 初始化图表布局
 
@@ -317,7 +365,11 @@ public:
         menuSettings->setObjectName("menuSettings");
         menubar->addAction(menuSettings->menuAction());
 
-        connectSetAction = menuSettings->addAction("Connect");
+        connectSetAction = menuSettings->addAction("仪器连接设置");
+        connectSettings = new ConnectSettings(platform_demo_test);
+        connectSettings->hide();
+        connectSettings->setAttribute(Qt::WA_QuitOnClose, false);
+        
 
         statusbar = new QStatusBar(platform_demo_test);
         statusbar->setObjectName("statusbar");

@@ -47,10 +47,14 @@ public:
     QPushButton *DetectGeneratorBtn;
     QPushButton *DetectGeneratorBtn2;
     QPushButton *DetectVoltmeterBtn;
+    QPushButton *SettingGeneratorResourceBtn;
+    QPushButton *SettingGeneratorResourceBtn2;
 
     QDoubleSpinBox *GeneratorResourceFreqSpinBox;
     QDoubleSpinBox *GeneratorResourceExternalClockFreqSpinBox;
+    QDoubleSpinBox *GeneratorResource2FreqSpinBox;
     QCheckBox *GeneratorResourceExternalClockFreqCheckBox;
+
 
 };
 

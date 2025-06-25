@@ -140,3 +140,43 @@ void KeySightVisa_N9040B::peakSearch() {
 
 
 }
+
+
+QVector<QPointF> KeySightVisa_N9040B::convertSpectrumDataToQPoints(const char* buffer, int bufferSize) {
+    QVector<QPointF> points;
+    
+    // 将字符缓冲区转换为QString
+    QString dataString = QString::fromLocal8Bit(buffer, bufferSize);
+    
+    // 移除可能的空格和换行符
+    dataString = dataString.trimmed();
+    
+    // 分割字符串为单独的数据项
+    QStringList dataList = dataString.split(",", Qt::SkipEmptyParts);
+    
+    // 检查数据数量是否有效
+    if (dataList.size() != 2048) {
+        qWarning() << "数据数量不匹配，期望2048个，实际得到" << dataList.size();
+        return points;
+    }
+    
+    // 转换为QPointF数组
+    bool ok;
+    for (int i = 0; i < dataList.size(); i += 2) {
+        double frequency = dataList[i].toDouble(&ok);
+        if (!ok) {
+            qWarning() << "频率转换失败:" << dataList[i];
+            continue;
+        }
+        
+        double amplitude = dataList[i+1].toDouble(&ok);
+        if (!ok) {
+            qWarning() << "幅度转换失败:" << dataList[i+1];
+            continue;
+        }
+        
+        points.append(QPointF(frequency, amplitude));
+    }
+    
+    return points;
+}

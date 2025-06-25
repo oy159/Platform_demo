@@ -7,7 +7,7 @@
 #include "ConnectSettings.h"
 
 ConnectSettings::ConnectSettings(QWidget *parent) {
-    resize(300, 400);
+    resize(200, 500);
 
     setWindowTitle("Connect Settings");
 
@@ -63,7 +63,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceLineEdit->setText("TCPIP::192.168.1.7::hislip0::INSTR");
     DetectGeneratorBtn = new QPushButton("Detect", GeneratorResourceGroupBox);
 
-    auto *GeneratorResourceFreqHBoxLayout = new QHBoxLayout(GeneratorResourceGroupBox);
+    auto *GeneratorResourceFreqHBoxLayout = new QHBoxLayout();
     auto *GeneratorResourceFreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
     GeneratorResourceFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
     GeneratorResourceFreqSpinBox->setDecimals(1);
@@ -77,7 +77,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceFreqHBoxLayout->addWidget(GeneratorResourceFreqUnitLabel);
     GeneratorResourceFreqHBoxLayout->addItem(QSpacerItem1);
 
-    auto *GeneratorResourceExternalClockFreqHBoxLayout = new QHBoxLayout(GeneratorResourceGroupBox);
+    auto *GeneratorResourceExternalClockFreqHBoxLayout = new QHBoxLayout();
     auto *GeneratorResourceExternalClockFreqLabel = new QLabel("外部时钟频率设置:", GeneratorResourceGroupBox);
     GeneratorResourceExternalClockFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
     GeneratorResourceExternalClockFreqSpinBox->setDecimals(1);
@@ -92,11 +92,14 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceExternalClockFreqHBoxLayout->addItem(QSpacerItem2);
     GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqCheckBox);
 
+    SettingGeneratorResourceBtn = new QPushButton("设置", GeneratorResourceGroupBox);
+
     GeneratorResourceLayout->addWidget(GeneratorResourceLabel);
     GeneratorResourceLayout->addWidget(GeneratorResourceLineEdit);
     GeneratorResourceLayout->addLayout(GeneratorResourceFreqHBoxLayout);
     GeneratorResourceLayout->addLayout(GeneratorResourceExternalClockFreqHBoxLayout);
     GeneratorResourceLayout->addWidget(DetectGeneratorBtn);
+    GeneratorResourceLayout->addWidget(SettingGeneratorResourceBtn);
 
     GeneratorResourceGroupBoxLayout->addLayout(GeneratorResourceLayout);
 
@@ -108,11 +111,29 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     auto *GeneratorResourceLabel2 = new QLabel("低频信号发生器资源:", GeneratorResourceGroupBox2);
     GeneratorResourceLineEdit2 = new QLineEdit(GeneratorResourceGroupBox2);
     GeneratorResourceLineEdit2->setText("TCPIP0::A-33600-00000.local::inst0::INSTR");
-    DetectGeneratorBtn2 = new QPushButton("Detect", GeneratorResourceGroupBox2);
+
+    auto *GeneratorResourceGroupBox2Layout = new QHBoxLayout();
+    auto *GeneratorResource2FreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
+    GeneratorResource2FreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
+    GeneratorResource2FreqSpinBox->setDecimals(1);
+    GeneratorResource2FreqSpinBox->setValue(10.0);
+    auto *GeneratorResource2FreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
+    auto *QSpacerItem3 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    GeneratorResourceGroupBox2Layout->addWidget(GeneratorResource2FreqLabel);
+    GeneratorResourceGroupBox2Layout->addWidget(GeneratorResource2FreqSpinBox);
+    GeneratorResourceGroupBox2Layout->addWidget(GeneratorResource2FreqUnitLabel);
+    GeneratorResourceGroupBox2Layout->addItem(QSpacerItem3);
+
+    
+    DetectGeneratorBtn2 = new QPushButton("检测", GeneratorResourceGroupBox2);
+    SettingGeneratorResourceBtn2 = new QPushButton("设置", GeneratorResourceGroupBox2);
 
     GeneratorResourceLayout2->addWidget(GeneratorResourceLabel2);
     GeneratorResourceLayout2->addWidget(GeneratorResourceLineEdit2);
+    GeneratorResourceLayout2->addLayout(GeneratorResourceGroupBox2Layout);
     GeneratorResourceLayout2->addWidget(DetectGeneratorBtn2);
+    GeneratorResourceLayout2->addWidget(SettingGeneratorResourceBtn2);
 
     GeneratorResourceGroupBoxLayout2->addLayout(GeneratorResourceLayout2);
 

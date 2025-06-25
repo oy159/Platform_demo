@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <visa.h>
 #include <memory>
+#include <QPointF>
 
 class KeySightVisa_N9040B {
 public:
@@ -25,6 +26,7 @@ public:
     void peakSearch();
 
 private:
+    QVector<QPointF> convertSpectrumDataToQPoints(const char* buffer, int bufferSize);
     ViSession m_defaultRM;
     ViSession m_session;
 };

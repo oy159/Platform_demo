@@ -71,8 +71,13 @@ private slots:
         // QAction *showAllAction = menu.addAction("显示全部窗口");
         menu.addSeparator();
         QList<QAction*> actions;
-        for (int i = 0; i < chartWidgets.size(); ++i) {
-            QString title = QString("显示窗口 %1").arg(i + 1);
+
+        if(chartWidgets.size() > ChartWidgetNames.size()) {
+            qDebug() << "ChartWidgetsManager: chartWidgets size exceeds ChartWidgetNames size!";
+        }
+
+        for (int i = 0; i < ChartWidgetNames.size(); ++i) {
+            QString title = ChartWidgetNames[i];
             QAction *action = menu.addAction(title);
             action->setCheckable(true);
             action->setChecked(visibleIndexes.contains(i));
@@ -106,6 +111,14 @@ private:
         for (int i = 0; i < chartWidgets.size(); ++i) idxs.append(i);
         return idxs;
     }
+
+    QList<QString> ChartWidgetNames = {
+        "Spectrum Chart",
+        "Time Chart",
+        "DNL Chart",
+        "INL Chart",
+        "Histogram Chart"
+    };
 };
 
 

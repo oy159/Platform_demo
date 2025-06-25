@@ -33,7 +33,36 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                   "}"
                   );
 
+    ui->connectSettings->setStyleSheet("QGroupBox {"
+                  "font-weight: bold;"
+                  "border: 1px solid #ccc;"
+                  "margin-top: 10px;"
+                  "}"
+                  "QGroupBox::title {"
+                  "subcontrol-origin: margin;"
+                  "subcontrol-position: top left;"
+                  "padding: 0 3px;"
+                  "}"
+                  "QPushButton {"
+                  "background-color: #ffffff;"
+                  "border: 1px solid #ccc;"
+                  "padding: 5px;"
+                  "border-radius: 6px;"  // Add this line to make buttons rounded
+                  "}"
+                  "QPushButton:hover {"
+                  "background-color: #a0e0e0;"
+                  "}"
+                  "QComboBox {"
+                  "padding: 3px;"
+                  "border: 1px solid #ccc;"
+                  "combobox-popup:0;"
+                  "}"
+                  );
+
     
+    connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
+        ui->connectSettings->show();
+    });
 
     connect(ui->connectButton, &QPushButton::clicked, this, &platform_demo_test::handleConnectButton);
     connect(ui->instrumentDetectBtn, &QPushButton::clicked, this, &platform_demo_test::handleInstrumentDetectBtn);
@@ -187,6 +216,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 platform_demo_test::~platform_demo_test() {
     // mUdpThread->quit();
     // mUdpThread->wait();
+    delete ui->connectSettings;
     delete ui;
 }
 
