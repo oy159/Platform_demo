@@ -66,7 +66,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     auto *GeneratorResourceFreqHBoxLayout = new QHBoxLayout();
     auto *GeneratorResourceFreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
     GeneratorResourceFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
-    GeneratorResourceFreqSpinBox->setDecimals(1);
+    GeneratorResourceFreqSpinBox->setDecimals(3);
     GeneratorResourceFreqSpinBox->setValue(10.0);
     auto *GeneratorResourceFreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
     auto *QSpacerItem1 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -80,8 +80,10 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     auto *GeneratorResourceExternalClockFreqHBoxLayout = new QHBoxLayout();
     auto *GeneratorResourceExternalClockFreqLabel = new QLabel("外部时钟频率设置:", GeneratorResourceGroupBox);
     GeneratorResourceExternalClockFreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
-    GeneratorResourceExternalClockFreqSpinBox->setDecimals(1);
-    GeneratorResourceExternalClockFreqSpinBox->setValue(10.0);
+    GeneratorResourceExternalClockFreqSpinBox->setDecimals(3);
+    GeneratorResourceExternalClockFreqSpinBox->setRange(0.001, 200.0);
+    GeneratorResourceExternalClockFreqSpinBox->setValue(100.0);
+     qDebug() << "Current value:" << GeneratorResourceExternalClockFreqSpinBox->value();
     auto *GeneratorResourceExternalClockFreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
     auto *QSpacerItem2 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
     GeneratorResourceExternalClockFreqCheckBox = new QCheckBox("外部时钟",GeneratorResourceGroupBox);

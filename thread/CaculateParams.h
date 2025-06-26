@@ -56,6 +56,12 @@ signals:
                                        double staticOffset, double staticPeak);
     void TransferDNLData(const std::vector<double>& DNL);
     void TransferINLData(const std::vector<double>& INL);
+    void TransferHistrogramData(const std::vector<double>& histogramData);
+
+    void TransferDACStaticData(const std::vector<double>& data);
+
+    void staticDACParamsCalculateFinished(double maxDNL, double maxINL, 
+                                       double minDNL, double minINL);
 
 public slots:
     void setData(const std::vector<double>& data) {
@@ -65,6 +71,12 @@ public slots:
     void caculateDynamicParamsADC();
     void caculateStaticParamsADC();
     void caculateStaticDataHistogram();
+
+    void setDACStaticData(const std::vector<double>& data) {
+        dacStaticData = data;
+        emit TransferDACStaticData(data);
+    }
+    void caculateDACStaticParams();
 
 private:
     void calculateFFT();
@@ -113,6 +125,15 @@ private:
     double maxINL = 0.0;
     double minINL = 0.0;
     double minDNL = 0.0;
+
+
+    std::vector<double> dacStaticData;
+    std::vector<double> DACDNL; // 差分非线性
+    std::vector<double> DACINL; // 积分非线性
+    double maxDACDNL = 0.0;
+    double maxDACINL = 0.0;
+    double minDACINL = 0.0;
+    double minDACDNL = 0.0;
 
 };
 

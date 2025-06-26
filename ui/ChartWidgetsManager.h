@@ -117,7 +117,8 @@ private:
         "Time Chart",
         "DNL Chart",
         "INL Chart",
-        "Histogram Chart"
+        "Histogram Chart",
+        "N9040B Chart",
     };
 };
 

@@ -131,9 +131,9 @@ void RhodeSchwarzVisa_SMA100B::setExternalClockState(bool state){
 }
 
 
-void RhodeSchwarzVisa_SMA100B::setExternalClock(){
+void RhodeSchwarzVisa_SMA100B::setExternalClock(int externalFreq){
     setExternalClockAmp();
-    setExternalClockFreq(1e8);
+    setExternalClockFreq(externalFreq);
     setExternalClockOffset();
     setExternalClockState(true);
 }

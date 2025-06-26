@@ -271,6 +271,10 @@ void CaculateParams::caculateStaticParamsADC() {
                                        staticOffset, staticPeak);
     emit TransferDNLData(DNL);
     emit TransferINLData(INL);
+
+    // StaticDataHistogram TO VECTOR<double>
+    std::vector<double> histogramData(StaticDataHistogram.begin(), StaticDataHistogram.end());
+    emit TransferHistrogramData(histogramData);
 }
 
 void CaculateParams::caculateStaticDataHistogram()
@@ -283,3 +287,43 @@ void CaculateParams::caculateStaticDataHistogram()
         }
     }
 }
+
+void CaculateParams::caculateDACStaticParams()
+{
+    auto N = dacStaticData.size();
+    double K1 = N*(N-1)/2;
+    // dacStaticData求和
+    double K2 = std::accumulate(dacStaticData.begin(), dacStaticData.end(), 0.0);
+    double K3 = N*(N-1)*(2*N-1)/6;
+    double K4 = std::accumulate(dacStaticData.begin(), dacStaticData.end(), 0.0,
+                [i = 0](double acc, double val) mutable {
+                    return acc + val * i++;
+                }
+            );
+
+    double gain = (N * K4 - K1 * K2) / (N * K3 - K1 * K1);
+    double offset = (K2 - gain * K3) / N;
+
+    // 计算 DNL 和 INL
+    DACDNL.resize(N, 0.0);
+    DACINL.resize(N, 0.0);
+
+    for (int i = 0; i < N; ++i) {
+        DACDNL[i] = dacStaticData[i]/gain - 1;
+        if (i == 0) {
+            DACINL[i] = DACDNL[i];
+        } else {
+            DACINL[i] = DACINL[i - 1] + DACDNL[i];
+        }
+    }
+
+    maxDACINL = *std::max_element(DACINL.begin(), DACINL.end());
+    maxDACDNL = *std::max_element(DACDNL.begin(), DACDNL.end());
+    minDACINL = *std::min_element(DACINL.begin(), DACINL.end());
+    minDACDNL = *std::min_element(DACDNL.begin(), DACDNL.end());
+    
+    emit staticDACParamsCalculateFinished(maxDACDNL, maxDACINL,
+                                          minDACDNL, minDACINL);
+}
+
+// todo: 完成caculateDACStaticParams的交互逻辑

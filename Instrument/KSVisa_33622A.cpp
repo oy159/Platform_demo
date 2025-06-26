@@ -31,7 +31,7 @@ bool KeySightVisa_33622A::connect(const std::string& resourceString) {
         return false;
     }
 
-    status = viSetAttribute(m_session, VI_ATTR_TMO_VALUE, 1000);
+    status = viSetAttribute(m_session, VI_ATTR_TMO_VALUE, 3000);
     if (status < VI_SUCCESS) {
         viClose(m_session);
         m_session = VI_NULL;

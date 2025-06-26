@@ -7,13 +7,15 @@
 InstrumentSourceManager::InstrumentSourceManager(QObject *parent) : QObject(parent) {
     n9040B = new KeySightVisa_N9040B();
     sma100B = new RhodeSchwarzVisa_SMA100B();
-    ks33622A = new KeySightVisa_33622A;
+    ks33622A = new KeySightVisa_33622A();
+    ks34460A = new KSVisa_34460A();
     // tcpInstrument = new TCPInstrument();
 
     // qDebug() << "Connected to TCP instrument: " << tcpInstrument->getID().c_str();
 
     Instrument_Resources.clear();
     Instrument_Resources = findAllVisaResources();
+
     // ks33622A->setFrequency(1, 1000.0); // 设置默认频率为1000Hz
 }
 
@@ -25,6 +27,10 @@ bool InstrumentSourceManager::connectToN9040B(const std::string &VisaAddress) {
     bool status = n9040B->connect(VisaAddress);
     if (status) {
         qDebug() << "Connected to N9040B: " << n9040B->getID().c_str();
+        emit ConnectInstrumentSuccess(InstrumentType::N9040B);
+    }else{
+        qDebug() << "Failed to connect to N9040B";
+        emit ConnectInstrumentFail(InstrumentType::N9040B);
     }
 
     // bool status = tcpInstrument->connect("127.0.0.1", 5025); // 连接到本地的TCP仪器，端口5025
@@ -41,8 +47,10 @@ bool InstrumentSourceManager::connectToSMA100B(const std::string &VisaAddress) {
     bool status = sma100B->connect(VisaAddress);
     if (status) {
         qDebug() << "Connected to: " << sma100B->getID().c_str();
+        emit  ConnectInstrumentSuccess(InstrumentType::SMA100B);
     } else {
         qDebug() << "Failed to connect to SMA100B";
+        emit ConnectInstrumentFail(InstrumentType::SMA100B);
     }
     
     return status;
@@ -52,25 +60,43 @@ void InstrumentSourceManager::disconnectFromSMA100B() {
     sma100B->disconnect();
 }
 
-bool InstrumentSourceManager::connectTo3458A(const std::string &VisaAddress)
+bool InstrumentSourceManager::connectTo34460A(const std::string &VisaAddress)
 {
-    return false; // 3458A连接逻辑未实现
+    bool status = ks34460A->connect(VisaAddress);
+    if (status) {
+        qDebug() << "Connected to 34460A: " << ks34460A->getID().c_str();
+        emit ConnectInstrumentSuccess(InstrumentType::KS34460A);
+    } else {
+        qDebug() << "Failed to connect to 34460A";
+        emit ConnectInstrumentFail(InstrumentType::KS34460A);
+    }
+
+    return status;
 }
 
-void InstrumentSourceManager::disconnectFrom3458A() {
+double InstrumentSourceManager::read34460AVoltage() {
+        double voltage = ks34460A->readVoltage();
+        qDebug() << "Read Voltage from 34460A:" << voltage;
+        return voltage;
+}
 
+
+void InstrumentSourceManager::disconnectFrom34460A() {
+    ks34460A->disconnect();
+    qDebug() << "Disconnected from 34460A";
 }
 
 bool InstrumentSourceManager::connectTo3362A(const std::string &VisaAddress) {
     bool status = ks33622A->connect(VisaAddress);
     if (status) {
         qDebug() << "Connected to " << ks33622A->getID().c_str();
-        ks33622A->setFrequency(1,123456);
-        ks33622A->setFunc(1,"SIN");
-        ks33622A->setVoltage(1,1.0);
-
+        // ks33622A->setFrequency(1,123456);
+        // ks33622A->setFunc(1,"SIN");
+        // ks33622A->setVoltage(1,1.0);
+        emit  ConnectInstrumentSuccess(InstrumentType::KS3362A);
     } else {
-        qDebug() << "Failed to connect to 3362A";
+        qDebug() << "Failed to connect to 33622A";
+        emit ConnectInstrumentFail(InstrumentType::KS3362A);
     }
     
     return status;
@@ -78,6 +104,21 @@ bool InstrumentSourceManager::connectTo3362A(const std::string &VisaAddress) {
 
 void InstrumentSourceManager::disconnectFrom3362A() {
     ks33622A->disconnect();
+}
+
+
+void InstrumentSourceManager::readSA(QVector<QPointF> &data) {
+    if (n9040B->m_session == VI_NULL) {
+        qDebug() << "N9040B is not connected";
+        return;
+    }
+
+    try {
+        data = n9040B->readSA();
+        emit TransferN9040BData(data);
+    } catch (const std::runtime_error &e) {
+        qDebug() << "Error reading SA data:" << e.what();
+    }
 }
 
 std::vector<std::string> InstrumentSourceManager::findAllVisaResources() {

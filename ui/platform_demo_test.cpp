@@ -59,7 +59,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                   "}"
                   );
 
-    
+    connect(this, &platform_demo_test::startOtherCaculate, this, &platform_demo_test::handleADCTestAfterCali);
+
     connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
         ui->connectSettings->show();
     });
@@ -95,52 +96,96 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mInstrumentSourceManager->moveToThread(mInstrumentManagerThread);
 
     mInstrumentManagerThread->start();
+
+    connect(mInstrumentSourceManager, &InstrumentSourceManager::ConnectInstrumentSuccess, this, [=](InstrumentType instrument) {
+        switch (instrument) {
+            case InstrumentType::N9040B:
+                ui->connectSettings->DetectSpectrumBtn->setText("连接成功");
+                mConnectToInstrumentFlag[0] = true;
+                break;
+            case InstrumentType::KS3362A:
+                ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
+                mConnectToInstrumentFlag[1] = true;
+                mADCUsedInstrumentType = InstrumentType::KS3362A;
+                break;
+            case InstrumentType::SMA100B:
+                ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
+                mConnectToInstrumentFlag[2] = true;
+                mADCUsedInstrumentType = InstrumentType::SMA100B;
+                break;
+            case InstrumentType::KS34460A:
+                ui->connectSettings->DetectVoltmeterBtn->setText("连接成功");
+                mConnectToInstrumentFlag[3] = true;
+                break;
+            default:
+                break;
+        }
+    });
+
+    connect(mInstrumentSourceManager, &InstrumentSourceManager::ConnectInstrumentFail, this, [=](InstrumentType instrument) {
+        switch (instrument) {
+            case InstrumentType::N9040B:
+                ui->connectSettings->DetectSpectrumBtn->setText("连接失败");
+                mConnectToInstrumentFlag[0] = false;
+                break;
+            case InstrumentType::KS3362A:
+                ui->connectSettings->DetectGeneratorBtn2->setText("连接失败");
+                mConnectToInstrumentFlag[1] = false;
+                break;
+            case InstrumentType::SMA100B:
+                ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
+                mConnectToInstrumentFlag[2] = false;
+                break;
+            case InstrumentType::KS34460A:
+                ui->connectSettings->DetectVoltmeterBtn->setText("连接失败");
+                mConnectToInstrumentFlag[3] = false;
+                break;
+            default:
+                break;
+        }
+    });
+
+    // * 检测仪器连接按钮
     connect(ui->connectSettings->DetectSpectrumBtn, &QPushButton::clicked, this, [=]() {
         QString ip = ui->connectSettings->SpectrumResourceLineEdit->text();
-        bool status = mInstrumentSourceManager->connectToN9040B(ip.toStdString());
-        if (status) {
-            ui->connectSettings->DetectSpectrumBtn->setText("连接成功");
-        } else {
-            ui->connectSettings->DetectSpectrumBtn->setText("连接失败");
-        }
+        // bool status = mInstrumentSourceManager->connectToN9040B(ip.toStdString());
+        QMetaObject::invokeMethod(mInstrumentSourceManager, "connectToN9040B",
+                            Qt::QueuedConnection, Q_ARG(std::string, ip.toStdString()));
     });
 
     connect(ui->connectSettings->DetectGeneratorBtn, &QPushButton::clicked, this, [=]() {
         QString ip = ui->connectSettings->GeneratorResourceLineEdit->text();
-        bool status = mInstrumentSourceManager->connectToSMA100B(ip.toStdString());
-        if (status) {
-            ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
-//            handleAutoCaliInstrument();
-            mInstrumentSourceManager->sma100B->setExternalClock();
-//            mInstrumentSourceManager->sma100B->SetFrequency((int)
-//                        (1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value()));
-        } else {
-            ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
-        }
+        // bool status = mInstrumentSourceManager->connectToSMA100B(ip.toStdString());
+        QMetaObject::invokeMethod(mInstrumentSourceManager, "connectToSMA100B",
+                            Qt::QueuedConnection, Q_ARG(std::string, ip.toStdString()));
+//         if (status) {
+//             ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
+// //            handleAutoCaliInstrument();
+//             mInstrumentSourceManager->sma100B->setExternalClock();
+// //            mInstrumentSourceManager->sma100B->SetFrequency((int)
+// //                        (1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value()));
+//         } else {
+//             ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
+//         }
     });
 
     connect(ui->connectSettings->DetectVoltmeterBtn, &QPushButton::clicked, this, [=]() {
         QString ip = ui->connectSettings->VoltmeterResourceLineEdit->text();
-        bool status = mInstrumentSourceManager->connectTo3458A(ip.toStdString());
-        if (status) {
-            ui->connectSettings->DetectVoltmeterBtn->setText("连接成功");
-        } else {
-            ui->connectSettings->DetectVoltmeterBtn->setText("连接失败");
-        }
+        // bool status = mInstrumentSourceManager->connectTo3458A(ip.toStdString());
+        QMetaObject::invokeMethod(mInstrumentSourceManager, "connectTo34460A",
+                            Qt::QueuedConnection, Q_ARG(std::string, ip.toStdString()));
+
     });
+
 
     connect(ui->connectSettings->DetectGeneratorBtn2, &QPushButton::clicked, this, [=]() {
         QString ip = ui->connectSettings->GeneratorResourceLineEdit2->text();
-        bool status = mInstrumentSourceManager->connectTo3362A(ip.toStdString());
-        if (status) {
-            ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
-        } else {
-            ui->connectSettings->DetectGeneratorBtn2->setText("连接失败");
-        }
+        QMetaObject::invokeMethod(mInstrumentSourceManager, "connectTo3362A",
+                            Qt::QueuedConnection, Q_ARG(std::string, ip.toStdString()));
     });
 
 
-
+    // * 切换右侧堆叠窗口
     connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
         int currentIndex = ui->rightStackedWidget->currentIndex();
         int nextIndex = (currentIndex + 1) % ui->rightStackedWidget->count();
@@ -159,6 +204,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     chartWidget2 = ui->chartWidget2;
     chartWidget3 = ui->chartWidget3;
     chartWidget4 = ui->chartWidget4;
+    chartWidget5 = ui->chartWidget5;
 
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
@@ -169,30 +215,35 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferHistrogramData, chartWidget5, &SpectrumChartWidget::handleRefreshSpectrum);
 
 
     connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
+            ui->ADCChannel2CheckBox->setChecked(false);
             if(mDeviceType == DeviceType::AD9268){
                 if(!mUdpStartFlag) {
                     QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
                     return;
                 }
                 QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 1));
+            }else{
+                QMessageBox::warning(this, "Warning", "当前不是AD9268！");
             }
-            ui->ADCChannel2CheckBox->setChecked(false);
         }
     });
     connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
+            ui->ADCChannel1CheckBox->setChecked(false);
             if(mDeviceType == DeviceType::AD9268){
                 if(!mUdpStartFlag) {
                     QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
                     return;
                 }
                 QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9268Channel", Qt::QueuedConnection, Q_ARG(int, 2));
+            }else{
+                QMessageBox::warning(this, "Warning", "当前不是AD9268！");
             }
-            ui->ADCChannel1CheckBox->setChecked(false);
         }
     });
 
@@ -205,9 +256,10 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         }
         if(mDeviceType == DeviceType::AD9142 || mDeviceType == DeviceType::AD9747) {
 
-            QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32767));
+            // todo:需修改逻辑
+            // QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32767));
 
-            QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,2));
+            QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,1));
 
         }else{
             QMessageBox::warning(this, "Warning", "当前不是DAC！");
@@ -401,7 +453,37 @@ QVector<double> platform_demo_test::generateWaveformData(int count)
     return data;
 }
 
+void platform_demo_test::handleSetConfigForGenerator() {
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+    if(ui->connectSettings->GeneratorResourceExternalClockFreqCheckBox->isChecked()){
+        if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+            QMessageBox::warning(this, "Warning", "当前不是ADC设备，默认不进行外部时钟设置");
+            return;
+        }
+        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518ExternalClock",Qt::QueuedConnection, Q_ARG(int, 10000));
+        // todo:设置外部时钟设置
+        if(mConnectToInstrumentFlag[InstrumentType::SMA100B]) {
+            // ? 这样似乎有点危险，在主线程调用方法，可能会遇到未知bug，感觉。。。。
+            mInstrumentSourceManager->sma100B->setExternalClock((int)(1e6*ui->connectSettings->GeneratorResourceExternalClockFreqSpinBox->value()));
+        }else{
+            QMessageBox::warning(this, "Warning", "当前未连接SMA100B仪器，无法进行外部时钟设置！");
+            return;
+        }
+    }else{
+        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518InternalClock",Qt::QueuedConnection);
+    }
 
+    // todo: 设置仪器输出频率
+    if(mADCUsedInstrumentType == InstrumentType::SMA100B){
+        mInstrumentSourceManager->sma100B->SetFrequency((int)(1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value()));
+    }else if(mADCUsedInstrumentType == InstrumentType::KS3362A) {
+        mInstrumentSourceManager->ks33622A->setFrequency(1, ui->connectSettings->GeneratorResourceFreqSpinBox->value());
+    }
+
+}
 
 
 void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
@@ -421,29 +503,63 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         qDebug() << "Min: " << minValue << ", count: " << minCount;
         qDebug() << "Max: " << maxValue << ", count: " << maxCount;
 
-        // 调整输出幅度
-        sma100b_amp += 0.1;
-        mInstrumentSourceManager->sma100B->setAMP(sma100b_amp);
-
-
-        emit clearADCData();
-        if(mDeviceType == AD9268){
-            if(maxValue > 65535*0.95){
-                qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
-                return;
+        
+        
+        if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC){
+            if(mDeviceType == AD9268){
+                if(maxValue > 65535*0.95){ 
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = true;
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = false;
+                }
+            }else if(mDeviceType == AD9434){
+                if(maxValue > 4095*0.95){
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = true;
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = false;
+                }
             }
-        }else if(mDeviceType == AD9434){
-            if(maxValue > 4095*0.95){
-                qDebug() << "AutoCali test suceessfully" << "Now amp is" << sma100b_amp;
-                return;
+        }else if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForStaticADC){
+            if(mDeviceType == AD9268){
+                if(maxValue == 65535 && maxCount > 20){
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = false;
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = true;
+
+                }
+            }else if(mDeviceType == AD9434){
+                if(maxValue == 4095 && maxCount > 20){
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = false;
+                    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = true;
+                }
             }
         }
-        
 
-//        QThread::msleep(100);
-
-        if(sma100b_amp > 15)
+        if(mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] || mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC]) {
+            if(mADCUsedInstrumentType == InstrumentType::SMA100B){
+                qDebug() << "AutoCali test suceessfully" << "Now SMA100B amp is " << sma100b_amp << " dBm";
+            }else if(mADCUsedInstrumentType == InstrumentType::KS3362A){
+                qDebug() << "AutoCali test suceessfully" << "Now KS3362A volt is " << ks3362a_volt << " V";
+            }
+            qDebug() << "AutoCali test finished, now stop ADC data caculate";
+            emit clearADCData();
+            emit startOtherCaculate(mCaliVoltageMode);
             return;
+        }
+
+        // 调整输出幅度
+        if(mADCUsedInstrumentType == InstrumentType::SMA100B){
+            sma100b_amp += 0.1;
+            mInstrumentSourceManager->sma100B->setAMP(sma100b_amp);
+        }else if(mADCUsedInstrumentType == InstrumentType::KS3362A){
+            ks3362a_volt += 0.02;
+            mInstrumentSourceManager->ks33622A->setVoltage(1, ks3362a_volt);
+        }
+        emit clearADCData();
+
+        if(mADCUsedInstrumentType == InstrumentType::SMA100B)
+            if(sma100b_amp > 15)
+                return;
+        else if(mADCUsedInstrumentType == InstrumentType::KS3362A)
+            if(ks3362a_volt > 3)
+                return;
 
 
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
@@ -463,7 +579,6 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         ui->staticParamsADCTestButton->setEnabled(false);
         QMetaObject::invokeMethod(mCaculateParams, "caculateStaticDataHistogram", Qt::QueuedConnection);
 
-        // todo:计算获取的数据总量是否满足置信度要求，决定是否关闭循环
         staticDataSize += dataArray.size();
 
 
@@ -479,7 +594,6 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         }
         emit clearADCData();
 
-        // todo:再获取一次数据（计算完后执行，signal&slot）
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
         if (!message.isEmpty()) {
             QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
@@ -506,14 +620,14 @@ void platform_demo_test::handleDynamicADCTest() {
         return;
     }
 
-
+    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
 
     // 2.获取adc数据 计算动态参数
-    QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
-    if (!message.isEmpty()) {
-        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-    }
-    mCaculateMode = ADC_DYNAMIC_MODE;
+    // QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+    // if (!message.isEmpty()) {
+    //     QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    // }
+    // mCaculateMode = ADC_DYNAMIC_MODE;
 
 }
 
@@ -534,77 +648,60 @@ void platform_demo_test::handleStaticADCTest() {
         return;
     }
 
+    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForStaticADC);
 
-    // todo: 2.获取第一次adc数据
-
-
-    // todo: 3.设置标志位使计算完成后循环直至达到条件
-    QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
-    if (!message.isEmpty()) {
-        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-    }
-    mCaculateMode = ADC_STATIC_MODE;
-    adcStaticTestStop = false;
+    // QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
+    // if (!message.isEmpty()) {
+    //     QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    // }
+    // mCaculateMode = ADC_STATIC_MODE;
 }
 
 
+void platform_demo_test::handleADCTestAfterCali(CALIVOLTAGE_MODE CaliVoltageMode)
+{
+    if(CaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC) {
+        mCaculateMode = ADC_DYNAMIC_MODE;
+    } else if(CaliVoltageMode == CALIVOLTAGE_MODE::ForStaticADC) {
+        mCaculateMode = ADC_STATIC_MODE;
+    }
+    QString message = "Hello, World!";
+    if (!message.isEmpty()) {
+        QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
+    }
+}
 
-void platform_demo_test::handleAutoCaliInstrument() {
-    // 第一步，验证当前固件为ADC，且已打开udp
 
-    if(!mUdpStartFlag) {
-        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+void platform_demo_test::AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE mode) {
+
+    mCaliVoltageMode = mode;
+    
+    if(mADCUsedInstrumentType == InstrumentType::SMA100B) {
+        mInstrumentSourceManager->sma100B->SetOutput1Status(false);
+        if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC && mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC]) 
+            sma100b_amp = 0;
+        mInstrumentSourceManager->sma100B->setAMP(sma100b_amp);        // 0dbm
+        mInstrumentSourceManager->sma100B->SetOutput1Status(true);  
+    }else if(mADCUsedInstrumentType == InstrumentType::KS3362A) {
+        // todo: 设置KS3362A输出幅度为一个较小值
+        mInstrumentSourceManager->ks33622A->setOutputStatus(1, false); // 关闭输出
+        if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC && mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC]) 
+            ks3362a_volt = 1.2;
+        mInstrumentSourceManager->ks33622A->setVoltage(1, ks3362a_volt); // 设置输出电压为1.2V
+        mInstrumentSourceManager->ks33622A->setOutputStatus(1, true); // 打开输出
+    } else {
+        QMessageBox::warning(this, "Warning", "当前未连接SMA100B或KS3362A仪器，无法进行自动校准输出电压功能！");
         return;
     }
 
-    if(mDeviceType ==  UnknownDevice) {
-        QMessageBox::warning(this, "Warning", "未知设备！");
-        return;
-    }
-
-    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
-        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行自动校准！");
-        return;
-    }
+    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = false;
+    mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = false;
 
 
-    // 判断使用仪器类型
-
-
-    mInstrumentType = KS3362A;
-    mInstrumentSourceManager->sma100B->SetOutput1Status(false);
-    mInstrumentSourceManager->sma100B->setAMP(0);
-    sma100b_amp = 0;
-//    QThread::msleep(100);
-    mInstrumentSourceManager->sma100B->SetOutput1Status(true);  
-
-
-    // 2.获取adc数据 计算动态参数
+    // 2.获取adc数据
     QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
     if (!message.isEmpty()) {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     }
     mCaculateMode = AUTO_CALI_MODE;
-
-}
-
-void platform_demo_test::handleSetConfigForGenerator() {
-    if(!mUdpStartFlag) {
-        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
-        return;
-    }
-    if(ui->connectSettings->GeneratorResourceExternalClockFreqCheckBox->isChecked()){
-        if(mDeviceType != AD9268 && mDeviceType != AD9434) {
-            QMessageBox::warning(this, "Warning", "当前不是ADC设备，默认不进行外部时钟设置");
-            return;
-        }
-        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518ExternalClock",Qt::QueuedConnection, Q_ARG(int, 10000));
-    }else{
-        QMetaObject::invokeMethod(mUdpWorker, "handleSetAD9518InternalClock",Qt::QueuedConnection);
-    }
-
-    // todo:设置sma100b输出频率和外部时钟设置
-
-
-
 }

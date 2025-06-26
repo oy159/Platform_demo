@@ -8,6 +8,14 @@
 #include <memory>
 #include <QPointF>
 
+typedef enum{
+    PeakSearch = 0,
+    NextSearch = 1,
+    RightSearch = 2,
+    LeftSearch = 3,
+} PeakSearchMode;
+
+
 class KeySightVisa_N9040B {
 public:
     KeySightVisa_N9040B();
@@ -23,12 +31,15 @@ public:
     void defineStopFreq(int freq);
     void defineRefLevel(double RefLeveldbm);
     std::string readX();
-    void peakSearch();
+    void peakSearch(PeakSearchMode mode = PeakSearch);
+    QVector<QPointF> readSA();
+
+    ViSession m_defaultRM;
+    ViSession m_session;
 
 private:
     QVector<QPointF> convertSpectrumDataToQPoints(const char* buffer, int bufferSize);
-    ViSession m_defaultRM;
-    ViSession m_session;
+    
 };
 
 #endif //PLATFORM_DEMO_KEYSIGHTVISA_N9040B_H

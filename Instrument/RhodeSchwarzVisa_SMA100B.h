@@ -24,7 +24,7 @@ public:
     void setExternalClockFreq(int freq);
     void setExternalClockOffset(double volt = 1.57);
     void setExternalClockState(bool state);
-    void setExternalClock();
+    void setExternalClock(int externalFreq);
 
 private:
     ViSession m_defaultRM;
