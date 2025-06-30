@@ -266,7 +266,7 @@ void UdpWorker::handleSetDDSFreq(int freq_Hz, int Mode)
     }
 
     QByteArray data;
-    if(Mode == 1)
+    if(Mode == 0)
     {
         current_command = CMD_SET_DDS_FREQ;
     } else{
@@ -283,7 +283,7 @@ void UdpWorker::handleSetDDSFreq(int freq_Hz, int Mode)
     data.append((char)((freq >> 8) & 0xFF));
     data.append((char)(freq & 0xFF));
 
-    if(Mode != 1){
+    if(Mode != 0){
         auto freq2 = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * (freq_Hz + 1.0e6) * qPow(2,16));
         data.append((char)((freq2 >> 24) & 0xFF));
         data.append((char)((freq2 >> 16) & 0xFF));
@@ -360,8 +360,9 @@ void UdpWorker::handleSetDACValue(int value)
         qDebug() << "get zynq return: " << datagram;
         // todo: 解析datagram，判断是否设置成功
         if(datagram.contains("Set Success")){
-            qDebug() << "DDS Value Set success";
+            qDebug() << "DAC Value Set success";
         }
+        emit DACValueSetSuccess();
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);

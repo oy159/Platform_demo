@@ -98,10 +98,14 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     mInstrumentManagerThread->start();
 
     connect(mInstrumentSourceManager, &InstrumentSourceManager::ConnectInstrumentSuccess, this, [=](InstrumentType instrument) {
+        QList<QPointF> SpData;
+
         switch (instrument) {
             case InstrumentType::N9040B:
                 ui->connectSettings->DetectSpectrumBtn->setText("连接成功");
                 mConnectToInstrumentFlag[0] = true;
+                QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
+                                          Qt::QueuedConnection);
                 break;
             case InstrumentType::KS3362A:
                 ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
@@ -184,6 +188,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                             Qt::QueuedConnection, Q_ARG(std::string, ip.toStdString()));
     });
 
+    connect(ui->connectSettings->SettingGeneratorResourceBtn2, &QPushButton::clicked, this, &platform_demo_test::handleSetConfigForGenerator);
+
 
     // * 切换右侧堆叠窗口
     connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
@@ -205,6 +211,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     chartWidget3 = ui->chartWidget3;
     chartWidget4 = ui->chartWidget4;
     chartWidget5 = ui->chartWidget5;
+    chartWidget6 = ui->chartWidget6;
 
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
@@ -216,7 +223,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferHistrogramData, chartWidget5, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(this, &platform_demo_test::TransferDACStaticData, chartWidget6, &SpectrumChartWidget::handleRefreshSpectrum);
 
+    connect(mInstrumentSourceManager, &InstrumentSourceManager::TransferN9040BData, chartWidget6, &SpectrumChartWidget::handleRefreshChart);
 
     connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
@@ -257,9 +266,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         if(mDeviceType == DeviceType::AD9142 || mDeviceType == DeviceType::AD9747) {
 
             // todo:需修改逻辑
-            // QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32767));
-
+//             QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32768));
             QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,1));
+
 
         }else{
             QMessageBox::warning(this, "Warning", "当前不是DAC！");
@@ -267,7 +276,12 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         }
     });
 
+    connect(ui->staticParamsDACTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticDACTest);
+    connect(mUdpWorker, &UdpWorker::DACValueSetSuccess, this, &platform_demo_test::handleDACSetValueSuccess);
 
+//    connect(mInstrumentSourceManager, &InstrumentSourceManager::TransferN9040BData, this, [=](){
+//
+//    });
 
 //    chartWidget3->adjustaxisX();
     mCaculateParams->setData(adc16Data);
@@ -480,7 +494,7 @@ void platform_demo_test::handleSetConfigForGenerator() {
     if(mADCUsedInstrumentType == InstrumentType::SMA100B){
         mInstrumentSourceManager->sma100B->SetFrequency((int)(1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value()));
     }else if(mADCUsedInstrumentType == InstrumentType::KS3362A) {
-        mInstrumentSourceManager->ks33622A->setFrequency(1, ui->connectSettings->GeneratorResourceFreqSpinBox->value());
+        mInstrumentSourceManager->ks33622A->setFrequency(1, (1e6*ui->connectSettings->GeneratorResource2FreqSpinBox->value()));
     }
 
 }
@@ -502,7 +516,11 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         int maxCount = std::count(dataArray.begin(), dataArray.end(), maxValue);
         qDebug() << "Min: " << minValue << ", count: " << minCount;
         qDebug() << "Max: " << maxValue << ", count: " << maxCount;
-
+        if(mADCUsedInstrumentType == InstrumentType::SMA100B){
+            qDebug() << "AutoCali test suceessfully" << "Now SMA100B amp is " << sma100b_amp << " dBm";
+        }else if(mADCUsedInstrumentType == InstrumentType::KS3362A){
+            qDebug() << "AutoCali test suceessfully" << "Now KS3362A volt is " << ks3362a_volt << " V";
+        }
         
         
         if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC){
@@ -519,13 +537,13 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
             }
         }else if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForStaticADC){
             if(mDeviceType == AD9268){
-                if(maxValue == 65535 && maxCount > 20){
+                if(maxValue == 65535 && maxCount > 3500){
                     mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = false;
                     mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = true;
 
                 }
             }else if(mDeviceType == AD9434){
-                if(maxValue == 4095 && maxCount > 20){
+                if(maxValue == 4095 && maxCount > 3500){
                     mCaliVoltageFlag[CALIVOLTAGE_MODE::ForDynamicADC] = false;
                     mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC] = true;
                 }
@@ -554,12 +572,13 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         }
         emit clearADCData();
 
-        if(mADCUsedInstrumentType == InstrumentType::SMA100B)
-            if(sma100b_amp > 15)
+        if(mADCUsedInstrumentType == InstrumentType::SMA100B) {
+            if (sma100b_amp > 15)
                 return;
-        else if(mADCUsedInstrumentType == InstrumentType::KS3362A)
-            if(ks3362a_volt > 3)
+        }else if(mADCUsedInstrumentType == InstrumentType::KS3362A) {
+            if (ks3362a_volt > 3)
                 return;
+        }
 
 
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
@@ -686,9 +705,10 @@ void platform_demo_test::AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE mode) {
         // todo: 设置KS3362A输出幅度为一个较小值
         mInstrumentSourceManager->ks33622A->setOutputStatus(1, false); // 关闭输出
         if(mCaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC && mCaliVoltageFlag[CALIVOLTAGE_MODE::ForStaticADC]) 
-            ks3362a_volt = 1.2;
+            ks3362a_volt = 0.6;
         mInstrumentSourceManager->ks33622A->setVoltage(1, ks3362a_volt); // 设置输出电压为1.2V
         mInstrumentSourceManager->ks33622A->setOutputStatus(1, true); // 打开输出
+        QThread::msleep(100);
     } else {
         QMessageBox::warning(this, "Warning", "当前未连接SMA100B或KS3362A仪器，无法进行自动校准输出电压功能！");
         return;
@@ -704,4 +724,57 @@ void platform_demo_test::AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE mode) {
         QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
     }
     mCaculateMode = AUTO_CALI_MODE;
+}
+
+void platform_demo_test::handleStaticDACTest(){
+    // todo: 校验DAC固件
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(!mConnectToInstrumentFlag[3]){
+        QMessageBox::warning(this, "Warning", "台表未连接");
+        return;
+    }
+
+    if(mDeviceType != AD9142 && mDeviceType != AD9747) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        return;
+    }
+
+    // todo: 从32768-65535，再32767-0设置DAC直流电压
+    DACStaticData.resize(65536,0);
+    dac_value = 39600;
+    QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, dac_value));
+}
+
+
+void platform_demo_test::handleDACSetValueSuccess(){
+    // todo: 读电压表，存数据
+    double data = mInstrumentSourceManager->ks34460A->readVoltage();
+    qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
+
+
+    if(dac_value == 65535)
+        dac_value = 32767;
+    else if(dac_value == 0) {
+        emit TransferDACStaticData(DACStaticData);
+        return;
+    }
+
+    if(dac_value > 32767) {
+        DACStaticData[dac_value - 32768] = data;
+        dac_value++;
+    }
+    else {
+        DACStaticData[dac_value + 32768] = data;
+        dac_value--;
+    }
+    QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, dac_value));
 }

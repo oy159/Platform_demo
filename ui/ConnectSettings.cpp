@@ -117,7 +117,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     auto *GeneratorResourceGroupBox2Layout = new QHBoxLayout();
     auto *GeneratorResource2FreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
     GeneratorResource2FreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
-    GeneratorResource2FreqSpinBox->setDecimals(1);
+    GeneratorResource2FreqSpinBox->setDecimals(6);
     GeneratorResource2FreqSpinBox->setValue(10.0);
     auto *GeneratorResource2FreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
     auto *QSpacerItem3 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -146,6 +146,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
 
     auto *VoltmeterLabel = new QLabel("台表资源:", VoltmeterGroupBox);
     VoltmeterResourceLineEdit = new QLineEdit(VoltmeterGroupBox);
+    VoltmeterResourceLineEdit->setText("USB0::0x2A8D::0x0501::MY60048805::INSTR");
     DetectVoltmeterBtn = new QPushButton("Detect", VoltmeterGroupBox);
 
     VoltmeterLayout->addWidget(VoltmeterLabel);

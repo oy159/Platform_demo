@@ -107,12 +107,12 @@ void InstrumentSourceManager::disconnectFrom3362A() {
 }
 
 
-void InstrumentSourceManager::readSA(QVector<QPointF> &data) {
+void InstrumentSourceManager::readSA() {
     if (n9040B->m_session == VI_NULL) {
         qDebug() << "N9040B is not connected";
         return;
     }
-
+    QList<QPointF> data;
     try {
         data = n9040B->readSA();
         emit TransferN9040BData(data);

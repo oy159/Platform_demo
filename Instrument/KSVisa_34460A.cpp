@@ -107,7 +107,11 @@ double KSVisa_34460A::readVoltage()
         return 0.0;
     }
 
-    std::string command = "MEAS:VOLT:DC?";
+//    std::string command = "CONF:VOLT:DC 1";
+//    sendCommandWrite(command);
+//    command = "SAMP:COUN 1?";
+//    sendCommandWrite(command);
+    std::string command = "READ?";
     std::string response = sendCommand(command);
     
     try {

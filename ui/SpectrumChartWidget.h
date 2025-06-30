@@ -44,6 +44,7 @@ public slots:
     void handleRefreshPeakData(const std::vector<Peak>& peaks);
     void onSliderValueChanged(int value);
     void handleRefreshSpectrum(std::vector<double> fft_data);
+    void handleRefreshChart(QList<QPointF> data);
     void handleFindPeak();
     void handleFindNextPeak();
 

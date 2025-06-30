@@ -54,6 +54,7 @@ signals:
     void dataReceived(const QByteArray &data);
     void ADCDataReady(const std::vector<uint16_t> &data);
     void initializePlatform(const QString &DeviceName);
+    void DACValueSetSuccess();
 
 private slots:
     void handleReadyRead();

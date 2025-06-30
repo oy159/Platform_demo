@@ -273,7 +273,7 @@ void CaculateParams::caculateStaticParamsADC() {
     emit TransferINLData(INL);
 
     // StaticDataHistogram TO VECTOR<double>
-    std::vector<double> histogramData(StaticDataHistogram.begin(), StaticDataHistogram.end());
+    std::vector<double> histogramData(StaticDataHistogram.begin(), StaticDataHistogram.begin() + qPow(2,ADC_BITS));
     emit TransferHistrogramData(histogramData);
 }
 

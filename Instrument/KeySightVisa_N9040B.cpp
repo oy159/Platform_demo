@@ -193,7 +193,7 @@ QVector<QPointF> KeySightVisa_N9040B::readSA(){
         }
         throw std::runtime_error("Failed to read response");
     }
-
+    qDebug() << buffer;
     return convertSpectrumDataToQPoints(buffer, retCount);
 }
 
@@ -212,10 +212,10 @@ QVector<QPointF> KeySightVisa_N9040B::convertSpectrumDataToQPoints(const char* b
     QStringList dataList = dataString.split(",", Qt::SkipEmptyParts);
     
     // 检查数据数量是否有效
-    if (dataList.size() != 2048) {
-        qWarning() << "数据数量不匹配，期望2048个，实际得到" << dataList.size();
-        return points;
-    }
+//    if (dataList.size() != 2048) {
+//        qWarning() << "数据数量不匹配，期望2048个，实际得到" << dataList.size();
+//        return points;
+//    }
     
     // 转换为QPointF数组
     bool ok;

@@ -39,12 +39,12 @@ public:
 signals:
     void ConnectInstrumentSuccess(InstrumentType instrument);
     void ConnectInstrumentFail(InstrumentType instrument);
-    void TransferN9040BData(const QVector<QPointF> &data);
+    void TransferN9040BData(const QList<QPointF> data);
 
 public slots:
     bool connectToN9040B(const std::string &VisaAddress);
     void disconnectFromN9040B();
-    void readSA(QVector<QPointF> &data);
+    void readSA();
 
     bool connectToSMA100B(const std::string &VisaAddress);
     void disconnectFromSMA100B();

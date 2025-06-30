@@ -65,6 +65,15 @@ void SpectrumChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
 
 }
 
+void SpectrumChartWidget::handleRefreshChart(QList<QPointF> data) {
+    QVector<QPointF> chart_data;
+    sampleNum = data.size();
+        for (size_t i = 0; i < sampleNum; ++i) {
+            chart_data.append(data[i]);
+        }
+    this->updateWaveformData(chart_data);
+}
+
 void SpectrumChartWidget::handleRefreshSpectrum(std::vector<double> fft_data) {
     QVector<QPointF> chart_data;
 

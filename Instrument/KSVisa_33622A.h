@@ -40,13 +40,13 @@ private:
 
     std::string FreqToScientific(double freq) {
         std::ostringstream oss;
-        oss << std::showpos << std::uppercase << std::scientific << std::setprecision(1) << freq;
+        oss << std::showpos << std::uppercase << std::scientific << std::setprecision(8) << freq;
         return oss.str();
     }
 
     std::string AmplitudeToShowpos(double amp) {
         std::ostringstream oss;
-        oss << std::showpos << std::fixed << std::setprecision(1) << amp;
+        oss << std::showpos << std::fixed << std::setprecision(4) << amp;
         return oss.str();
     }
 };

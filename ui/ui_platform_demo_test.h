@@ -125,6 +125,7 @@ public:
     SpectrumChartWidget *chartWidget3;
     SpectrumChartWidget *chartWidget4;
     SpectrumChartWidget *chartWidget5;
+    SpectrumChartWidget *chartWidget6;
     QMenuBar *menubar;
     QStatusBar *statusbar;
     QMenu *menuFile;
@@ -273,7 +274,7 @@ public:
         DACFrequencySpinBox->setRange(0.1, 199.999); // 设置DAC频率范围为0.1MHz到100MHz
         DACFrequencySpinBox->setSingleStep(0.1); // 设置步长为0.1MHz
         DACFrequencySpinBox->setValue(10.0); // 默认值为10MHz
-        DACFrequencySpinBox->setDecimals(3); // 设置小数点后保留3位
+        DACFrequencySpinBox->setDecimals(5); // 设置小数点后保留3位
         auto* DACFrequencyUnitLabel = new QLabel("MHz", DynamicParamsDACGroupBox);
 
         auto* DACFrequencyLayout = new QHBoxLayout();
@@ -332,11 +333,13 @@ public:
         chartWidget3 = new SpectrumChartWidget;
         chartWidget4 = new SpectrumChartWidget;
         chartWidget5 = new SpectrumChartWidget;
+        chartWidget6 = new SpectrumChartWidget;
         chartGridWidget->addChart(chartWidget1);
         chartGridWidget->addChart(chartWidget2);
         chartGridWidget->addChart(chartWidget3);
         chartGridWidget->addChart(chartWidget4);
         chartGridWidget->addChart(chartWidget5);
+        chartGridWidget->addChart(chartWidget6);
 
         chartGridWidget->reorganizeCharts(); // 初始化图表布局
 

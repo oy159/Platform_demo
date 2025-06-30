@@ -38,6 +38,7 @@ public:
 signals:
     void clearADCData();
     void startOtherCaculate(CALIVOLTAGE_MODE CaliVoltageMode);
+    void TransferDACStaticData(const std::vector<double>& data);
 
 private slots:
     void handleInitializePlatform(const QString &DeviceName);
@@ -54,6 +55,8 @@ private slots:
     void handleADCTestAfterCali(CALIVOLTAGE_MODE CaliVoltageMode);
     
     void handleSetConfigForGenerator();
+    void handleStaticDACTest();
+    void handleDACSetValueSuccess();
 
 private:
     QVector<double> generateWaveformData(int count);
@@ -79,6 +82,7 @@ private:
     SpectrumChartWidget *chartWidget3;
     SpectrumChartWidget *chartWidget4;
     SpectrumChartWidget *chartWidget5;
+    SpectrumChartWidget *chartWidget6;
 
     InstrumentSourceManager *mInstrumentSourceManager;
     InstrumentType mADCUsedInstrumentType = UnknownInstrument;
@@ -88,8 +92,10 @@ private:
     std::vector<bool> mConnectToInstrumentFlag = {false, false, false, false}; // N9040B, KS3362A, SMA100B, KS34460A
 
     double sma100b_amp = 0;
-    double ks3362a_volt = 1.2;
+    double ks3362a_volt = 0.6;
     bool mUdpStartFlag = false;
+    int dac_value = 32768;
+    std::vector<double> DACStaticData;
 };
 
 
