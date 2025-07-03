@@ -1,6 +1,9 @@
 #ifndef PLATFORM_DEMO_PLATFORM_DEMO_TEST_H
 #define PLATFORM_DEMO_PLATFORM_DEMO_TEST_H
 
+#include <fstream>
+#include <vector>
+#include <iomanip> // 用于精度控制
 #include <QMainWindow>
 #include <QThread>
 #include "udpworker.h"
@@ -58,9 +61,15 @@ private slots:
     void handleStaticDACTest();
     void handleDACSetValueSuccess();
 
+    void handleDynamicDACTest();
+
 private:
     QVector<double> generateWaveformData(int count);
     void AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE mode);
+    uint16_t get_sorted_index_optimal(uint16_t input);
+    bool writeDACDataToCSV(const std::vector<double>& data, 
+                      const std::string& filename,
+                      int precision = 6);
 
 
     Ui::platform_demo_test *ui;
@@ -94,7 +103,7 @@ private:
     double sma100b_amp = 0;
     double ks3362a_volt = 0.6;
     bool mUdpStartFlag = false;
-    int dac_value = 32768;
+    int dac_value = 0;
     std::vector<double> DACStaticData;
 };
 

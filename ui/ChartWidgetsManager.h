@@ -118,6 +118,7 @@ private:
         "DNL Chart",
         "INL Chart",
         "Histogram Chart",
+        "DAC Static Chart",
         "N9040B Chart",
     };
 };

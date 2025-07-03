@@ -122,3 +122,25 @@ double KSVisa_34460A::readVoltage()
     }
 }
 
+
+double KSVisa_34460A::readDM3068Voltage()
+{
+    if (m_session == VI_NULL) {
+        qDebug() << "Not connected to instrument";
+        return 0.0;
+    }
+
+//    std::string command = "CONF:VOLT:DC 1";
+//    sendCommandWrite(command);
+//    command = "SAMP:COUN 1?";
+//    sendCommandWrite(command);
+    std::string command = ":MEASure:VOLTage:DC?";
+    std::string response = sendCommand(command);
+    
+    try {
+        return std::stod(response);
+    } catch (const std::invalid_argument& e) {
+        qDebug() << "Invalid response from instrument:" << response.c_str();
+        return 0.0;
+    }
+}

@@ -744,37 +744,64 @@ void platform_demo_test::handleStaticDACTest(){
     }
 
     if(mDeviceType != AD9142 && mDeviceType != AD9747) {
-        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        QMessageBox::warning(this, "Warning", "当前不是DAC设备，无法进行静态指标测试！");
         return;
     }
 
-    // todo: 从32768-65535，再32767-0设置DAC直流电压
     DACStaticData.resize(65536,0);
-    dac_value = 39600;
+    dac_value = 0;
     QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, dac_value));
 }
 
 
 void platform_demo_test::handleDACSetValueSuccess(){
-    // todo: 读电压表，存数据
-    double data = mInstrumentSourceManager->ks34460A->readVoltage();
+    // double data = mInstrumentSourceManager->ks34460A->readVoltage();
+    double data = mInstrumentSourceManager->ks34460A->readDM3068Voltage();
     qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
-
-
-    if(dac_value == 65535)
-        dac_value = 32767;
-    else if(dac_value == 0) {
+    
+    DACStaticData[get_sorted_index_optimal(dac_value)] = data;
+    if(dac_value == 65535){
         emit TransferDACStaticData(DACStaticData);
+        if(!writeDACDataToCSV(DACStaticData, "DACStaticData.csv", 6)) {
+            QMessageBox::warning(this, "Warning", "写入CSV文件失败！");
+        }
         return;
     }
-
-    if(dac_value > 32767) {
-        DACStaticData[dac_value - 32768] = data;
-        dac_value++;
-    }
-    else {
-        DACStaticData[dac_value + 32768] = data;
-        dac_value--;
-    }
+    dac_value++;
     QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, dac_value));
+}
+
+void platform_demo_test::handleDynamicDACTest(){
+    // todo: 动态DAC测试
+}
+
+
+
+uint16_t platform_demo_test::get_sorted_index_optimal(uint16_t input) {
+    // 一步完成转换：
+    // 1. 将uint16重新解释为int16（补码转换）
+    // 2. 加上32768偏移量（-32768→0, 0→32768, 32767→65535）
+    return static_cast<uint16_t>(static_cast<int16_t>(input) + 32768);
+}
+
+bool platform_demo_test::writeDACDataToCSV(const std::vector<double>& data, 
+                      const std::string& filename,
+                      int precision = 6) {
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << std::endl;
+        return false;
+    }
+
+    // 设置输出精度和固定小数点表示
+    outFile << std::fixed << std::setprecision(precision);
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        outFile << data[i];
+        // 每行一个数据（如需逗号分隔则改为 << ","）
+        outFile << "\n"; 
+    }
+
+    outFile.close();
+    return true;
 }

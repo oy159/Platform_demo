@@ -25,6 +25,7 @@ public:
 
     std::string getID();
     double readVoltage();
+    double readDM3068Voltage();
 
 private:
     ViSession m_defaultRM;
