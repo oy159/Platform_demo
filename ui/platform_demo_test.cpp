@@ -756,11 +756,12 @@ void platform_demo_test::handleStaticDACTest(){
 
 void platform_demo_test::handleDACSetValueSuccess(){
     // double data = mInstrumentSourceManager->ks34460A->readVoltage();
+    QThread::msleep(2000);
     double data = mInstrumentSourceManager->ks34460A->readDM3068Voltage();
     qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
     
     DACStaticData[get_sorted_index_optimal(dac_value)] = data;
-    if(dac_value == 65535){
+    if(dac_value == 1000){
         emit TransferDACStaticData(DACStaticData);
         if(!writeDACDataToCSV(DACStaticData, "DACStaticData.csv", 6)) {
             QMessageBox::warning(this, "Warning", "写入CSV文件失败！");
@@ -786,7 +787,7 @@ uint16_t platform_demo_test::get_sorted_index_optimal(uint16_t input) {
 
 bool platform_demo_test::writeDACDataToCSV(const std::vector<double>& data, 
                       const std::string& filename,
-                      int precision = 6) {
+                      int precision) {
     std::ofstream outFile(filename);
     if (!outFile.is_open()) {
         std::cerr << "Error: Could not open file " << filename << std::endl;
