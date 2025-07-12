@@ -305,15 +305,16 @@ void CaculateParams::caculateDACStaticParams()
     double offset = (K2 - gain * K3) / N;
 
     // 计算 DNL 和 INL
-    DACDNL.resize(N, 0.0);
-    DACINL.resize(N, 0.0);
+    
+    DACDNL.resize(N-1, 0.0);
+    DACINL.resize(N-1, 0.0);
 
-    for (int i = 0; i < N; ++i) {
-        DACDNL[i] = dacStaticData[i]/gain - 1;
-        if (i == 0) {
-            DACINL[i] = DACDNL[i];
+    for (int i = 1; i < N; ++i) {
+        DACDNL[i-1] = (dacStaticData[i] - dacStaticData[i-1])/gain - 1;
+        if (i - 1 == 0) {
+            DACINL[i-1] = DACDNL[i-1];
         } else {
-            DACINL[i] = DACINL[i - 1] + DACDNL[i];
+            DACINL[i - 1] = DACINL[i - 2] + DACDNL[i - 1];
         }
     }
 

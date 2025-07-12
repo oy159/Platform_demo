@@ -98,19 +98,23 @@ std::string KeySightVisa_N9040B::getID() {
 }
 
 void KeySightVisa_N9040B::defineStartFreq(int freq) {
-    sendCommandWrite(":SENSe:FREQuency:STARt " + std::to_string(freq) + "\n");
+    sendCommandWrite(":SENSe:FREQuency:STARt " + std::to_string(freq) + "\n"); // general
 }
 
 void KeySightVisa_N9040B::defineStopFreq(int freq) {
-    sendCommandWrite(":SENSe:FREQuency:STOP " + std::to_string(freq) + "\n");
+    sendCommandWrite(":SENSe:FREQuency:STOP " + std::to_string(freq) + "\n"); // general
 }
 
 void KeySightVisa_N9040B::defineRefLevel(double RefLeveldbm) {
-    sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel " + std::to_string(RefLeveldbm) + "\n");
+#ifdef USE_RSA3030N
+    sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel:OFFSet " + std::to_string(RefLeveldbm) + "\n"); // RSA3030N
+#else
+    sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel " + std::to_string(RefLeveldbm) + "\n"); // N9040B
+#endif
 }
 
 std::string KeySightVisa_N9040B::readX() {
-    return sendCommandQuery(":CALCulate:Marker1:X?\n");
+    return sendCommandQuery(":CALCulate:Marker1:X?\n");     // general
 }
 
 void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
@@ -122,19 +126,19 @@ void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
     {
     case  PeakSearch:
         /* code */
-        sendCommandWrite(":CALCulate:Marker1:maximum:PEAK\n");
+        sendCommandWrite(":CALCulate:Marker1:MAXimum:PEAK\n");
         break;
 
     case NextSearch:
-        sendCommandWrite(":CALCulate:Marker1:maximum:NEXT\n");
+        sendCommandWrite(":CALCulate:Marker1:MAXimum:NEXT\n");
         break;
 
     case RightSearch:
-        sendCommandWrite(":CALCulate:Marker1:maximum:RIGHt\n");
+        sendCommandWrite(":CALCulate:Marker1:MAXimum:RIGHt\n");
         break;
 
     case LeftSearch:
-        sendCommandWrite(":CALCulate:Marker1:maximum:LEFT\n");
+        sendCommandWrite(":CALCulate:Marker1:MAXimum:LEFT\n");
         break;
     
     default:

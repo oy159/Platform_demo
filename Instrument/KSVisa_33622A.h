@@ -32,7 +32,16 @@ public:
     void setOffsetVoltage(int source, double Voltage);
     void setHighVoltage(int source, double Voltage);
     void setLowVoltage(int source, double Voltage);
+
+    void setAMDSSC(int source, bool on);
+    void setAMSource(int source, std::string choice = "INTernal");
+    void setAMDepth(int source, int depth);
+
+    void setAMInternalFunc(int source, std::string func);
+    void setAMInternalFreq(int source, double freq);
+    void setAMOutputStatus(int source, bool on);
     
+    void setTwoTone(int channel, double voltage);
 
 private:
     ViSession m_defaultRM;
