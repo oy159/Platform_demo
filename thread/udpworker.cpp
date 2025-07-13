@@ -17,7 +17,7 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
     if (udpSocket->state() == QAbstractSocket::UnconnectedState) {
         udpSocket->abort();
     }
-    if (!udpSocket->bind(QHostAddress::Any, local_port)) {
+    if (!udpSocket->bind(QHostAddress("192.168.1.20"), local_port)) {
         emit errorOccurred("Failed to bind to local port");
         return;
     }
@@ -59,6 +59,9 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         }else if(datagram.contains("AD9142")){
             emit initializePlatform("AD9142");
             mdeviceType = AD9142;
+        }else if(datagram.contains("AD9747")){
+            emit initializePlatform("AD9747");
+            mdeviceType = AD9747;
         }
 
     }

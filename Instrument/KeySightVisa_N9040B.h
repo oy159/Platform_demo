@@ -7,6 +7,10 @@
 #include <visa.h>
 #include <memory>
 #include <QPointF>
+#include <sstream>
+#include <iomanip>
+
+#define USE_RSA3030N
 
 typedef enum{
     PeakSearch = 0,
@@ -30,7 +34,12 @@ public:
     void defineStartFreq(int freq);
     void defineStopFreq(int freq);
     void defineRefLevel(double RefLeveldbm);
-    std::string readX();
+    void defineRBW(int freq);
+    void defineVBW(int freq);
+    double readMarker1Freq();
+    double readMarker1Amp();
+    void defineRFAttenuation(int dbm);
+
     void peakSearch(PeakSearchMode mode = PeakSearch);
     QVector<QPointF> readSA();
 
@@ -38,7 +47,15 @@ public:
     ViSession m_session;
 
 private:
+    std::string readMarker1X();
+    std::string readMarker1Y();
     QVector<QPointF> convertSpectrumDataToQPoints(const char* buffer, int bufferSize);
+    double ScientificToFreq(const std::string& str) {
+        std::istringstream iss(str);
+        double freq;
+        iss >> std::scientific >> freq;
+        return freq;
+    }
     
 };
 

@@ -107,14 +107,18 @@ void KeySightVisa_N9040B::defineStopFreq(int freq) {
 
 void KeySightVisa_N9040B::defineRefLevel(double RefLeveldbm) {
 #ifdef USE_RSA3030N
-    sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel:OFFSet " + std::to_string(RefLeveldbm) + "\n"); // RSA3030N
+    sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel " + std::to_string(RefLeveldbm) + "\n"); // RSA3030N
 #else
     sendCommandWrite(":DISPlay:WINDow:TRACe:Y:SCALe:RLEVel " + std::to_string(RefLeveldbm) + "\n"); // N9040B
 #endif
 }
 
-std::string KeySightVisa_N9040B::readX() {
+std::string KeySightVisa_N9040B::readMarker1X() {
     return sendCommandQuery(":CALCulate:Marker1:X?\n");     // general
+}
+
+std::string KeySightVisa_N9040B::readMarker1Y() {
+    return sendCommandQuery(":CALCulate:Marker1:Y?\n");     // general
 }
 
 void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
@@ -126,11 +130,19 @@ void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
     {
     case  PeakSearch:
         /* code */
+#ifdef USE_RSA3030N
+        sendCommandWrite(":CALCulate:MARKer1:MAXimum:MAX\n");    // RSA303N
+#else
         sendCommandWrite(":CALCulate:Marker1:MAXimum:PEAK\n");
+#endif
         break;
 
     case NextSearch:
-        sendCommandWrite(":CALCulate:Marker1:MAXimum:NEXT\n");
+#ifdef USE_RSA3030N
+            sendCommandWrite(":CALCulate:Marker1:MAXimum:NEXT\n");    // RSA303N
+#else
+            sendCommandWrite(":CALCulate:Marker1:MAXimum:NEXT\n");
+#endif
         break;
 
     case RightSearch:
@@ -146,14 +158,14 @@ void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
         break;
     }
 
-    std::string dataString = readX();
-    qDebug() << "Peak Search Result:" << QString::fromStdString(dataString);
+    std::string dataString = readMarker1X();
+    qDebug() << "Peak Search Result:" << ScientificToFreq(dataString);
 
     // dataSting 格式
 
 
-    //        :SENSe:BANDwidth:RESoulution:AUTO 0/1
-    //        :SENSe:BANDwidth:RESoulution 30000       // RBW
+    //        :SENSe:BANDwidth:RESolution:AUTO 0/1
+    //        :SENSe:BANDwidth:RESolution 30000       // RBW
 
     //        :SENSe:BANDwidth:VIDeo:AUTO 0/1
     //         :SENSe:BANDwidth:VIDeo 30000            //VBW
@@ -167,6 +179,21 @@ void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
     //          :SENSE:SWEep:POINts 2048        // 点数
 }
 
+void KeySightVisa_N9040B::defineRBW(int freq){
+#ifdef USE_RSA3030N
+    sendCommandWrite(":SENSe:BANDwidth:RESolution " + std::to_string(freq) + "\n");    // RSA303N
+#else
+    sendCommandWrite(":SENSe:BANDwidth:RESolution " + std::to_string(freq) + "\n");
+#endif
+}
+
+void KeySightVisa_N9040B::defineVBW(int freq){
+#ifdef USE_RSA3030N
+    sendCommandWrite(":SENSe:BANDwidth:VIDeo " + std::to_string(freq) + "\n");    // RSA303N
+#else
+    sendCommandWrite(":SENSe:BANDwidth:VIDeo " + std::to_string(freq) + "\n");
+#endif
+}
 
 QVector<QPointF> KeySightVisa_N9040B::readSA(){
     std::string command = ":READ:SANalyzer1?\n";
@@ -240,6 +267,20 @@ QVector<QPointF> KeySightVisa_N9040B::convertSpectrumDataToQPoints(const char* b
     }
     
     return points;
+}
+
+double KeySightVisa_N9040B::readMarker1Freq() {
+    return ScientificToFreq(readMarker1X());
+}
+
+double KeySightVisa_N9040B::readMarker1Amp() {
+    return ScientificToFreq(readMarker1Y());
+}
+
+void KeySightVisa_N9040B::defineRFAttenuation(int dbm) {
+#ifdef USE_RSA3030N
+    sendCommandWrite(":SENSe:POWer:RF:ATTenuation " + std::to_string(dbm) + "\n"); // RSA3030N
+#endif
 }
 
 

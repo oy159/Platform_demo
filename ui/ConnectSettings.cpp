@@ -44,7 +44,9 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
 
     auto *SpectrumResourceLabel = new QLabel("频谱仪资源:", SpectrumResourceGroupBox);
     SpectrumResourceLineEdit = new QLineEdit(SpectrumResourceGroupBox);
-    SpectrumResourceLineEdit->setText("TCPIP0::K-N9040B-70101.local::hislip0::INSTR");
+//    SpectrumResourceLineEdit->setText("TCPIP0::K-N9040B-70101.local::hislip0::INSTR");
+    SpectrumResourceLineEdit->setText("TCPIP::192.168.1.4::INSTR");
+
     DetectSpectrumBtn = new QPushButton("Detect", SpectrumResourceGroupBox);
 
     SpectrumResourceLayout->addWidget(SpectrumResourceLabel);

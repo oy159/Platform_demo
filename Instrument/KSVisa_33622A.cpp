@@ -159,7 +159,7 @@ void KeySightVisa_33622A::setAMDSSC(int source, bool on) {
     sendCommandWrite(command);
 }
 
-void KeySightVisa_33622A::setAMSource(int source, std::string choice = "INTernal") {
+void KeySightVisa_33622A::setAMSource(int source, std::string choice) {
     std::string command = "SOURce" + std::to_string(source) + ":AM:SOURce " + choice + "\n";
     sendCommandWrite(command);
 }

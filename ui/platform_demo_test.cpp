@@ -104,8 +104,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
             case InstrumentType::N9040B:
                 ui->connectSettings->DetectSpectrumBtn->setText("连接成功");
                 mConnectToInstrumentFlag[0] = true;
-                QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
-                                          Qt::QueuedConnection);
+//                QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
+//                                          Qt::QueuedConnection);
                 break;
             case InstrumentType::KS3362A:
                 ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
@@ -267,9 +267,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
             // todo:需修改逻辑
 //             QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32768));
-            QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,1));
-
-
+            QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,0));
         }else{
             QMessageBox::warning(this, "Warning", "当前不是DAC！");
             return;
@@ -278,6 +276,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(ui->staticParamsDACTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticDACTest);
     connect(mUdpWorker, &UdpWorker::DACValueSetSuccess, this, &platform_demo_test::handleDACSetValueSuccess);
+
+
+    connect(ui->dynamicParamsDACTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicDACTest);
 
 //    connect(mInstrumentSourceManager, &InstrumentSourceManager::TransferN9040BData, this, [=](){
 //
@@ -328,6 +329,9 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
         mUdpStartFlag = true;
     }else if(DeviceName == "AD9142"){
         mDeviceType = DeviceType::AD9142;
+        mUdpStartFlag = true;
+    }else if(DeviceName == "AD9747"){
+        mDeviceType = DeviceType::AD9747;
         mUdpStartFlag = true;
     }else{
         qDebug() << "Unknown device type!";
@@ -756,12 +760,12 @@ void platform_demo_test::handleStaticDACTest(){
 
 void platform_demo_test::handleDACSetValueSuccess(){
     // double data = mInstrumentSourceManager->ks34460A->readVoltage();
-    QThread::msleep(2000);
+//    QThread::msleep(2000);
     double data = mInstrumentSourceManager->ks34460A->readDM3068Voltage();
     qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
     
     DACStaticData[get_sorted_index_optimal(dac_value)] = data;
-    if(dac_value == 1000){
+    if(dac_value == 65535){
         emit TransferDACStaticData(DACStaticData);
         if(!writeDACDataToCSV(DACStaticData, "DACStaticData.csv", 6)) {
             QMessageBox::warning(this, "Warning", "写入CSV文件失败！");
@@ -774,6 +778,28 @@ void platform_demo_test::handleDACSetValueSuccess(){
 
 void platform_demo_test::handleDynamicDACTest(){
     // todo: 动态DAC测试
+    int freq = (int)((double)ui->DACFrequencySpinBox->value() * 1e6);
+
+    mInstrumentSourceManager->n9040B->defineStartFreq(freq/10);
+    mInstrumentSourceManager->n9040B->defineStopFreq(freq*10);
+    mInstrumentSourceManager->n9040B->defineRBW(1e4);
+    mInstrumentSourceManager->n9040B->defineVBW(1e4);
+    mInstrumentSourceManager->n9040B->defineRFAttenuation(10);
+    mInstrumentSourceManager->n9040B->defineRefLevel(0);
+    QThread::msleep(3000);
+    mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::PeakSearch);
+    double peakFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
+    double peakAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
+    mInstrumentSourceManager->n9040B->defineRFAttenuation(0);
+    mInstrumentSourceManager->n9040B->defineRefLevel(0);
+    QThread::msleep(3000);
+    mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::NextSearch);
+    double nextFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
+    double nextAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
+    qDebug() << "峰值幅度是" << peakAmp << "nextAmp is" << nextAmp << "SFDR is" << peakAmp + 10 - nextAmp;
+
+    QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
+                          Qt::QueuedConnection);
 }
 
 
