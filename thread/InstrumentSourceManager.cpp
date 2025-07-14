@@ -121,6 +121,95 @@ void InstrumentSourceManager::readSA() {
     }
 }
 
+
+void InstrumentSourceManager::dynamicDacInstrumentsControl(dynamicDACTestStep step, int fundFreq){
+    switch (step) {
+        case CaculateSFDR:
+            qDebug() << "Caculating SFDR";
+            // todo:
+            // 获取基频具体位置和幅度
+            peakFreq.clear();
+            peakAmp.clear();
+
+            n9040B->defineStartFreq(fundFreq - 1e5);
+            n9040B->defineStopFreq(fundFreq + 1e5);
+            n9040B->defineRBW(1e3);
+            n9040B->defineVBW(1e4);
+            n9040B->defineRFAttenuation(10);
+            n9040B->defineRefLevel(0);
+            QThread::msleep(100);
+            n9040B->peakSearch(PeakSearchMode::PeakSearch);
+            peakFreq.push_back(n9040B->readMarker1Freq());
+            peakAmp.push_back(n9040B->readMarker1Amp() + 10);
+
+            for(int i = 2; i <= HARMONIC_NUMBER; i++){
+                n9040B->defineStartFreq(fundFreq * i - 1e5);
+                n9040B->defineStopFreq(fundFreq * i + 1e5);
+                n9040B->defineRBW(1e3);
+                n9040B->defineVBW(1e4);
+                n9040B->defineRFAttenuation(0);
+                n9040B->defineRefLevel(0);
+                QThread::msleep(100);
+                n9040B->setMarker1X(fundFreq * i);
+                n9040B->peakSearch(PeakSearchMode::PeakSearch);
+                peakFreq.push_back(n9040B->readMarker1Freq());
+                peakAmp.push_back(n9040B->readMarker1Amp()); // 10dB的衰减
+                qDebug() << "Harmonic" << i << "Frequency:" << peakFreq[i-1] << "Amplitude:" << peakAmp[i-1];
+            }
+            Harmonic_Finished = true;
+            break;
+        case CaculateTHD:
+            qDebug() << "Caculating THD";
+            // todo:
+            if(!Harmonic_Finished){
+                peakFreq.clear();
+                peakAmp.clear();
+
+                n9040B->defineStartFreq(fundFreq - 1e5);
+                n9040B->defineStopFreq(fundFreq + 1e5);
+                n9040B->defineRBW(1e3);
+                n9040B->defineVBW(1e4);
+                n9040B->defineRFAttenuation(10);
+                n9040B->defineRefLevel(0);
+                QThread::msleep(100);
+                n9040B->peakSearch(PeakSearchMode::PeakSearch);
+                peakFreq.push_back(n9040B->readMarker1Freq());
+                peakAmp.push_back(n9040B->readMarker1Amp() + 10);
+
+                for(int i = 2; i <= HARMONIC_NUMBER; i++){
+                    n9040B->defineStartFreq(fundFreq * i - 1e5);
+                    n9040B->defineStopFreq(fundFreq * i + 1e5);
+                    n9040B->defineRBW(1e3);
+                    n9040B->defineVBW(1e4);
+                    n9040B->defineRFAttenuation(0);
+                    n9040B->defineRefLevel(0);
+                    QThread::msleep(100);
+                    n9040B->setMarker1X(fundFreq * i);
+                    n9040B->peakSearch(PeakSearchMode::PeakSearch);
+                    peakFreq.push_back(n9040B->readMarker1Freq());
+                    peakAmp.push_back(n9040B->readMarker1Amp()); // 10dB的衰减
+                    qDebug() << "Harmonic" << i << "Frequency:" << peakFreq[i-1] << "Amplitude:" << peakAmp[i-1];
+                }
+                Harmonic_Finished = true;
+            }
+            
+            double thd = peakAmp[0] / (std::accumulate(peakAmp.begin() + 1, peakAmp.begin() + HARMONIC_NUMBER, 0.0));
+            qDebug() << "Thd is" << thd;
+            break;
+        case CaculateIMD:
+            qDebug() << "Caculating IMD";
+            // todo:
+            break;
+        default:
+            qDebug() << "Unknown dynamic DAC test step";
+            break;
+    }
+}
+
+
+
+
+
 std::vector<std::string> InstrumentSourceManager::findAllVisaResources() {
     std::vector<std::string> resources;
 

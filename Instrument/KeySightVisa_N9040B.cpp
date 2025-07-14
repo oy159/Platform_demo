@@ -283,6 +283,14 @@ void KeySightVisa_N9040B::defineRFAttenuation(int dbm) {
 #endif
 }
 
+void KeySightVisa_N9040B::setMarker1X(int hz)
+{
+#ifdef USE_RSA3030N
+    sendCommandWrite(":CALCulate:MARKer1:X " + std::to_string(hz) + "\n"); // RSA3030N
+#else
+    sendCommandWrite(":CALCulate:MARKer1:X " + std::to_string(hz) + "\n");
+#endif
+}
 
 // // 生成模拟频谱数据 (1024个点，2048个值)
 // std::string generateSpectrumData() {

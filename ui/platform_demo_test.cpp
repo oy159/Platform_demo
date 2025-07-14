@@ -780,26 +780,26 @@ void platform_demo_test::handleDynamicDACTest(){
     // todo: 动态DAC测试
     int freq = (int)((double)ui->DACFrequencySpinBox->value() * 1e6);
 
-    mInstrumentSourceManager->n9040B->defineStartFreq(freq/10);
-    mInstrumentSourceManager->n9040B->defineStopFreq(freq*10);
-    mInstrumentSourceManager->n9040B->defineRBW(1e4);
-    mInstrumentSourceManager->n9040B->defineVBW(1e4);
-    mInstrumentSourceManager->n9040B->defineRFAttenuation(10);
-    mInstrumentSourceManager->n9040B->defineRefLevel(0);
-    QThread::msleep(3000);
-    mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::PeakSearch);
-    double peakFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
-    double peakAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
-    mInstrumentSourceManager->n9040B->defineRFAttenuation(0);
-    mInstrumentSourceManager->n9040B->defineRefLevel(0);
-    QThread::msleep(3000);
-    mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::NextSearch);
-    double nextFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
-    double nextAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
-    qDebug() << "峰值幅度是" << peakAmp << "nextAmp is" << nextAmp << "SFDR is" << peakAmp + 10 - nextAmp;
+    // mInstrumentSourceManager->n9040B->defineStartFreq(freq/10);
+    // mInstrumentSourceManager->n9040B->defineStopFreq(freq*10);
+    // mInstrumentSourceManager->n9040B->defineRBW(1e4);
+    // mInstrumentSourceManager->n9040B->defineVBW(1e4);
+    // mInstrumentSourceManager->n9040B->defineRFAttenuation(10);
+    // mInstrumentSourceManager->n9040B->defineRefLevel(0);
+    // QThread::msleep(3000);
+    // mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::PeakSearch);
+    // double peakFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
+    // double peakAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
+    // mInstrumentSourceManager->n9040B->defineRFAttenuation(0);
+    // mInstrumentSourceManager->n9040B->defineRefLevel(0);
+    // QThread::msleep(3000);
+    // mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::NextSearch);
+    // double nextFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
+    // double nextAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
+    // qDebug() << "峰值幅度是" << peakAmp << "nextAmp is" << nextAmp << "SFDR is" << peakAmp + 10 - nextAmp;
 
-    QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
-                          Qt::QueuedConnection);
+    QMetaObject::invokeMethod(mInstrumentSourceManager, "dynamicDacInstrumentsControl",
+                          Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateSFDR), Q_ARG(int, freq));
 }
 
 

@@ -12,6 +12,12 @@
 #include "KSVisa_34460A.h"
 #include "TCPInstrument.h"
 #include "QDebug"
+#include "QThread"
+#include <vector>
+#include <numeric>
+
+
+#define HARMONIC_NUMBER 5
 
 typedef enum{
     N9040B = 0,
@@ -20,6 +26,14 @@ typedef enum{
     KS34460A = 3,
     UnknownInstrument = 4
 } InstrumentType;
+
+
+typedef enum{
+    CaculateSFDR = 0,
+    CaculateTHD = 1,
+    CaculateIMD = 2,
+} dynamicDACTestStep;
+
 
 class InstrumentSourceManager : public QObject{
 Q_OBJECT
@@ -56,6 +70,9 @@ public slots:
     bool connectTo3362A(const std::string &VisaAddress);
     void disconnectFrom3362A();
     
+
+    void dynamicDacInstrumentsControl(dynamicDACTestStep step = CaculateSFDR, int fundFreq = 1e7);
+    
     
 
 private:
@@ -65,6 +82,10 @@ private:
 
 
     TCPInstrument *tcpInstrument;
+
+    std::vector<double> peakFreq;
+    std::vector<double> peakAmp;
+    bool Harmonic_Finished = false;
 };
 
 

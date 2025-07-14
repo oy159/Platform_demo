@@ -40,6 +40,8 @@ public:
     double readMarker1Amp();
     void defineRFAttenuation(int dbm);
 
+    void setMarker1X(int hz);
+
     void peakSearch(PeakSearchMode mode = PeakSearch);
     QVector<QPointF> readSA();
 
