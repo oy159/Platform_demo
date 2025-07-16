@@ -107,14 +107,23 @@ void InstrumentSourceManager::disconnectFrom3362A() {
 }
 
 
-void InstrumentSourceManager::readSA() {
+void InstrumentSourceManager::readSA(int freq) {
     if (n9040B->m_session == VI_NULL) {
         qDebug() << "N9040B is not connected";
         return;
     }
+
+    n9040B->defineStartFreq(freq / 10);
+    n9040B->defineStopFreq(freq*10);
+    n9040B->defineRBW(1e5);
+    n9040B->defineVBW(1e5);
+    n9040B->defineRFAttenuation(0);
+    n9040B->defineRefLevel(0);
+    QThread::msleep(1000);
     QList<QPointF> data;
     try {
         data = n9040B->readSA();
+        n9040B->defineContinuous(true);
         emit TransferN9040BData(data);
     } catch (const std::runtime_error &e) {
         qDebug() << "Error reading SA data:" << e.what();
@@ -123,86 +132,139 @@ void InstrumentSourceManager::readSA() {
 
 
 void InstrumentSourceManager::dynamicDacInstrumentsControl(dynamicDACTestStep step, int fundFreq){
+    int offsetFreq = 500;
+    double refLevel = 0;
+    const int RBW = 10;
+    const int VBW = 10;
+
+    auto configureSpectrumAnalyzer = [&](int centerFreq) {
+        n9040B->defineStartFreq(centerFreq - offsetFreq);
+        n9040B->defineStopFreq(centerFreq + offsetFreq);
+        n9040B->defineRBW(RBW);
+        n9040B->defineVBW(VBW);
+        n9040B->defineRFAttenuation(0);
+        n9040B->defineRefLevel(refLevel);
+        QThread::msleep(2000); // Allow settling time
+    };
+
+    auto measurePeak = [&](int expectedFreq = 0) {
+        if (expectedFreq > 0) {
+            n9040B->setMarker1X(expectedFreq);
+        }
+        n9040B->peakSearch(PeakSearchMode::PeakSearch);
+        return std::make_pair(n9040B->readMarker1Freq(), n9040B->readMarker1Amp());
+    };
+
     switch (step) {
-        case CaculateSFDR:
-            qDebug() << "Caculating SFDR";
-            // todo:
-            // 获取基频具体位置和幅度
+        case CaculateSFDR: {
+            qDebug() << "Calculating SFDR";
             peakFreq.clear();
             peakAmp.clear();
 
-            n9040B->defineStartFreq(fundFreq - 1e5);
-            n9040B->defineStopFreq(fundFreq + 1e5);
-            n9040B->defineRBW(1e3);
-            n9040B->defineVBW(1e4);
-            n9040B->defineRFAttenuation(10);
-            n9040B->defineRefLevel(0);
-            QThread::msleep(100);
-            n9040B->peakSearch(PeakSearchMode::PeakSearch);
-            peakFreq.push_back(n9040B->readMarker1Freq());
-            peakAmp.push_back(n9040B->readMarker1Amp() + 10);
+            // Measure fundamental frequency
+            configureSpectrumAnalyzer(fundFreq);
+            auto [freq, amp] = measurePeak();
+            peakFreq.push_back(freq);
+            peakAmp.push_back(amp);
 
-            for(int i = 2; i <= HARMONIC_NUMBER; i++){
-                n9040B->defineStartFreq(fundFreq * i - 1e5);
-                n9040B->defineStopFreq(fundFreq * i + 1e5);
-                n9040B->defineRBW(1e3);
-                n9040B->defineVBW(1e4);
-                n9040B->defineRFAttenuation(0);
-                n9040B->defineRefLevel(0);
-                QThread::msleep(100);
-                n9040B->setMarker1X(fundFreq * i);
-                n9040B->peakSearch(PeakSearchMode::PeakSearch);
-                peakFreq.push_back(n9040B->readMarker1Freq());
-                peakAmp.push_back(n9040B->readMarker1Amp()); // 10dB的衰减
-                qDebug() << "Harmonic" << i << "Frequency:" << peakFreq[i-1] << "Amplitude:" << peakAmp[i-1];
+            // Measure harmonics
+            for (int i = 2; i <= HARMONIC_NUMBER; i++) {
+                configureSpectrumAnalyzer(fundFreq * i);
+                auto [harmonicFreq, harmonicAmp] = measurePeak();
+                peakFreq.push_back(harmonicFreq);
+                peakAmp.push_back(harmonicAmp);
+                qDebug() << "Harmonic" << i << "Frequency:" << harmonicFreq << "Amplitude:" << harmonicAmp;
             }
+
             Harmonic_Finished = true;
+            auto maxHarmonicAmp = *std::max_element(peakAmp.begin() + 1, peakAmp.end());
+            double sfdr = peakAmp[0] - maxHarmonicAmp;
+            qDebug() << "SFDR is" << sfdr << "dB";
             break;
-        case CaculateTHD:
-            qDebug() << "Caculating THD";
-            // todo:
-            if(!Harmonic_Finished){
+        }
+
+        case CaculateTHD: {
+            qDebug() << "Calculating THD";
+
+            if (!Harmonic_Finished) {
                 peakFreq.clear();
                 peakAmp.clear();
 
-                n9040B->defineStartFreq(fundFreq - 1e5);
-                n9040B->defineStopFreq(fundFreq + 1e5);
-                n9040B->defineRBW(1e3);
-                n9040B->defineVBW(1e4);
-                n9040B->defineRFAttenuation(10);
-                n9040B->defineRefLevel(0);
-                QThread::msleep(100);
-                n9040B->peakSearch(PeakSearchMode::PeakSearch);
-                peakFreq.push_back(n9040B->readMarker1Freq());
-                peakAmp.push_back(n9040B->readMarker1Amp() + 10);
+                // Measure fundamental frequency
+                configureSpectrumAnalyzer(fundFreq);
+                auto [freq, amp] = measurePeak();
+                peakFreq.push_back(freq);
+                peakAmp.push_back(amp);
 
-                for(int i = 2; i <= HARMONIC_NUMBER; i++){
-                    n9040B->defineStartFreq(fundFreq * i - 1e5);
-                    n9040B->defineStopFreq(fundFreq * i + 1e5);
-                    n9040B->defineRBW(1e3);
-                    n9040B->defineVBW(1e4);
-                    n9040B->defineRFAttenuation(0);
-                    n9040B->defineRefLevel(0);
-                    QThread::msleep(100);
-                    n9040B->setMarker1X(fundFreq * i);
-                    n9040B->peakSearch(PeakSearchMode::PeakSearch);
-                    peakFreq.push_back(n9040B->readMarker1Freq());
-                    peakAmp.push_back(n9040B->readMarker1Amp()); // 10dB的衰减
-                    qDebug() << "Harmonic" << i << "Frequency:" << peakFreq[i-1] << "Amplitude:" << peakAmp[i-1];
+                // Measure harmonics
+                for (int i = 2; i <= HARMONIC_NUMBER; i++) {
+                    configureSpectrumAnalyzer(fundFreq * i);
+                    auto [harmonicFreq, harmonicAmp] = measurePeak();
+                    peakFreq.push_back(harmonicFreq);
+                    peakAmp.push_back(harmonicAmp);
+                    qDebug() << "Harmonic" << i << "Frequency:" << harmonicFreq << "Amplitude:" << harmonicAmp;
                 }
                 Harmonic_Finished = true;
             }
-            
-            double thd = peakAmp[0] / (std::accumulate(peakAmp.begin() + 1, peakAmp.begin() + HARMONIC_NUMBER, 0.0));
-            qDebug() << "Thd is" << thd;
+
+            // Convert dBm to linear power (mW) for THD calculation
+            double fundamentalPower = std::pow(10.0, peakAmp[0] / 10.0);
+            double sumHarmonicPower = 0.0;
+
+            for (size_t i = 1; i < peakAmp.size(); i++) {
+                sumHarmonicPower += std::pow(10.0, peakAmp[i] / 10.0);
+            }
+
+            double thd = 100.0 * std::sqrt(sumHarmonicPower / fundamentalPower); // THD in percentage
+            qDebug() << "THD is" << thd << "%";
             break;
-        case CaculateIMD:
-            qDebug() << "Caculating IMD";
-            // todo:
+        }
+
+        case CaculateIMD: {
+            qDebug() << "Calculating IMD";
+            const int freq1 = fundFreq;
+            const int freq2 = fundFreq + 1e6;
+
+            // Calculate IMD frequencies
+            ImdFreq = {
+                    freq1,                      // Fundamental 1
+                    freq2,                      // Fundamental 2
+                    freq2 - freq1,              // Difference tone (2nd order)
+                    freq1 + freq2,              // Sum tone (2nd order)
+                    2 * freq2 - freq1,          // 3rd order IMD (lower)
+                    2 * freq1 - freq2,          // 3rd order IMD (upper)
+                    2 * freq2 + freq1,          // 3rd order sum (usually not measured)
+                    2 * freq1 + freq2           // 3rd order sum (usually not measured)
+            };
+
+            ImdAmp.clear();
+
+            // Measure all IMD components
+            for (int freq : ImdFreq) {
+                configureSpectrumAnalyzer(freq);
+                auto [measuredFreq, amp] = measurePeak(freq);
+                ImdAmp.push_back(amp);
+                qDebug() << "IMD Component at" << freq << "Hz: Amplitude =" << amp << "dBm";
+            }
+
+            // Calculate IMD3 (3rd order intermodulation distortion)
+            // Typically calculated as the average of the two 3rd order products
+            double imd3 = *std::max_element(ImdAmp.begin() + 4, ImdAmp.end());
+
+            // Calculate IMD relative to fundamentals
+            double fundAvg = (ImdAmp[0] + ImdAmp[1]) / 2.0;
+            double imd3Relative = fundAvg - imd3;
+
+//            qDebug() << "IMD3 products at" << ImdFreq[4] << "Hz and" << ImdFreq[5] << "Hz";
+            qDebug() << "Max IMD3 level:" << imd3 << "dBm";
+            qDebug() << "IMD3 relative to fundamentals:" << imd3Relative << "dB";
             break;
-        default:
+        }
+
+        default: {
             qDebug() << "Unknown dynamic DAC test step";
             break;
+        }
     }
 }
 

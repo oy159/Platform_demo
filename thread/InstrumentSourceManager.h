@@ -58,7 +58,7 @@ signals:
 public slots:
     bool connectToN9040B(const std::string &VisaAddress);
     void disconnectFromN9040B();
-    void readSA();
+    void readSA(int freq);
 
     bool connectToSMA100B(const std::string &VisaAddress);
     void disconnectFromSMA100B();
@@ -85,6 +85,9 @@ private:
 
     std::vector<double> peakFreq;
     std::vector<double> peakAmp;
+
+    std::vector<int> ImdFreq;
+    std::vector<double> ImdAmp;
     bool Harmonic_Finished = false;
 };
 

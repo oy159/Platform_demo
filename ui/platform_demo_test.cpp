@@ -800,6 +800,14 @@ void platform_demo_test::handleDynamicDACTest(){
 
     QMetaObject::invokeMethod(mInstrumentSourceManager, "dynamicDacInstrumentsControl",
                           Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateSFDR), Q_ARG(int, freq));
+//    QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,1));
+    mUdpWorker->handleSetDDSFreq(freq, 1);
+    QThread::msleep(1000);
+    QMetaObject::invokeMethod(mInstrumentSourceManager, "dynamicDacInstrumentsControl",
+                              Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateIMD), Q_ARG(int, freq));
+    QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
+                              Qt::QueuedConnection, Q_ARG(int, freq));
+
 }
 
 

@@ -39,6 +39,7 @@ public:
     double readMarker1Freq();
     double readMarker1Amp();
     void defineRFAttenuation(int dbm);
+    void defineContinuous(bool on);
 
     void setMarker1X(int hz);
 

@@ -195,6 +195,16 @@ void KeySightVisa_N9040B::defineVBW(int freq){
 #endif
 }
 
+
+void KeySightVisa_N9040B::defineContinuous(bool on){
+#ifdef USE_RSA3030N
+    sendCommandWrite(":INIT:CONT " + (on ? std::to_string(1) : std::to_string(0)) + "\n");    // RSA303N
+#else
+    sendCommandWrite(":INIT:CONT " + (on ? std::to_string(1) : std::to_string(0)) + "\n");
+#endif
+}
+
+
 QVector<QPointF> KeySightVisa_N9040B::readSA(){
     std::string command = ":READ:SANalyzer1?\n";
     if (m_session == VI_NULL) {
@@ -224,7 +234,7 @@ QVector<QPointF> KeySightVisa_N9040B::readSA(){
         }
         throw std::runtime_error("Failed to read response");
     }
-    qDebug() << buffer;
+    qDebug() << "READ SA DATA FINISHED";
     return convertSpectrumDataToQPoints(buffer, retCount);
 }
 
