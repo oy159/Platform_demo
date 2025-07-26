@@ -8,6 +8,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QContextMenuEvent>
+#include <SpectrumChartTryWidget.h>
 
 class ChartWidgetsManager : public QWidget {
     Q_OBJECT
@@ -42,17 +43,11 @@ public:
         int cols = qCeil(count / double(rows));
         int idx = 0;
         for (int i : toShow) {
-            // chartWidgets[i]->setVisible(true);
             int row = idx / cols;
             int col = idx % cols;
             gridLayout->addWidget(chartWidgets[i], row, col);
             ++idx;
         }
-        // 隐藏未显示的窗口
-        // for (int i = 0; i < chartWidgets.size(); ++i) {
-        //     if (!toShow.contains(i)) chartWidgets[i]->setVisible(false);
-        // }
-        // 拉伸因子
         for (int r = 1; r < gridLayout->rowCount(); ++r)
             gridLayout->setRowStretch(r, 0);
         for (int c = 1; c < gridLayout->columnCount(); ++c)
@@ -68,7 +63,14 @@ public:
 private slots:
     void showContextMenu(const QPoint &pos) {
         QMenu menu(this);
-        // QAction *showAllAction = menu.addAction("显示全部窗口");
+        // for (QWidget *w : chartWidgets) {
+        //     // 判断是否有addCustomContextMenuActions方法
+        //     auto *custom = dynamic_cast<SpectrumChartTryWidget*>(w);
+        //     if (custom) {
+        //         custom->addCustomContextMenuActions(&menu);
+        //     }
+        //     // 你也可以用接口基类，或用QWidget的property判断
+        // }
         menu.addSeparator();
         QList<QAction*> actions;
 
@@ -89,7 +91,6 @@ private slots:
             
             int idx = selected->data().toInt();
             showAll = false;
-            // 切换该窗口的显示状态
             if (visibleIndexes.contains(idx)) {
                 visibleIndexes.removeAll(idx);
             } else {

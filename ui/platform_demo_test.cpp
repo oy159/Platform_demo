@@ -6,6 +6,7 @@
 
 platform_demo_test::platform_demo_test(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::platform_demo_test) {
+    setWindowTitle("AD/DA 测试平台");
     ui->setupUi(this);
     setStyleSheet("QGroupBox {"
                   "font-weight: bold;"
@@ -212,20 +213,21 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     chartWidget4 = ui->chartWidget4;
     chartWidget5 = ui->chartWidget5;
     chartWidget6 = ui->chartWidget6;
+    chartWidget7 = ui->chartWidget7;
 
-    connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartWidget::handleRefreshSpectrum);
-    connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartWidget::handleRefreshPeakData);
-    connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartWidget::handleFindPeak);
-    connect(ui->FindNextButton, &QPushButton::clicked, chartWidget1, &SpectrumChartWidget::handleFindNextPeak);
+    connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartTryWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartTryWidget::handleRefreshPeakData);
+    connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindPeak);
+    connect(ui->FindNextButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindNextPeak);
 
-    connect(mCaculateParams, &CaculateParams::TransferADCData, chartWidget2, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferADCData, chartWidget2, &BaseChartWidget::updateChartDataDirect);
 
-    connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &SpectrumChartWidget::handleRefreshSpectrum);
-    connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &SpectrumChartWidget::handleRefreshSpectrum);
-    connect(mCaculateParams, &CaculateParams::TransferHistrogramData, chartWidget5, &SpectrumChartWidget::handleRefreshSpectrum);
-    connect(this, &platform_demo_test::TransferDACStaticData, chartWidget6, &SpectrumChartWidget::handleRefreshSpectrum);
+    connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &BaseChartWidget::updateChartDataDirect);
+    connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &BaseChartWidget::updateChartDataDirect);
+    connect(mCaculateParams, &CaculateParams::TransferHistrogramData, chartWidget5, &BaseChartWidget::updateChartDataDirect);
+    connect(this, &platform_demo_test::TransferDACStaticData, chartWidget6, &BaseChartWidget::updateChartDataDirect);
 
-    connect(mInstrumentSourceManager, &InstrumentSourceManager::TransferN9040BData, chartWidget6, &SpectrumChartWidget::handleRefreshChart);
+    connect(mInstrumentSourceManager, &InstrumentSourceManager::TransferN9040BData, chartWidget7, &BaseChartWidget::updateChartData);
 
     connect(ui->ADCChannel1CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {

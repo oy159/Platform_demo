@@ -4,7 +4,7 @@ KSVisa_34460A::KSVisa_34460A() : m_defaultRM(VI_NULL), m_session(VI_NULL)
 {
     ViStatus status = viOpenDefaultRM(&m_defaultRM);
     if (status < VI_SUCCESS) {
-        qDebug() << "Failed to open VISA resource manager" << status;
+        qCritical() << "Failed to open VISA resource manager" << status;
     }
 }
 

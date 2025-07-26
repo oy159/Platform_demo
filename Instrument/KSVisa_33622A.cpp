@@ -4,7 +4,7 @@ KeySightVisa_33622A::KeySightVisa_33622A() : m_defaultRM(VI_NULL), m_session(VI_
 {
     ViStatus status = viOpenDefaultRM(&m_defaultRM);
     if (status < VI_SUCCESS) {
-        qDebug() << "Failed to open VISA resource manager" << status;
+        qCritical() << "Failed to open VISA resource manager" << status;
     }
 }
 

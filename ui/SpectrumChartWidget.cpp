@@ -11,36 +11,12 @@ SpectrumChartWidget::SpectrumChartWidget(QWidget *parent) : QWidget(parent){
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(5);
-
-    // 创建计数标签
-    // counterLabel = new QLabel(this);
-    // counterLabel->setAlignment(Qt::AlignCenter);
-    // counterLabel->setStyleSheet("QLabel {"
-    //                             "background-color: rgba(50, 50, 50, 150);"
-    //                             "color: white;"
-    //                             "padding: 5px;"
-    //                             "border-radius: 5px;"
-    //                             "}");
-    // updateCounterLabel();  // 初始化标签文本
-
     // 初始化图表
     initChart();
 
     setCursor(Qt::ArrowCursor); // 恢复默认指针样式
 
-    // slider = new mSlider(this);
-    // slider->setOrientation(Qt::Horizontal);
-    // slider->setRange(0, 1000);
-    // slider->setTracking(true);
-    // slider->setPageStep(1);
-
-    // connect(slider, &QSlider::valueChanged, this, &SpectrumChartWidget::onSliderValueChanged);
-
-
-    // 将控件添加到布局
-    // mainLayout->addWidget(counterLabel);
     mainLayout->addWidget(chartView);
-    // mainLayout->addWidget(slider);
 }
 
 SpectrumChartWidget::~SpectrumChartWidget() {
@@ -58,11 +34,6 @@ void SpectrumChartWidget::handleRefreshPeakData(const std::vector<Peak> &peaks)
     qDebug() << "Received peaks:" << mpeaks[1].position << mpeaks[1].value;
 
     peakSeries->clear();
-
-    // 添加新的峰值点
-    // peakSeries->append((double)peaks[0].position/sampleNum/2*sampleRate/1e6, peaks[0].value);
-    // peakSeries->append((double)peaks[1].position/sampleNum/2*sampleRate/1e6, peaks[1].value);
-
 }
 
 void SpectrumChartWidget::handleRefreshChart(QList<QPointF> data) {

@@ -12,6 +12,8 @@
 #include "SpectrumChartWidget.h"
 #include "InstrumentSourceManager.h"
 #include "testdata.h"
+#include "SpectrumChartTryWidget.h"
+
 
 typedef enum{
     ADC_DYNAMIC_MODE = 0,
@@ -86,12 +88,13 @@ private:
     CACULATE_MODE mCaculateMode;
     uint32_t staticDataSize = 0;
 
-    SpectrumChartWidget *chartWidget1;
-    SpectrumChartWidget *chartWidget2;
-    SpectrumChartWidget *chartWidget3;
-    SpectrumChartWidget *chartWidget4;
-    SpectrumChartWidget *chartWidget5;
-    SpectrumChartWidget *chartWidget6;
+    SpectrumChartTryWidget *chartWidget1;
+    BaseChartWidget *chartWidget2;
+    BaseChartWidget *chartWidget3;
+    BaseChartWidget *chartWidget4;
+    BaseChartWidget *chartWidget5;
+    BaseChartWidget *chartWidget6;
+    BaseChartWidget *chartWidget7; 
 
     InstrumentSourceManager *mInstrumentSourceManager;
     InstrumentType mADCUsedInstrumentType = UnknownInstrument;

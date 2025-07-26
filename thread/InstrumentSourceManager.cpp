@@ -49,7 +49,7 @@ bool InstrumentSourceManager::connectToSMA100B(const std::string &VisaAddress) {
         qDebug() << "Connected to: " << sma100B->getID().c_str();
         emit  ConnectInstrumentSuccess(InstrumentType::SMA100B);
     } else {
-        qDebug() << "Failed to connect to SMA100B";
+        qCritical() << "Failed to connect to SMA100B";
         emit ConnectInstrumentFail(InstrumentType::SMA100B);
     }
     
@@ -67,12 +67,13 @@ bool InstrumentSourceManager::connectTo34460A(const std::string &VisaAddress)
         qDebug() << "Connected to 34460A: " << ks34460A->getID().c_str();
         emit ConnectInstrumentSuccess(InstrumentType::KS34460A);
     } else {
-        qDebug() << "Failed to connect to 34460A";
+        qCritical() << "Failed to connect to 34460A";
         emit ConnectInstrumentFail(InstrumentType::KS34460A);
     }
 
     return status;
 }
+
 
 double InstrumentSourceManager::read34460AVoltage() {
         double voltage = ks34460A->readVoltage();
@@ -95,7 +96,7 @@ bool InstrumentSourceManager::connectTo3362A(const std::string &VisaAddress) {
         // ks33622A->setVoltage(1,1.0);
         emit  ConnectInstrumentSuccess(InstrumentType::KS3362A);
     } else {
-        qDebug() << "Failed to connect to 33622A";
+        qCritical() << "Failed to connect to 33622A";
         emit ConnectInstrumentFail(InstrumentType::KS3362A);
     }
     
@@ -109,7 +110,7 @@ void InstrumentSourceManager::disconnectFrom3362A() {
 
 void InstrumentSourceManager::readSA(int freq) {
     if (n9040B->m_session == VI_NULL) {
-        qDebug() << "N9040B is not connected";
+        qCritical() <<"N9040B is not connected";
         return;
     }
 
@@ -120,13 +121,13 @@ void InstrumentSourceManager::readSA(int freq) {
     n9040B->defineRFAttenuation(0);
     n9040B->defineRefLevel(0);
     QThread::msleep(1000);
-    QList<QPointF> data;
+    QVector<QPointF> data;
     try {
         data = n9040B->readSA();
         n9040B->defineContinuous(true);
         emit TransferN9040BData(data);
     } catch (const std::runtime_error &e) {
-        qDebug() << "Error reading SA data:" << e.what();
+        qCritical() <<"Error reading SA data:" << e.what();
     }
 }
 
@@ -278,7 +279,7 @@ std::vector<std::string> InstrumentSourceManager::findAllVisaResources() {
     ViSession defaultRM;
     ViStatus status = viOpenDefaultRM(&defaultRM);
     if (status < VI_SUCCESS) {
-        qDebug() << "Error opening VISA resource manager:" << status;
+        qCritical() << "Error opening VISA resource manager:" << status;
         return resources;
     }
 

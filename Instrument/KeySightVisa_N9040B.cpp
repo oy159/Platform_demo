@@ -4,7 +4,7 @@
 KeySightVisa_N9040B::KeySightVisa_N9040B() : m_defaultRM(VI_NULL), m_session(VI_NULL) {
     ViStatus status = viOpenDefaultRM(&m_defaultRM);
     if (status < VI_SUCCESS) {
-        qDebug() << "Failed to open VISA resource manager" << status;
+        qCritical() << "Failed to open VISA resource manager" << status;
     }
 }
 

@@ -21,6 +21,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <SpectrumChartWidget.h>
+#include <SpectrumChartTryWidget.h>
 #include <ChartWidgetsManager.h>
 #include <ConnectSettings.h>
 
@@ -88,7 +89,7 @@ public:
     QVBoxLayout *paramTestADCGroupBoxLayout;
     QPushButton *dynamicParamsADCTestButton;
     QPushButton *staticParamsADCTestButton;
-
+    QPushButton *twoTonesADCTestButton;
 
     // DAC参数显示部件
     QWidget *DisplayDACParamsWidget;
@@ -120,12 +121,13 @@ public:
     QPushButton *staticParamsDACTestButton;
 
     ChartWidgetsManager *chartGridWidget;  // 新增图表网格部件
-    SpectrumChartWidget *chartWidget1;
-    SpectrumChartWidget *chartWidget2;
-    SpectrumChartWidget *chartWidget3;
-    SpectrumChartWidget *chartWidget4;
-    SpectrumChartWidget *chartWidget5;
-    SpectrumChartWidget *chartWidget6;
+    SpectrumChartTryWidget *chartWidget1;
+    BaseChartWidget *chartWidget2;
+    BaseChartWidget *chartWidget3;
+    BaseChartWidget *chartWidget4;
+    BaseChartWidget *chartWidget5;
+    BaseChartWidget *chartWidget6;
+    BaseChartWidget *chartWidget7; // 新增图表部件
     QMenuBar *menubar;
     QStatusBar *statusbar;
     QMenu *menuFile;
@@ -245,8 +247,10 @@ public:
         paramTestADCGroupBoxLayout = new QVBoxLayout(paramTestADCGroupBox);
         dynamicParamsADCTestButton = new QPushButton("动态参数测试", paramTestADCGroupBox);
         staticParamsADCTestButton = new QPushButton("静态参数测试", paramTestADCGroupBox);
+        twoTonesADCTestButton = new QPushButton("双音测试", paramTestADCGroupBox);
         paramTestADCGroupBoxLayout->addWidget(dynamicParamsADCTestButton);
         paramTestADCGroupBoxLayout->addWidget(staticParamsADCTestButton);
+        paramTestADCGroupBoxLayout->addWidget(twoTonesADCTestButton);
 
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
@@ -328,18 +332,20 @@ public:
         rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
 
         chartGridWidget = new ChartWidgetsManager(splitter);
-        chartWidget1 = new SpectrumChartWidget;
-        chartWidget2 = new SpectrumChartWidget; // 可以添加更多图表
-        chartWidget3 = new SpectrumChartWidget;
-        chartWidget4 = new SpectrumChartWidget;
-        chartWidget5 = new SpectrumChartWidget;
-        chartWidget6 = new SpectrumChartWidget;
+        chartWidget1 = new SpectrumChartTryWidget;
+        chartWidget2 = new BaseChartWidget;
+        chartWidget3 = new BaseChartWidget;
+        chartWidget4 = new BaseChartWidget;
+        chartWidget5 = new BaseChartWidget;
+        chartWidget6 = new BaseChartWidget;
+        chartWidget7 = new BaseChartWidget; 
         chartGridWidget->addChart(chartWidget1);
         chartGridWidget->addChart(chartWidget2);
         chartGridWidget->addChart(chartWidget3);
         chartGridWidget->addChart(chartWidget4);
         chartGridWidget->addChart(chartWidget5);
         chartGridWidget->addChart(chartWidget6);
+        chartGridWidget->addChart(chartWidget7);
 
         chartGridWidget->reorganizeCharts(); // 初始化图表布局
 
