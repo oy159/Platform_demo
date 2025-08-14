@@ -65,11 +65,14 @@ private slots:
 
     void handleDynamicDACTest();
 
+    void handleStaticDACParamsCalculateFinished(double maxDNL, double maxINL, double minDNL,
+                                               double minINL, double staticGain, double staticOffset);
+
 private:
     QVector<double> generateWaveformData(int count);
     void AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE mode);
-    uint16_t get_sorted_index_optimal(uint16_t input);
-    bool writeDACDataToCSV(const std::vector<double>& data, 
+    static uint16_t get_sorted_index_optimal(uint16_t input);
+    static bool writeDACDataToCSV(const std::vector<double>& data,
                       const std::string& filename,
                       int precision = 6);
 

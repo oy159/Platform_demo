@@ -83,6 +83,7 @@ void SpectrumChartTryWidget::handleRefreshSpectrum(std::vector<double> fft_data)
 
 
     // 准备图表数据
+    chart_data.clear();
     if (m_frequencyMode) {
         double freqStep = (m_sampleRate / 1e6) / (2 * fft_data.size());
         for (size_t i = 0; i < fft_data.size(); ++i) {
@@ -98,9 +99,9 @@ void SpectrumChartTryWidget::handleRefreshSpectrum(std::vector<double> fft_data)
     updateChartData(chart_data);
     
     // 如果已有峰值数据，重新标记
-    if (!m_peaks.empty()) {
-        handleFindPeak();
-    }
+//    if (!m_peaks.empty()) {
+//        handleFindPeak();
+//    }
 }
 
 void SpectrumChartTryWidget::handleFindPeak() {

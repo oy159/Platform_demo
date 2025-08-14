@@ -93,9 +93,15 @@ void BaseChartWidget::updateChartDataDirect(std::vector<double> data) {
 
 void BaseChartWidget::updateChartData(const QVector<QPointF> &data) {
     if (data.isEmpty()) return;
-    
+
+    m_series->clear();
+
     m_series->replace(data);
-    optimizeAxisRanges(data);
+    // only first
+    if(first){
+        optimizeAxisRanges(data);
+        first = false;
+    }
 }
 
 void BaseChartWidget::clearChartData() {

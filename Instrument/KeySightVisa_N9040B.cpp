@@ -179,6 +179,11 @@ void KeySightVisa_N9040B::peakSearch(PeakSearchMode mode) {
     //          :SENSE:SWEep:POINts 2048        // 点数
 }
 
+void KeySightVisa_N9040B::definePoints(int points){
+    sendCommandWrite(":SENSE:SWEep:POINts " + std::to_string(points) + "\n");
+}
+
+
 void KeySightVisa_N9040B::defineRBW(int freq){
 #ifdef USE_RSA3030N
     sendCommandWrite(":SENSe:BANDwidth:RESolution " + std::to_string(freq) + "\n");    // RSA303N
@@ -254,10 +259,10 @@ QVector<QPointF> KeySightVisa_N9040B::convertSpectrumDataToQPoints(const char* b
     
     // 检查数据数量是否有效
 //    if (dataList.size() != 2048) {
-//        qWarning() << "数据数量不匹配，期望2048个，实际得到" << dataList.size();
+//
 //        return points;
 //    }
-    
+    qInfo() << "得到SA数据量大小" << dataList.size();
     // 转换为QPointF数组
     bool ok;
     for (int i = 0; i < dataList.size(); i += 2) {

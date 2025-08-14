@@ -144,3 +144,13 @@ double KSVisa_34460A::readDM3068Voltage()
         return 0.0;
     }
 }
+
+void KSVisa_34460A::setNPLC(double NPLC){
+    std::string command = "VOLT:DC:NPLC " + std::to_string(NPLC);
+    sendCommandWrite(command);
+}
+
+void KSVisa_34460A::setNPLCTime(double time) {
+    std::string command = "VOLT:DC:APER " + TimeToScientific(time);
+    sendCommandWrite(command);
+}

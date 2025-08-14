@@ -61,7 +61,10 @@ signals:
     void TransferDACStaticData(const std::vector<double>& data);
 
     void staticDACParamsCalculateFinished(double maxDNL, double maxINL, 
-                                       double minDNL, double minINL);
+                                       double minDNL, double minINL,
+                                       double offset, double gain);
+    void TransferDACDNLData(const std::vector<double>& DNL);
+    void TransferDACINLData(const std::vector<double>& INL);
 
 public slots:
     void setData(const std::vector<double>& data) {

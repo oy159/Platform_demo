@@ -9,6 +9,8 @@
 #include <memory>
 #include <QPointF>
 #include <QDebug>
+#include <iomanip>
+#include <sstream>
 
 
 class KSVisa_34460A
@@ -26,10 +28,18 @@ public:
     std::string getID();
     double readVoltage();
     double readDM3068Voltage();
+    void setNPLC(double NPLC);
+    void setNPLCTime(double time);
 
 private:
     ViSession m_defaultRM;
     ViSession m_session;
+
+    std::string TimeToScientific(double time) {
+        std::ostringstream oss;
+        oss << std::showpos << std::uppercase << std::scientific << std::setprecision(5) << time;
+        return oss.str();
+    }
 };
 
 

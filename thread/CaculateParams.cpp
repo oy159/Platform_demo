@@ -2,11 +2,14 @@
 // Created by oycr on 2025/4/4.
 //
 
+#include <iomanip>
+#include <fstream>
 #include "CaculateParams.h"
 
 CaculateParams::CaculateParams(QObject *parent) : QObject(parent)  {
     StaticDataHistogram.resize(65536, 0); // 初始化直方图
     ADCStaticDataLength = 0;
+    connect(this, &CaculateParams::TransferDACStaticData, this, &CaculateParams::caculateDACStaticParams);
 }
 
 CaculateParams::~CaculateParams() {
@@ -288,6 +291,26 @@ void CaculateParams::caculateStaticDataHistogram()
     }
 }
 
+
+static bool writeDACDataToCSV(const std::vector<double>& data,
+                              const std::string& filename,
+                              int precision) {
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        qCritical() << "Error: Could not open file " << filename;
+        return false;
+    }
+    outFile << std::fixed << std::setprecision(precision);
+
+    for (double i : data) {
+        outFile << i;
+        outFile << "\n";
+    }
+    outFile.close();
+    return true;
+}
+
+
 void CaculateParams::caculateDACStaticParams()
 {
     auto N = dacStaticData.size();
@@ -302,7 +325,9 @@ void CaculateParams::caculateDACStaticParams()
             );
 
     double gain = (N * K4 - K1 * K2) / (N * K3 - K1 * K1);
-    double offset = (K2 - gain * K3) / N;
+    double offset = (K2 - gain * K1) / N;
+    qDebug() << "gain:" << gain;
+    qDebug() << "offset:" << offset;
 
     // 计算 DNL 和 INL
     
@@ -317,14 +342,23 @@ void CaculateParams::caculateDACStaticParams()
             DACINL[i - 1] = DACINL[i - 2] + DACDNL[i - 1];
         }
     }
+    emit TransferDACDNLData(DACDNL);
+    emit TransferDACINLData(DACINL);
+    writeDACDataToCSV(DACDNL, "DAC_DNLData.csv", 5);
+    writeDACDataToCSV(DACINL, "DAC_INLData.csv", 5);
 
     maxDACINL = *std::max_element(DACINL.begin(), DACINL.end());
     maxDACDNL = *std::max_element(DACDNL.begin(), DACDNL.end());
     minDACINL = *std::min_element(DACINL.begin(), DACINL.end());
     minDACDNL = *std::min_element(DACDNL.begin(), DACDNL.end());
-    
+//    qDebug() << "minDNL: " << minDACDNL;
+//    qDebug() << "minINL: " << minDACINL;
+//    qDebug() << "maxDNL: " << maxDACDNL;
+//    qDebug() << "maxINL: " << maxDACINL;
     emit staticDACParamsCalculateFinished(maxDACDNL, maxDACINL,
-                                          minDACDNL, minDACINL);
+                                          minDACDNL, minDACINL,
+                                          gain, offset);
 }
 
-// todo: 完成caculateDACStaticParams的交互逻辑
+
+

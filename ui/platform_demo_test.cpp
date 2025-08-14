@@ -3,6 +3,27 @@
 #include "ui_platform_demo_test.h"
 #include <vector>
 
+static std::vector<double> readCSVData(const std::string& filename) {
+    std::vector<double> data;
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return data;
+    }
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        double value;
+        if (iss >> value) {
+            data.push_back(value);
+        }
+    }
+
+    file.close();
+    return data;
+}
 
 platform_demo_test::platform_demo_test(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::platform_demo_test) {
@@ -89,7 +110,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mCaculateParams, &CaculateParams::dynamicParamsCalculateFinished, this, &platform_demo_test::handleDynamicCaculateFinished);
     connect(mCaculateParams, &CaculateParams::staticParamsCalculateFinished, this, &platform_demo_test::handleStaticCaculateFinished);
 
-    
+    mCalculateThread->start();
 
 
     mInstrumentSourceManager = new InstrumentSourceManager();
@@ -112,6 +133,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                 ui->connectSettings->DetectGeneratorBtn2->setText("连接成功");
                 mConnectToInstrumentFlag[1] = true;
                 mADCUsedInstrumentType = InstrumentType::KS3362A;
+//                mInstrumentSourceManager->ks33622A->setTwoTone(1,1);
                 break;
             case InstrumentType::SMA100B:
                 ui->connectSettings->DetectGeneratorBtn->setText("连接成功");
@@ -121,6 +143,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
             case InstrumentType::KS34460A:
                 ui->connectSettings->DetectVoltmeterBtn->setText("连接成功");
                 mConnectToInstrumentFlag[3] = true;
+                mInstrumentSourceManager->ks34460A->setNPLCTime(1e-3);
                 break;
             default:
                 break;
@@ -136,6 +159,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
             case InstrumentType::KS3362A:
                 ui->connectSettings->DetectGeneratorBtn2->setText("连接失败");
                 mConnectToInstrumentFlag[1] = false;
+
                 break;
             case InstrumentType::SMA100B:
                 ui->connectSettings->DetectGeneratorBtn->setText("连接失败");
@@ -215,6 +239,11 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     chartWidget6 = ui->chartWidget6;
     chartWidget7 = ui->chartWidget7;
 
+
+    chartWidget3->setAxisPrecision(0,0);
+    chartWidget4->setAxisPrecision(0,0);
+
+
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartTryWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartTryWidget::handleRefreshPeakData);
     connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindPeak);
@@ -224,6 +253,10 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(mCaculateParams, &CaculateParams::TransferDNLData, chartWidget3, &BaseChartWidget::updateChartDataDirect);
     connect(mCaculateParams, &CaculateParams::TransferINLData, chartWidget4, &BaseChartWidget::updateChartDataDirect);
+
+    connect(mCaculateParams, &CaculateParams::TransferDACDNLData, chartWidget3, &BaseChartWidget::updateChartDataDirect);
+    connect(mCaculateParams, &CaculateParams::TransferDACINLData, chartWidget4, &BaseChartWidget::updateChartDataDirect);
+
     connect(mCaculateParams, &CaculateParams::TransferHistrogramData, chartWidget5, &BaseChartWidget::updateChartDataDirect);
     connect(this, &platform_demo_test::TransferDACStaticData, chartWidget6, &BaseChartWidget::updateChartDataDirect);
 
@@ -266,9 +299,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
             return;
         }
         if(mDeviceType == DeviceType::AD9142 || mDeviceType == DeviceType::AD9747) {
-
-            // todo:需修改逻辑
-//             QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, 32768));
             QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,0));
         }else{
             QMessageBox::warning(this, "Warning", "当前不是DAC！");
@@ -289,11 +319,13 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 //    chartWidget3->adjustaxisX();
     mCaculateParams->setData(adc16Data);
     chartWidget1->setSampleRate(1e8); // 设置采样率
-    mCalculateThread->start();
+
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
 
     connect(ui->dynamicParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicADCTest);
     connect(ui->staticParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticADCTest);
+
+    connect(mCaculateParams, &CaculateParams::staticDACParamsCalculateFinished, this, &platform_demo_test::handleStaticDACParamsCalculateFinished);
     /** test code **/
     // create timer
     QTimer *timer = new QTimer(this);
@@ -307,12 +339,16 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     });
 //    timer->start(1000); // 每秒更新一次
 
-
+    QMetaObject::invokeMethod(mCaculateParams, "setDACStaticData", Qt::QueuedConnection, Q_ARG(vector<double>, readCSVData("DACStaticData.csv")));
 }
 
 platform_demo_test::~platform_demo_test() {
-    // mUdpThread->quit();
-    // mUdpThread->wait();
+    mUdpThread->quit();
+    mUdpThread->wait();
+    mCalculateThread->quit();
+    mCalculateThread->wait();
+
+
     delete ui->connectSettings;
     delete ui;
 }
@@ -400,8 +436,8 @@ void platform_demo_test::handleDynamicCaculateFinished(double SFDR, double THD, 
     ui->THDADCLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
     ui->SNRADCLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
     ui->ENOBADCLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
-    mCalculateThread->quit();
-    mCalculateThread->wait();
+//    mCalculateThread->quit();
+//    mCalculateThread->wait();
 }
 
 void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxINL, 
@@ -647,12 +683,8 @@ void platform_demo_test::handleDynamicADCTest() {
 
     AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
 
-    // 2.获取adc数据 计算动态参数
-    // QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
-    // if (!message.isEmpty()) {
-    //     QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-    // }
-    // mCaculateMode = ADC_DYNAMIC_MODE;
+//    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForDynamicADC);
+
 
 }
 
@@ -674,12 +706,8 @@ void platform_demo_test::handleStaticADCTest() {
     }
 
     AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForStaticADC);
+//    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForStaticADC);
 
-    // QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
-    // if (!message.isEmpty()) {
-    //     QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
-    // }
-    // mCaculateMode = ADC_STATIC_MODE;
 }
 
 
@@ -761,7 +789,7 @@ void platform_demo_test::handleStaticDACTest(){
 
 
 void platform_demo_test::handleDACSetValueSuccess(){
-    // double data = mInstrumentSourceManager->ks34460A->readVoltage();
+//     double data = mInstrumentSourceManager->ks34460A->readVoltage();
 //    QThread::msleep(2000);
     double data = mInstrumentSourceManager->ks34460A->readDM3068Voltage();
     qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
@@ -769,6 +797,8 @@ void platform_demo_test::handleDACSetValueSuccess(){
     DACStaticData[get_sorted_index_optimal(dac_value)] = data;
     if(dac_value == 65535){
         emit TransferDACStaticData(DACStaticData);
+//        mCaculateParams->setDACStaticData(DACStaticData);
+        QMetaObject::invokeMethod(mCaculateParams, "setDACStaticData", Qt::QueuedConnection, Q_ARG(vector<double>, DACStaticData));
         if(!writeDACDataToCSV(DACStaticData, "DACStaticData.csv", 6)) {
             QMessageBox::warning(this, "Warning", "写入CSV文件失败！");
         }
@@ -781,30 +811,13 @@ void platform_demo_test::handleDACSetValueSuccess(){
 void platform_demo_test::handleDynamicDACTest(){
     // todo: 动态DAC测试
     int freq = (int)((double)ui->DACFrequencySpinBox->value() * 1e6);
-
-    // mInstrumentSourceManager->n9040B->defineStartFreq(freq/10);
-    // mInstrumentSourceManager->n9040B->defineStopFreq(freq*10);
-    // mInstrumentSourceManager->n9040B->defineRBW(1e4);
-    // mInstrumentSourceManager->n9040B->defineVBW(1e4);
-    // mInstrumentSourceManager->n9040B->defineRFAttenuation(10);
-    // mInstrumentSourceManager->n9040B->defineRefLevel(0);
-    // QThread::msleep(3000);
-    // mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::PeakSearch);
-    // double peakFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
-    // double peakAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
-    // mInstrumentSourceManager->n9040B->defineRFAttenuation(0);
-    // mInstrumentSourceManager->n9040B->defineRefLevel(0);
-    // QThread::msleep(3000);
-    // mInstrumentSourceManager->n9040B->peakSearch(PeakSearchMode::NextSearch);
-    // double nextFreq = mInstrumentSourceManager->n9040B->readMarker1Freq();
-    // double nextAmp = mInstrumentSourceManager->n9040B->readMarker1Amp();
-    // qDebug() << "峰值幅度是" << peakAmp << "nextAmp is" << nextAmp << "SFDR is" << peakAmp + 10 - nextAmp;
-
+    mUdpWorker->handleSetDDSFreq(freq, 0);
+    QThread::msleep(2000);
     QMetaObject::invokeMethod(mInstrumentSourceManager, "dynamicDacInstrumentsControl",
                           Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateSFDR), Q_ARG(int, freq));
 //    QMetaObject::invokeMethod(mUdpWorker, "handleSetDDSFreq", Qt::QueuedConnection, Q_ARG(int, freq), Q_ARG(int,1));
     mUdpWorker->handleSetDDSFreq(freq, 1);
-    QThread::msleep(1000);
+    QThread::msleep(2000);
     QMetaObject::invokeMethod(mInstrumentSourceManager, "dynamicDacInstrumentsControl",
                               Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateIMD), Q_ARG(int, freq));
     QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
@@ -815,9 +828,6 @@ void platform_demo_test::handleDynamicDACTest(){
 
 
 uint16_t platform_demo_test::get_sorted_index_optimal(uint16_t input) {
-    // 一步完成转换：
-    // 1. 将uint16重新解释为int16（补码转换）
-    // 2. 加上32768偏移量（-32768→0, 0→32768, 32767→65535）
     return static_cast<uint16_t>(static_cast<int16_t>(input) + 32768);
 }
 
@@ -829,16 +839,25 @@ bool platform_demo_test::writeDACDataToCSV(const std::vector<double>& data,
         std::cerr << "Error: Could not open file " << filename << std::endl;
         return false;
     }
-
-    // 设置输出精度和固定小数点表示
     outFile << std::fixed << std::setprecision(precision);
 
-    for (size_t i = 0; i < data.size(); ++i) {
-        outFile << data[i];
-        // 每行一个数据（如需逗号分隔则改为 << ","）
+    for (double i : data) {
+        outFile << i;
         outFile << "\n"; 
     }
-
     outFile.close();
     return true;
+}
+
+void
+platform_demo_test::handleStaticDACParamsCalculateFinished(double maxDNL, double maxINL, double minDNL,
+                                                           double minINL, double staticGain, double staticOffset) {
+    qDebug() << "minDNL: " << minDNL;
+    qDebug() << "minINL: " << minINL;
+    qDebug() << "maxDNL: " << maxDNL;
+    qDebug() << "maxINL: " << maxINL;
+    ui->DNLDACLabel->setText("DNL:   " + QString::number(minDNL, 'f', 2) + " | " + QString::number(maxDNL, 'f', 2) + " LSB");
+    ui->INLDACLabel->setText("INL:   " + QString::number(minINL, 'f', 2) + " | " + QString::number(maxINL, 'f', 2) + " LSB");
+    ui->OffsetDACLabel->setText("增益:   " + QString::number(staticGain, 'E', 3) + "  V/LSB");
+    ui->PeakDACLabel->setText("零点偏移:   " + QString::number(staticOffset, 'E', 3) + "  V");
 }

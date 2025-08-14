@@ -10,7 +10,7 @@
 #include <sstream>
 #include <iomanip>
 
-#define USE_RSA3030N
+//#define USE_RSA3030N
 
 typedef enum{
     PeakSearch = 0,
@@ -40,6 +40,7 @@ public:
     double readMarker1Amp();
     void defineRFAttenuation(int dbm);
     void defineContinuous(bool on);
+    void definePoints(int points);
 
     void setMarker1X(int hz);
 

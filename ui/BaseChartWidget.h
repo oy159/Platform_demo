@@ -69,6 +69,9 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+
+private:
+    bool first = true;
 };
 
 #endif // BASECHARTWIDGET_H

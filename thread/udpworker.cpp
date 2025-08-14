@@ -17,7 +17,7 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
     if (udpSocket->state() == QAbstractSocket::UnconnectedState) {
         udpSocket->abort();
     }
-    if (!udpSocket->bind(QHostAddress("192.168.1.20"), local_port)) {
+    if (!udpSocket->bind(QHostAddress::Any, local_port)) {
         emit errorOccurred("Failed to bind to local port");
         return;
     }
@@ -276,18 +276,28 @@ void UdpWorker::handleSetDDSFreq(int freq_Hz, int Mode)
         current_command = CMD_SET_DDS_TWO_TONE;
     }
 
-    auto freq = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * freq_Hz * qPow(2,16));
-    data.append((char)((current_command >> 24) & 0xFF));
-    data.append((char)((current_command >> 16) & 0xFF));
-    data.append((char)((current_command >> 8) & 0xFF));
-    data.append((char)(current_command & 0xFF));
-    data.append((char)((freq >> 24) & 0xFF));
-    data.append((char)((freq >> 16) & 0xFF));
-    data.append((char)((freq >> 8) & 0xFF));
-    data.append((char)(freq & 0xFF));
+    uint32_t freq;
+    if(mdeviceType == AD9142) {
+        freq = (uint32_t) ((double) (qPow(2, 16)) / 2.0e8 * freq_Hz * qPow(2, 16));
+    }else if(mdeviceType == AD9747){
+        freq = (uint32_t) ((double) (qPow(2, 16)) / 2.5e8 * freq_Hz * qPow(2, 16));
+    }
+    data.append((char) ((current_command >> 24) & 0xFF));
+    data.append((char) ((current_command >> 16) & 0xFF));
+    data.append((char) ((current_command >> 8) & 0xFF));
+    data.append((char) (current_command & 0xFF));
+    data.append((char) ((freq >> 24) & 0xFF));
+    data.append((char) ((freq >> 16) & 0xFF));
+    data.append((char) ((freq >> 8) & 0xFF));
+    data.append((char) (freq & 0xFF));
 
+
+    uint32_t freq2;
     if(Mode != 0){
-        auto freq2 = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * (freq_Hz + 1.0e6) * qPow(2,16));
+        if(mdeviceType == AD9747){
+            freq2 = (uint32_t) ((double) (qPow(2, 16)) / 2.5e8 * (freq_Hz + 1.0e6) * qPow(2, 16));
+        }else
+            freq2 = (uint32_t)((double)(qPow(2,16)) / 2.0e8 * (freq_Hz + 1.0e6) * qPow(2,16));
         data.append((char)((freq2 >> 24) & 0xFF));
         data.append((char)((freq2 >> 16) & 0xFF));
         data.append((char)((freq2 >> 8) & 0xFF));

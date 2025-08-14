@@ -120,6 +120,7 @@ void InstrumentSourceManager::readSA(int freq) {
     n9040B->defineVBW(1e5);
     n9040B->defineRFAttenuation(0);
     n9040B->defineRefLevel(0);
+    n9040B->definePoints(1024);
     QThread::msleep(1000);
     QVector<QPointF> data;
     try {
@@ -171,6 +172,8 @@ void InstrumentSourceManager::dynamicDacInstrumentsControl(dynamicDACTestStep st
             // Measure harmonics
             for (int i = 2; i <= HARMONIC_NUMBER; i++) {
                 configureSpectrumAnalyzer(fundFreq * i);
+                n9040B->defineRefLevel(-30);
+                QThread::msleep(1000);
                 auto [harmonicFreq, harmonicAmp] = measurePeak();
                 peakFreq.push_back(harmonicFreq);
                 peakAmp.push_back(harmonicAmp);
@@ -241,8 +244,13 @@ void InstrumentSourceManager::dynamicDacInstrumentsControl(dynamicDACTestStep st
             ImdAmp.clear();
 
             // Measure all IMD components
-            for (int freq : ImdFreq) {
+            for (int i = 0;i < ImdFreq.size(); i++) {
+                int freq = ImdFreq[i];
                 configureSpectrumAnalyzer(freq);
+                if(i > 1) {
+                    n9040B->defineRefLevel(-30);
+                    QThread::msleep(1000);
+                }
                 auto [measuredFreq, amp] = measurePeak(freq);
                 ImdAmp.push_back(amp);
                 qDebug() << "IMD Component at" << freq << "Hz: Amplitude =" << amp << "dBm";
