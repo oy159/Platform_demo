@@ -26,11 +26,11 @@ void myMessageHandler(QtMsgType type, const QMessageLogContext &context, const Q
     QString timeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QString typeStr;
     switch (type) {
-    case QtDebugMsg:    typeStr = "[DEBUG]"; break;
-    case QtWarningMsg:  typeStr = "[WARNING]"; break;
-    case QtCriticalMsg: typeStr = "[ERROR]"; break;
-    case QtFatalMsg:    typeStr = "[FATAL]"; break;
-    default:            typeStr = "[INFO]"; break;
+        case QtDebugMsg:    typeStr = "[DEBUG]"; break;
+        case QtWarningMsg:  typeStr = "[WARNING]"; break;
+        case QtCriticalMsg: typeStr = "[ERROR]"; break;
+        case QtFatalMsg:    typeStr = "[FATAL]"; break;
+        default:            typeStr = "[INFO]"; break;
     }
     QString logLine = timeStr + " " + typeStr + " " + msg + "\n";
 
@@ -72,21 +72,33 @@ int main(int argc, char *argv[]) {
 
 
     QApplication a(argc, argv);
+
+    QFile styleFile(":/qss/themes/MacOS.qss"); // 使用资源文件路径，或者绝对路径、相对路径
+    if (styleFile.open(QFile::ReadOnly | QFile::Text)) {
+        QTextStream stream(&styleFile);
+        QString styleSheet = stream.readAll();
+        a.setStyleSheet(styleSheet);
+        styleFile.close();
+    } else {
+        qWarning() << "Failed to open style sheet file.";
+    }
+
+
     platform_demo_test w;
     w.show();
 
-    SpectrumChartTryWidget w2;
-    w2.setSampleRate(100e6); // 100 MHz采样率
-    w2.handleRefreshSpectrum(adc16Data);
-    w2.show();
-    
+//    SpectrumChartTryWidget w2;
+//    w2.setSampleRate(100e6); // 100 MHz采样率
+//    w2.handleRefreshSpectrum(adc16Data);
+//    w2.show();
 
-    
+
+
 
     // SpectrumChartView viewer;
     // viewer.resize(800, 600);
     // viewer.show();
-    
+
     return a.exec();
 
 }
