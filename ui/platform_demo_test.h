@@ -97,7 +97,7 @@ private:
     BaseChartWidget *chartWidget4;
     BaseChartWidget *chartWidget5;
     BaseChartWidget *chartWidget6;
-    BaseChartWidget *chartWidget7; 
+    BaseChartWidget *chartWidget7;
 
     InstrumentSourceManager *mInstrumentSourceManager;
     InstrumentType mADCUsedInstrumentType = UnknownInstrument;

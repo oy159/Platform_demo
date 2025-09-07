@@ -1,10 +1,9 @@
-// Copyright (C) 2023 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 #include "callout.h"
 
 #include <QChart>
-#include <QFontMetrics>
+#include <QValueAxis>
+#include <qgraphicsscene.h>
 #include <QGraphicsSceneMouseEvent>
 #include <QMouseEvent>
 #include <QPainter>
@@ -15,8 +14,42 @@ Callout::Callout(QChart *chart)
 {
 }
 
+Callout::~Callout() {
+    if (scene()) {
+        scene()->removeItem(this);
+    }
+}
+
+bool Callout::isAnchorVisible() const {
+    if (!m_chart || m_anchor.isNull()) {
+        return false;
+    }
+
+    // 获取当前坐标轴范围
+    QValueAxis *axisX = qobject_cast<QValueAxis*>(m_chart->axes(Qt::Horizontal).first());
+    QValueAxis *axisY = qobject_cast<QValueAxis*>(m_chart->axes(Qt::Vertical).first());
+
+    if (!axisX || !axisY) {
+        return false;
+    }
+
+    // 检查锚点是否在当前坐标轴范围内
+    double xMin = axisX->min();
+    double xMax = axisX->max();
+    double yMin = axisY->min();
+    double yMax = axisY->max();
+
+    return (m_anchor.x() >= xMin && m_anchor.x() <= xMax &&
+            m_anchor.y() >= yMin && m_anchor.y() <= yMax);
+}
+
+
 QRectF Callout::boundingRect() const
 {
+    if (!isAnchorVisible()) {
+        // 如果锚点不可见，只返回文本框的矩形
+        return m_rect;
+    }
     QPointF anchor = mapFromParent(m_chart->mapToPosition(m_anchor));
     QRectF rect;
     rect.setLeft(qMin(m_rect.left(), anchor.x()));
@@ -30,44 +63,50 @@ void Callout::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    if (!m_chart || m_text.isEmpty()) {
+        return;
+    }
     QPainterPath path;
     path.addRoundedRect(m_rect, 5, 5);
 
-    QPointF anchor = mapFromParent(m_chart->mapToPosition(m_anchor));
-    if (!m_rect.contains(anchor) && !m_anchor.isNull()) {
-        QPointF point1, point2;
 
-        // establish the position of the anchor point in relation to m_rect
-        bool above = anchor.y() <= m_rect.top();
-        bool aboveCenter = anchor.y() > m_rect.top() && anchor.y() <= m_rect.center().y();
-        bool belowCenter = anchor.y() > m_rect.center().y() && anchor.y() <= m_rect.bottom();
-        bool below = anchor.y() > m_rect.bottom();
+    if (isAnchorVisible()) {
+        QPointF anchor = mapFromParent(m_chart->mapToPosition(m_anchor));
+        if (!m_rect.contains(anchor) && !m_anchor.isNull()) {
+            QPointF point1, point2;
 
-        bool onLeft = anchor.x() <= m_rect.left();
-        bool leftOfCenter = anchor.x() > m_rect.left() && anchor.x() <= m_rect.center().x();
-        bool rightOfCenter = anchor.x() > m_rect.center().x() && anchor.x() <= m_rect.right();
-        bool onRight = anchor.x() > m_rect.right();
+            // establish the position of the anchor point in relation to m_rect
+            bool above = anchor.y() <= m_rect.top();
+            bool aboveCenter = anchor.y() > m_rect.top() && anchor.y() <= m_rect.center().y();
+            bool belowCenter = anchor.y() > m_rect.center().y() && anchor.y() <= m_rect.bottom();
+            bool below = anchor.y() > m_rect.bottom();
 
-        // get the nearest m_rect corner.
-        qreal x = (onRight + rightOfCenter) * m_rect.width();
-        qreal y = (below + belowCenter) * m_rect.height();
-        bool cornerCase = (above && onLeft) || (above && onRight) || (below && onLeft) || (below && onRight);
-        bool vertical = qAbs(anchor.x() - x) > qAbs(anchor.y() - y);
+            bool onLeft = anchor.x() <= m_rect.left();
+            bool leftOfCenter = anchor.x() > m_rect.left() && anchor.x() <= m_rect.center().x();
+            bool rightOfCenter = anchor.x() > m_rect.center().x() && anchor.x() <= m_rect.right();
+            bool onRight = anchor.x() > m_rect.right();
 
-        qreal x1 = x + leftOfCenter * 10 - rightOfCenter * 20 + cornerCase * !vertical * (onLeft * 10 - onRight * 20);
-        qreal y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20);;
-        point1.setX(x1);
-        point1.setY(y1);
+            // get the nearest m_rect corner.
+            qreal x = (onRight + rightOfCenter) * m_rect.width();
+            qreal y = (below + belowCenter) * m_rect.height();
+            bool cornerCase = (above && onLeft) || (above && onRight) || (below && onLeft) || (below && onRight);
+            bool vertical = qAbs(anchor.x() - x) > qAbs(anchor.y() - y);
 
-        qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * !vertical * (onLeft * 20 - onRight * 10);;
-        qreal y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10);;
-        point2.setX(x2);
-        point2.setY(y2);
+            qreal x1 = x + leftOfCenter * 10 - rightOfCenter * 20 + cornerCase * !vertical * (onLeft * 10 - onRight * 20);
+            qreal y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20);;
+            point1.setX(x1);
+            point1.setY(y1);
 
-        path.moveTo(point1);
-        path.lineTo(anchor);
-        path.lineTo(point2);
-        path = path.simplified();
+            qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * !vertical * (onLeft * 20 - onRight * 10);;
+            qreal y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10);;
+            point2.setX(x2);
+            point2.setY(y2);
+
+            path.moveTo(point1);
+            path.lineTo(anchor);
+            path.lineTo(point2);
+            path = path.simplified();
+        }
     }
     painter->setBrush(QColor(255, 255, 255));
     painter->drawPath(path);

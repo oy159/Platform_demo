@@ -14,7 +14,7 @@ SpectrumChartTryWidget::SpectrumChartTryWidget(QWidget *parent)
     // 设置频谱图特有的默认参数
     setAxisLabels("Frequency (MHz)", "Amplitude (dB)");
     setAxisPrecision(3, 2);
-    setLineColor(Qt::cyan);
+    setLineColor(Qt::blue);
     // setBackgroundColor(QColor(30, 30, 40));
     setGridVisible(true);
     

@@ -239,7 +239,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     chartWidget6 = ui->chartWidget6;
     chartWidget7 = ui->chartWidget7;
 
-
     chartWidget3->setAxisPrecision(0,0);
     chartWidget4->setAxisPrecision(0,0);
 
@@ -337,9 +336,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         mCalculateThread->start();
         QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
     });
-//    timer->start(1000); // 每秒更新一次
+    // timer->start(100); // 每秒更新一次
 
-    QMetaObject::invokeMethod(mCaculateParams, "setDACStaticData", Qt::QueuedConnection, Q_ARG(vector<double>, readCSVData("DACStaticData.csv")));
+    // QMetaObject::invokeMethod(mCaculateParams, "setDACStaticData", Qt::QueuedConnection, Q_ARG(vector<double>, readCSVData("DACStaticData.csv")));
 }
 
 platform_demo_test::~platform_demo_test() {
@@ -790,7 +789,10 @@ void platform_demo_test::handleStaticDACTest(){
 
 void platform_demo_test::handleDACSetValueSuccess(){
 //     double data = mInstrumentSourceManager->ks34460A->readVoltage();
-//    QThread::msleep(2000);
+   QThread::msleep(5);
+    if(dac_value == 0x8000){
+        QThread::msleep(1000); // 等待1秒钟，确保DAC输出稳定
+    }
     double data = mInstrumentSourceManager->ks34460A->readDM3068Voltage();
     qDebug() << "Now DAC Value is" << dac_value << " voltage: " << data;
     

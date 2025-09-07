@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "E:/Program_Files/QT6/6.7.1/mingw_64/lib/cmake")
+set(CMAKE_PREFIX_PATH "d:/Program_Files/QT6/6.9.0/mingw_64/lib/cmake")
 
 find_package(Qt6 COMPONENTS
         Core
@@ -14,10 +14,11 @@ find_package(Qt6 COMPONENTS
         Network
         Charts
         REQUIRED)
-file(GLOB_RECURSE SOURCES "ui/*.cpp" "thread/*.cpp" "FFT/*.cpp")
-include_directories(ui thread FFT .)
+file(GLOB_RECURSE SOURCES "ui/*.cpp" "thread/*.cpp" "FFT/*.cpp" "Instrument/*.cpp" "ui/NavigationChartView.h")
+include_directories(ui thread FFT Instrument .)
+qt_add_resources(RESOURCE_RCC ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 
-add_executable(platform_demo main.cpp ${SOURCES})
+add_executable(platform_demo main.cpp ${SOURCES} ${RESOURCE_RCC})
 target_link_libraries(platform_demo
         Qt::Core
         Qt::Gui
@@ -26,7 +27,22 @@ target_link_libraries(platform_demo
         Qt::Charts
         )
 
-set(FFTW_DIR "D:/Program_Data/Clion/Cpp/QT/platform_demo/FFT")
+# 添加Visa库头文件路径
+include_directories(${CMAKE_SOURCE_DIR}/Visa/include)
+
+# 添加Visa库lib路径
+link_directories(${CMAKE_SOURCE_DIR}/Visa/lib)
+
+# 链接visa库（根据你的平台选择visa32或visa64）
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64位
+    target_link_libraries(platform_demo ${CMAKE_SOURCE_DIR}/Visa/lib/visa64.lib)
+else()
+    # 32位
+    target_link_libraries(platform_demo visa32)
+endif()
+
+set(FFTW_DIR "D:/Program_Data/QT/Platform_demo/FFT")
 link_directories(${FFTW_DIR})
 target_link_libraries(platform_demo
         ${FFTW_DIR}/libfftw3-3.lib
@@ -65,9 +81,10 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif ()
 
 find_library(VISA_LIBRARY
-        NAMES visa32 visa64
-        PATHS "C:/Program Files (x86)/IVI Foundation/VISA/WinNT/Lib_x64/msc")
+     NAMES visa32 visa64
+     PATHS "C:/Program Files (x86)/IVI Foundation/VISA/WinNT/Lib_x64/msc")
 INCLUDE_DIRECTORIES("C:/Program Files (x86)/IVI Foundation/VISA/WinNT/Include")
 if (VISA_LIBRARY)
-    target_link_libraries(platform_demo ${VISA_LIBRARY})
+ target_link_libraries(platform_demo ${VISA_LIBRARY})
+ message(STATUS "这是一条状态消息")
 endif ()

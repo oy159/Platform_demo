@@ -6,6 +6,7 @@
 
 #include <QFont>
 #include <QGraphicsItem>
+#include <QChart>
 
 QT_FORWARD_DECLARE_CLASS(QChart)
 QT_FORWARD_DECLARE_CLASS(QGraphicsSceneMouseEvent)
@@ -14,10 +15,13 @@ class Callout : public QGraphicsItem
 {
 public:
     Callout(QChart *parent);
+    ~Callout(); // 添加析构函数声明
 
     void setText(const QString &text);
     void setAnchor(QPointF point);
     void updateGeometry();
+
+    bool isAnchorVisible() const;
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
