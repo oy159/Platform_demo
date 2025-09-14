@@ -16,6 +16,12 @@ struct Peak {
     double value;
 };
 
+typedef enum {
+    Hanning,
+    Hamming,
+    Rectangular
+}WindowFuncClass;
+
 
 class CaculateParams: public QObject {
     Q_OBJECT
@@ -44,6 +50,9 @@ public:
             INL.resize(4096, 0);
         }
     }
+
+
+
 
 signals:
     void dynamicParamsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
@@ -80,6 +89,7 @@ public slots:
         emit TransferDACStaticData(data);
     }
     void caculateDACStaticParams();
+    void setWindowFunc(WindowFuncClass windowFunc);
 
 private:
     void calculateFFT();
@@ -137,6 +147,8 @@ private:
     double maxDACINL = 0.0;
     double minDACINL = 0.0;
     double minDACDNL = 0.0;
+
+    WindowFuncClass windowFunc = Hanning;
 
 };
 

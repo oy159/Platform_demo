@@ -27,8 +27,9 @@ public slots:
 
 protected:
     // 重写基类方法
-    void optimizeAxisRanges(const QVector<QPointF> &data) override;
+    // void optimizeAxisRanges(const QVector<QPointF> &data) override;
     void keyPressEvent(QKeyEvent *event) override;
+
     // void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:

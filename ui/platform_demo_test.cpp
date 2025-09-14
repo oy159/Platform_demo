@@ -40,7 +40,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                   "padding: 0 3px;"
                   "}"
                   "QPushButton {"
-                  "background-color: #ffffff;"
                   "border: 1px solid #ccc;"
                   "padding: 5px;"
                   "border-radius: 6px;"  // Add this line to make buttons rounded
@@ -66,7 +65,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
                   "padding: 0 3px;"
                   "}"
                   "QPushButton {"
-                  "background-color: #ffffff;"
                   "border: 1px solid #ccc;"
                   "padding: 5px;"
                   "border-radius: 6px;"  // Add this line to make buttons rounded
@@ -83,9 +81,18 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(this, &platform_demo_test::startOtherCaculate, this, &platform_demo_test::handleADCTestAfterCali);
 
-    connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
+    // connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
+    //     ui->connectSettings->show();
+    // });
+    connect(ui->instrumentSettingsBtn, &QPushButton::clicked, this, [=]() {
         ui->connectSettings->show();
     });
+
+    connect(ui->ChartWidgetControlButton, &QPushButton::clicked, [=]() {
+                ui->chartControlWidget->show();
+    });
+
+    connect(ui->chartControlWidget, &ChartControlWidget::sendInform, ui->chartGridWidget, &ChartWidgetsManager::receiveLayoutInform);
 
     connect(ui->connectSettings->SettingGeneratorResourceBtn, &QPushButton::clicked, this, &platform_demo_test::handleSetConfigForGenerator);
 
@@ -245,8 +252,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(mCaculateParams, &CaculateParams::TransferFFTData, chartWidget1, &SpectrumChartTryWidget::handleRefreshSpectrum);
     connect(mCaculateParams, &CaculateParams::TransferPeakData, chartWidget1, &SpectrumChartTryWidget::handleRefreshPeakData);
-    connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindPeak);
-    connect(ui->FindNextButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindNextPeak);
+    // connect(ui->FindPeakButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindPeak);
+    // connect(ui->FindNextButton, &QPushButton::clicked, chartWidget1, &SpectrumChartTryWidget::handleFindNextPeak);
 
     connect(mCaculateParams, &CaculateParams::TransferADCData, chartWidget2, &BaseChartWidget::updateChartDataDirect);
 
@@ -275,6 +282,7 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
             }
         }
     });
+
     connect(ui->ADCChannel2CheckBox, &QCheckBox::checkStateChanged, this, [this](int state) {
         if (state == Qt::Checked) {
             ui->ADCChannel1CheckBox->setChecked(false);
@@ -325,6 +333,29 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->staticParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticADCTest);
 
     connect(mCaculateParams, &CaculateParams::staticDACParamsCalculateFinished, this, &platform_demo_test::handleStaticDACParamsCalculateFinished);
+
+
+    connect(ui->WindowsFuncCombox, &QComboBox::currentIndexChanged, this, [this](int index) {
+        switch(index) {
+            case 0:
+                QMetaObject::invokeMethod(mCaculateParams, "setWindowFunc", Qt::QueuedConnection, Q_ARG(WindowFuncClass, Hanning));
+                break;
+            case 1:
+                QMetaObject::invokeMethod(mCaculateParams, "setWindowFunc", Qt::QueuedConnection, Q_ARG(WindowFuncClass, Hamming));
+                break;
+            case 2:
+                QMetaObject::invokeMethod(mCaculateParams, "setWindowFunc", Qt::QueuedConnection, Q_ARG(WindowFuncClass, Rectangular));
+                break;
+            default:
+                break;
+        }
+        if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+            QMessageBox::warning(this, "Warning", "当前无ADC设备");
+            return;
+        }
+        QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+    });
+
     /** test code **/
     // create timer
     QTimer *timer = new QTimer(this);
@@ -422,7 +453,12 @@ void platform_demo_test::handleConnectButton() {
 }
 
 void platform_demo_test::handleInstrumentDetectBtn() {
-    mInstrumentManager->findAllVisaResources();
+    auto messages = mInstrumentManager->findAllVisaResources();
+    for (size_t i = 0; i < messages.size(); ++i) {
+        QTimer::singleShot(i * 1000, this, [this, message = messages[i]]() {
+            ui->statusbar->showMessage(QString::fromStdString(message), 1000);
+        });
+    }
 }
 
 
@@ -435,8 +471,8 @@ void platform_demo_test::handleDynamicCaculateFinished(double SFDR, double THD, 
     ui->THDADCLabel->setText("THD:   " + QString::number(THD, 'f', 2) + " dB");
     ui->SNRADCLabel->setText("SNR:    " + QString::number(SNR, 'f', 2) + " dB");
     ui->ENOBADCLabel->setText("ENOB:  " + QString::number(ENOB, 'f', 2) + " bit");
-//    mCalculateThread->quit();
-//    mCalculateThread->wait();
+    QMessageBox::question(this, "提示", "ADC动态测试完成",
+                                  QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxINL, 
@@ -453,9 +489,8 @@ void platform_demo_test::handleStaticCaculateFinished(double maxDNL, double maxI
     ui->OffsetADCLabel->setText("Offset:   " + QString::number(staticOffset, 'f', 2));
     ui->PeakADCLabel->setText("Peak:   " + QString::number(staticPeak, 'f', 2));
 
-
-    mCalculateThread->quit();
-    mCalculateThread->wait();
+    QMessageBox::question(this, "提示", "ADC静态测试完成",
+                                  QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void platform_demo_test::handleErrorOccurred(const QString &error) {
@@ -621,7 +656,6 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
                 return;
         }
 
-
         QString message = "Hello, World!";      // 修改为获取一次ADC数据的命令
         if (!message.isEmpty()) {
             QMetaObject::invokeMethod(mUdpWorker, "sendMessage", Q_ARG(QString, message));
@@ -640,9 +674,10 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
         QMetaObject::invokeMethod(mCaculateParams, "caculateStaticDataHistogram", Qt::QueuedConnection);
 
         staticDataSize += dataArray.size();
-
+        ui->staticParamsADCTestProgressBar->setValue(staticDataSize / 655320);
 
         if(staticDataSize >= 65532*1000) {
+            ui->staticParamsADCTestProgressBar->setValue(100);
             qDebug() << "ADC Static Test Stop" << "now data size = " << staticDataSize;
             
             QMetaObject::invokeMethod(mCaculateParams, "caculateStaticParamsADC", Qt::QueuedConnection);
@@ -807,6 +842,7 @@ void platform_demo_test::handleDACSetValueSuccess(){
         return;
     }
     dac_value++;
+    ui->staticParamsDACTestProgressBar->setValue(dac_value * 100 / 65535);
     QMetaObject::invokeMethod(mUdpWorker, "handleSetDACValue", Qt::QueuedConnection, Q_ARG(int, dac_value));
 }
 
@@ -824,7 +860,6 @@ void platform_demo_test::handleDynamicDACTest(){
                               Qt::QueuedConnection, Q_ARG(dynamicDACTestStep, dynamicDACTestStep::CaculateIMD), Q_ARG(int, freq));
     QMetaObject::invokeMethod(mInstrumentSourceManager, "readSA",
                               Qt::QueuedConnection, Q_ARG(int, freq));
-
 }
 
 
@@ -862,4 +897,7 @@ platform_demo_test::handleStaticDACParamsCalculateFinished(double maxDNL, double
     ui->INLDACLabel->setText("INL:   " + QString::number(minINL, 'f', 2) + " | " + QString::number(maxINL, 'f', 2) + " LSB");
     ui->OffsetDACLabel->setText("增益:   " + QString::number(staticGain, 'E', 3) + "  V/LSB");
     ui->PeakDACLabel->setText("零点偏移:   " + QString::number(staticOffset, 'E', 3) + "  V");
+    ui->staticParamsDACTestProgressBar->setValue(100);
+    QMessageBox::question(this, "提示", "DAC静态测试完成",
+                                  QMessageBox::Ok, QMessageBox::Ok);
 }

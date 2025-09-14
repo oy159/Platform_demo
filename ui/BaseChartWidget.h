@@ -29,17 +29,22 @@ public:
     void resetView();
     void updateCoordText(const QPointF &chartPos);
     void setRecoverRange(double xMin, double xMax, double yMin, double yMax);
+    void setPeakData(QVector<QPointF> Peaks);
+    void setPointMarker(QPointF point);
     
     QChartView* chartView() const { return m_chartView; }
 
 public slots:
     void updateChartDataDirect(std::vector<double> data);
+    void findMaxPoint();
+    void findNextPoint();
 
 protected:
     void initChart();
     void initMenu();
 
     virtual void optimizeAxisRanges(const QVector<QPointF> &data);
+    virtual void markPeak(int index);
     static void optimizeAxisRange(double &min, double &max, double marginRatio = 0.1);
     static double calculateNiceTickInterval(double range);
     void contextMenuEvent(QContextMenuEvent *event) override;
@@ -53,7 +58,6 @@ protected:
     NavigationChartView *m_chartView = nullptr;
     QLineSeries *m_series = nullptr;
     QScatterSeries *m_scatterSeries = nullptr;
-    QList<QScatterSeries *> m_MarkerSeries;
     QValueAxis *m_axisX = nullptr;
     QValueAxis *m_axisY = nullptr;
     
@@ -74,7 +78,10 @@ protected:
     Cursor *m_cursor = nullptr;
     QVector<QPointF> mPeaks;
     int mCurrentPeakIndex = -1;
-    int MarkerIndex = 0;
+    QVector<bool> mPeaksVisible;
+    QMenu *menu = nullptr;
+    QAction *findMaxAction;
+    QAction *findNextAction;
 
 protected slots:
     void keepCallout();
@@ -85,8 +92,9 @@ protected slots:
     void autoAdjust();
     void setCursorVisible(bool visible);
     void addMarker();
-    void findMaxPoint();
-    void findNextPoint();
+
+    void findPoint(int index);
+    void findPoint(QPointF point);
     void setMarkerToggled(bool checked);
 
 protected:
@@ -97,8 +105,6 @@ protected:
 
 private:
     bool first = true;
-
-    QMenu *menu = nullptr;
 
     QAction *snipAction;
     QAction *exportDataAction;
@@ -113,8 +119,7 @@ private:
     MarkerColorAction *marker1Action;
     QAction *addMarkerAction;
     QAction *ClearMarkerAction;
-    QAction *findMaxAction;
-    QAction *findNextAction;
+
 
     QMenu *axisYSubMenu;
     QWidgetAction *axisYPrecision;
@@ -132,7 +137,7 @@ private:
 
     QAction *autoAdjustAction;
 
-    QVector<QPair<bool, int>> MarkerCalloutFlag;
+    // QVector<QPair<bool, int>> MarkerCalloutFlag;
     QList<Callout*> m_calloutPool;
 };
 

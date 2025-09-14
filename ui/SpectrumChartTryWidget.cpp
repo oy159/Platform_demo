@@ -28,7 +28,11 @@ SpectrumChartTryWidget::SpectrumChartTryWidget(QWidget *parent)
     m_chart->addSeries(m_peakSeries);
     m_peakSeries->attachAxis(m_axisX);
     m_peakSeries->attachAxis(m_axisY);
-    
+    SpectrumChartTryWidget::addCustomContextMenuActions(menu);
+    disconnect(findMaxAction, &QAction::triggered, this, &BaseChartWidget::findMaxPoint);
+    disconnect(findNextAction, &QAction::triggered, this, &BaseChartWidget::findNextPoint);
+    connect(findMaxAction, &QAction::triggered, this, &SpectrumChartTryWidget::handleFindPeak);
+    connect(findNextAction, &QAction::triggered, this, &SpectrumChartTryWidget::handleFindNextPeak);
 }
 
 void SpectrumChartTryWidget::setSampleRate(double rate) {
@@ -92,6 +96,7 @@ void SpectrumChartTryWidget::handleRefreshSpectrum(std::vector<double> fft_data)
     } else {
         for (size_t i = 0; i < fft_data.size(); ++i) {
             chart_data.append(QPointF(i, fft_data[i]));
+
         }
     }
 
@@ -124,60 +129,62 @@ void SpectrumChartTryWidget::handleFindNextPeak() {
 
 void SpectrumChartTryWidget::markPeak(int index) {
     if (index < 0 || index >= static_cast<int>(m_peaks.size())) return;
-    
+
     double x, y;
     const Peak& peak = m_peaks[index];
-    
+
     if (m_frequencyMode) {
         x = (static_cast<double>(peak.position) / m_sampleNum / 2) * (m_sampleRate / 1e6);
     } else {
         x = peak.position;
     }
     y = peak.value;
-    
-    m_peakSeries->clear();
-    m_peakSeries->append(x, y);
-    updateCoordText(QPointF(x, y));
-    
-    // 添加标注
-    if (!m_peakCallout) {
-        m_peakCallout = new Callout(m_chart);
-    }
-    m_peakCallout->setText(QString("Peak %1\n%2 MHz\n%3 dB")
-                          .arg(index+1)
-                          .arg(x, 0, 'f', 3)
-                          .arg(y, 0, 'f', 2));
-    m_peakCallout->setAnchor(QPointF(x, y));
-    m_peakCallout->setZValue(12);
-    m_peakCallout->updateGeometry();
-    m_peakCallout->show();
+
+    setPointMarker(QPointF{x,y});
+
+    // m_peakSeries->clear();
+    // m_peakSeries->append(x, y);
+    // updateCoordText(QPointF(x, y));
+    //
+    // // 添加标注
+    // if (!m_peakCallout) {
+    //     m_peakCallout = new Callout(m_chart);
+    // }
+    // m_peakCallout->setText(QString("Peak %1\n%2 MHz\n%3 dB")
+    //                       .arg(index+1)
+    //                       .arg(x, 0, 'f', 3)
+    //                       .arg(y, 0, 'f', 2));
+    // m_peakCallout->setAnchor(QPointF(x, y));
+    // m_peakCallout->setZValue(12);
+    // m_peakCallout->updateGeometry();
+    // m_peakCallout->show();
 }
 
-void SpectrumChartTryWidget::optimizeAxisRanges(const QVector<QPointF> &data) {
-    if (data.isEmpty()) return;
-    
-    double minX = data.first().x();
-    double maxX = data.last().x();
-    double minY = data.first().y();
-    double maxY = data.last().y();
-    
-    for (const auto &point : data) {
-        minY = qMin(minY, point.y());
-        maxY = qMax(maxY, point.y());
-    }
-    
-    // 添加10%边距
-    double yMargin = qMax(0.1, (maxY - minY) * 0.1);
-    
-    // 记录恢复范围
-    setRecoverRange(minX, maxX, minY - yMargin, maxY + yMargin);
-    
-    m_axisX->setRange(minX, maxX);
-    m_axisY->setRange(minY - yMargin, maxY + yMargin);
-}
+// void SpectrumChartTryWidget::optimizeAxisRanges(const QVector<QPointF> &data) {
+//     if (data.isEmpty()) return;
+//
+//     double minX = data.first().x();
+//     double maxX = data.last().x();
+//     double minY = data.first().y();
+//     double maxY = data.last().y();
+//
+//     for (const auto &point : data) {
+//         minY = qMin(minY, point.y());
+//         maxY = qMax(maxY, point.y());
+//     }
+//
+//     // 添加10%边距
+//     double yMargin = qMax(0.1, (maxY - minY) * 0.1);
+//
+//     // 记录恢复范围
+//     setRecoverRange(minX, maxX, minY - yMargin, maxY + yMargin);
+//
+//     m_axisX->setRange(minX, maxX);
+//     m_axisY->setRange(minY - yMargin, maxY + yMargin);
+// }
 
 void SpectrumChartTryWidget::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Left) {
+    if (event->key() == Qt::Key_A) {
         // 向左查找峰值
         if (m_peakCnt > 0) {
             m_peakCnt--;
@@ -186,7 +193,7 @@ void SpectrumChartTryWidget::keyPressEvent(QKeyEvent *event) {
         }
         markPeak(m_peakCnt);
         event->accept();
-    } else if (event->key() == Qt::Key_Right) {
+    } else if (event->key() == Qt::Key_D) {
         // 向右查找峰值
         handleFindNextPeak();
         event->accept();
@@ -203,17 +210,12 @@ void SpectrumChartTryWidget::keyPressEvent(QKeyEvent *event) {
 }
 
 void SpectrumChartTryWidget::addCustomContextMenuActions(QMenu *menu) {
-    QAction *freqModeAction = menu->addAction("Frequency Mode");
+    menu->addSeparator();
+    QAction *freqModeAction = menu->addAction("X轴坐标频率显示");
+
     freqModeAction->setCheckable(true);
+    freqModeAction->setChecked(true);
     freqModeAction->setChecked(m_frequencyMode);
     connect(freqModeAction, &QAction::toggled, this, &SpectrumChartTryWidget::setFrequencyMode);
 
-    menu->addSeparator();
-    QAction *findPeakAction = menu->addAction("Find First Peak");
-    connect(findPeakAction, &QAction::triggered, this, &SpectrumChartTryWidget::handleFindPeak);
-
-    QAction *nextPeakAction = menu->addAction("Find Next Peak");
-    connect(nextPeakAction, &QAction::triggered, this, &SpectrumChartTryWidget::handleFindNextPeak);
-
-    menu->addSeparator();
 }

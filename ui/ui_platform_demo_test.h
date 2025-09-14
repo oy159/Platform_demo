@@ -45,9 +45,11 @@ public:
     QGroupBox *messageGroupBox;
     QVBoxLayout *messageGroupBoxLayout;
     QPushButton *instrumentDetectBtn;
+    QPushButton *instrumentSettingsBtn;
 
 
-    QPushButton *switchWidgetButton;  // 新增切换按钮
+    QPushButton *switchWidgetButton;
+    QPushButton *ChartWidgetControlButton;
     QSpacerItem *verticalSpacer;
 
     QStackedWidget *rightStackedWidget;  // 主堆叠部件
@@ -62,8 +64,8 @@ public:
     QLabel *SNRADCLabel;
     QLabel *THDADCLabel;
     QLabel *ENOBADCLabel;
-    QPushButton *FindPeakButton;
-    QPushButton *FindNextButton;
+    // QPushButton *FindPeakButton;
+    // QPushButton *FindNextButton;
 
     QGroupBox *StaticParamsADCGroupBox;
     QVBoxLayout *StaticParamsADCGroupBoxLayout;
@@ -90,6 +92,7 @@ public:
     QPushButton *dynamicParamsADCTestButton;
     QPushButton *staticParamsADCTestButton;
     QPushButton *twoTonesADCTestButton;
+    QProgressBar *staticParamsADCTestProgressBar;
 
     // DAC参数显示部件
     QWidget *DisplayDACParamsWidget;
@@ -119,8 +122,10 @@ public:
     QVBoxLayout *paramTestDACGroupBoxLayout;
     QPushButton *dynamicParamsDACTestButton;
     QPushButton *staticParamsDACTestButton;
+    QProgressBar *staticParamsDACTestProgressBar;
 
-    ChartWidgetsManager *chartGridWidget;  // 新增图表网格部件
+    ChartWidgetsManager *chartGridWidget;
+    ChartControlWidget *chartControlWidget;
     SpectrumChartTryWidget *chartWidget1;
     BaseChartWidget *chartWidget2;
     BaseChartWidget *chartWidget3;
@@ -128,11 +133,11 @@ public:
     BaseChartWidget *chartWidget5;
     BaseChartWidget *chartWidget6;
     BaseChartWidget *chartWidget7; // 新增图表部件
-    QMenuBar *menubar;
+    // QMenuBar *menubar;
     QStatusBar *statusbar;
-    QMenu *menuFile;
-    QMenu *menuSettings;
-    QAction *connectSetAction;
+    // QMenu *menuFile;
+    // QMenu *menuSettings;
+    // QAction *connectSetAction;
 
     ConnectSettings *connectSettings;
 
@@ -158,25 +163,22 @@ public:
         connectButton->setCheckable(true);
         ipGroupBoxLayout->addWidget(connectButton);
 
-        messageGroupBox = new QGroupBox("仪器资源检测", leftWidget);
+        messageGroupBox = new QGroupBox("仪器资源", leftWidget);
         messageGroupBoxLayout = new QVBoxLayout(messageGroupBox);
         instrumentDetectBtn = new QPushButton("检测仪器", messageGroupBox);
-
+        instrumentSettingsBtn = new QPushButton("仪器设置", messageGroupBox);
         messageGroupBoxLayout->addWidget(instrumentDetectBtn);
-
-        // 添加参数测试按钮组
-        
+        messageGroupBoxLayout->addWidget(instrumentSettingsBtn);
 
         // 添加切换按钮
         switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
+        ChartWidgetControlButton = new QPushButton("图表控制", leftWidget);
 
-        // connectSettings = new ConnectSettings(leftWidget);
-        
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
-        // controlLayout->addWidget(paramTestADCGroupBox);  // 添加参数测试按钮组
-        controlLayout->addWidget(switchWidgetButton);  // 添加切换按钮
-        // controlLayout->addWidget(connectSettings);  // 添加连接设置部件
+        controlLayout->addWidget(switchWidgetButton);
+        controlLayout->addWidget(ChartWidgetControlButton);
+
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
         controlLayout->addItem(verticalSpacer);
@@ -197,15 +199,15 @@ public:
         SNRADCLabel = new QLabel("SNR: ", DynamicParamsADCGroupBox);
         THDADCLabel = new QLabel("THD: ", DynamicParamsADCGroupBox);
         ENOBADCLabel = new QLabel("ENOB: ", DynamicParamsADCGroupBox);
-        FindPeakButton = new QPushButton("Find Peak", DynamicParamsADCGroupBox);
-        FindNextButton = new QPushButton("Find Next", DynamicParamsADCGroupBox);
+        // FindPeakButton = new QPushButton("Find Peak", DynamicParamsADCGroupBox);
+        // FindNextButton = new QPushButton("Find Next", DynamicParamsADCGroupBox);
         
         DynamicParamsADCGroupBoxLayout->addWidget(SFDRADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(SNRADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(THDADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(ENOBADCLabel);
-        DynamicParamsADCGroupBoxLayout->addWidget(FindPeakButton);
-        DynamicParamsADCGroupBoxLayout->addWidget(FindNextButton);
+        // DynamicParamsADCGroupBoxLayout->addWidget(FindPeakButton);
+        // DynamicParamsADCGroupBoxLayout->addWidget(FindNextButton);
 
         StaticParamsADCGroupBox = new QGroupBox("ADC Static Parameters", DisplayADCParamsWidget);
         StaticParamsADCGroupBoxLayout = new QVBoxLayout(StaticParamsADCGroupBox);
@@ -226,6 +228,7 @@ public:
         WindowsFuncCombox = new QComboBox(WindowsFuncGroupBox);
         WindowsFuncCombox->addItem("Hanning Window");
         WindowsFuncCombox->addItem("Hamming Window");
+        WindowsFuncCombox->addItem("Rectangular Window");
 
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncLabel);
         WindowsFuncGroupBoxLayout->addWidget(WindowsFuncCombox);
@@ -248,9 +251,12 @@ public:
         dynamicParamsADCTestButton = new QPushButton("动态参数测试", paramTestADCGroupBox);
         staticParamsADCTestButton = new QPushButton("静态参数测试", paramTestADCGroupBox);
         twoTonesADCTestButton = new QPushButton("双音测试", paramTestADCGroupBox);
+        staticParamsADCTestProgressBar = new QProgressBar(paramTestADCGroupBox);
+        staticParamsADCTestProgressBar->setRange(0, 100);
         paramTestADCGroupBoxLayout->addWidget(dynamicParamsADCTestButton);
-        paramTestADCGroupBoxLayout->addWidget(staticParamsADCTestButton);
         paramTestADCGroupBoxLayout->addWidget(twoTonesADCTestButton);
+        paramTestADCGroupBoxLayout->addWidget(staticParamsADCTestButton);
+        paramTestADCGroupBoxLayout->addWidget(staticParamsADCTestProgressBar);
 
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
@@ -315,9 +321,12 @@ public:
         paramTestDACGroupBoxLayout = new QVBoxLayout(paramTestDACGroupBox);
         dynamicParamsDACTestButton = new QPushButton("动态参数测试", paramTestDACGroupBox);
         staticParamsDACTestButton = new QPushButton("静态参数测试", paramTestDACGroupBox);
+        staticParamsDACTestProgressBar = new QProgressBar(paramTestADCGroupBox);
+        staticParamsDACTestProgressBar->setRange(0, 100);
 
         paramTestDACGroupBoxLayout->addWidget(dynamicParamsDACTestButton);
         paramTestDACGroupBoxLayout->addWidget(staticParamsDACTestButton);
+        paramTestDACGroupBoxLayout->addWidget(staticParamsDACTestProgressBar);
 
         DisplayDACParamsLayout->addWidget(DynamicParamsDACGroupBox);
         DisplayDACParamsLayout->addWidget(StaticParamsDACGroupBox);
@@ -348,33 +357,22 @@ public:
         chartGridWidget->addChart(chartWidget7);
 
         chartGridWidget->reorganizeCharts(); // 初始化图表布局
+        chartControlWidget = new ChartControlWidget();
+        chartControlWidget->hide();
+        chartControlWidget->setAttribute(Qt::WA_QuitOnClose, false);
 
         splitter->addWidget(leftWidget);
-        splitter->addWidget(rightStackedWidget);  // 使用堆叠部件替换原来的DisplayADCParamsWidget
+        splitter->addWidget(rightStackedWidget);
         splitter->addWidget(chartGridWidget);
-        splitter->setStretchFactor(0, 30);
-        splitter->setStretchFactor(1, 1);
-        splitter->setStretchFactor(2, 500);
+        splitter->setStretchFactor(0, 15);
+        splitter->setStretchFactor(1, 10);
+        splitter->setStretchFactor(2, 50);
 
         mainLayout->addWidget(splitter);
         centralwidget->setLayout(mainLayout);
 
         platform_demo_test->setCentralWidget(centralwidget);
 
-        menubar = new QMenuBar(platform_demo_test);
-        menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 800, 21));
-        platform_demo_test->setMenuBar(menubar);
-
-        menuFile = new QMenu(menubar);
-        menuFile->setObjectName("menuFile");
-        menubar->addAction(menuFile->menuAction());
-
-        menuSettings = new QMenu(menubar);
-        menuSettings->setObjectName("menuSettings");
-        menubar->addAction(menuSettings->menuAction());
-
-        connectSetAction = menuSettings->addAction("仪器连接设置");
         connectSettings = new ConnectSettings(platform_demo_test);
         connectSettings->hide();
         connectSettings->setAttribute(Qt::WA_QuitOnClose, false);
@@ -392,9 +390,10 @@ public:
     void retranslateUi(QMainWindow *platform_demo_test)
     {
         platform_demo_test->setWindowTitle(QCoreApplication::translate("platform_demo_test", "platform_demo_test", nullptr));
-        menuFile->setTitle(QCoreApplication::translate("platform_demo_test", "File", nullptr));
-        menuSettings->setTitle(QCoreApplication::translate("platform_demo_test", "Settings", nullptr));
+        // menuFile->setTitle(QCoreApplication::translate("platform_demo_test", "File", nullptr));
+        // menuSettings->setTitle(QCoreApplication::translate("platform_demo_test", "Settings", nullptr));
         switchWidgetButton->setText(QCoreApplication::translate("platform_demo_test", "切换显示部件 (ADC/DAC)", nullptr));
+
     } // retranslateUi
 
 };

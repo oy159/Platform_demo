@@ -25,6 +25,10 @@ public:
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void setMarkerColor(QColor color);
+    QColor getColor() const;
+    void setIfDrawColor(bool status);
+    bool isIfDrawColor() const;
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -37,6 +41,8 @@ private:
     QPointF m_anchor;
     QFont m_font;
     QChart *m_chart = nullptr;
+    QColor m_color = Qt::red;      // 默认marker颜色
+    bool IfDrawMarker;       // 是否绘制marker
 };
 
 #endif

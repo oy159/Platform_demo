@@ -21,12 +21,25 @@ void CaculateParams::calculateFFT() {
     int N = mData.size();
     fftw_complex *in, *out;
     fftw_plan p;
+    double window;
 
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
     for (int i = 0; i < N; ++i) {
-        double window = 0.5 * (1 - cos(2 * M_PI * i / (N - 1))); // 汉宁窗
+        switch (windowFunc) {
+            case Hanning:
+                window = 0.5 * (1 - cos(2 * M_PI * i / (N - 1))); // 汉宁窗
+                break;
+            case Hamming:
+                window = 0.53586 -  (1 - 0.53586) * cos(2 * M_PI * i / (N - 1));
+                break;
+            case Rectangular:
+                window = 1;
+                break;
+            default:
+                window = 0.5 * (1 - cos(2 * M_PI * i / (N - 1))); // 汉宁窗
+        }
         in[i][0] = mData[i] * window; // Real part
         in[i][1] = 0.0;     // Imaginary part
     }
@@ -141,8 +154,8 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
         dcExcludeWidth = sample_rate / 1000.0;
     }
 
-    auto nfft = (fft_abs.size()) * 2; // 计算原始FFT点数
-    const auto& fft_mag = fft_abs;        // 引用输入数据
+    auto nfft = (fft_abs.size()) * 2;
+    const auto& fft_mag = fft_abs;
     double max_mag = *std::max_element(fft_mag.begin(), fft_mag.end());
 
     // 计算频率向量
@@ -183,7 +196,7 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 
     // 考虑谐波区域
     fund_energy = 0;
-    std::vector<bool> exclude_bins(fft_mag.size(), false);
+    std::vector exclude_bins(fft_mag.size(), false);
     for (int i = exclude_start; i <= exclude_end; ++i) {
         exclude_bins[i] = true;
         fund_energy += fft_mag[i] * fft_mag[i];
@@ -197,7 +210,6 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
             int h_end = std::min(static_cast<int>(fft_mag.size()) - 1,
                                  static_cast<int>(ceil((harmonic_freq + exclude_band) * nfft / sample_rate)));
             for (int i = h_start; i <= h_end; ++i) {
-//                exclude_bins[i] = true;
                 harmonic_energy += fft_mag[i] * fft_mag[i];
             }
         }
@@ -235,8 +247,6 @@ void CaculateParams::calculateSFDRdb(int numHarmonics, double dcExcludeWidth) {
 }
 
 void CaculateParams::caculateStaticParamsADC() {
-
-
     double C1 = cos(M_PI * StaticDataHistogram[0] / (ADCStaticDataLength));
     double C2 = cos(M_PI * StaticDataHistogram[qPow(2,ADC_BITS) - 1] / (ADCStaticDataLength));
 
@@ -255,14 +265,6 @@ void CaculateParams::caculateStaticParamsADC() {
     for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i) {
         INL[i] = INL[i - 1] + DNL[i];
     }
-
-    // max INL, DNL
-    // auto INL_S = INL;
-    // auto DNL_S = DNL;
-    // for(int i = 1; i < qPow(2,ADC_BITS) - 1; ++i){
-    //     INL_S[i] = abs(INL_S[i]);
-    //     DNL_S[i] = abs(DNL_S[i]);
-    // }
 
     maxINL = *std::max_element(INL.begin(), INL.end());
     maxDNL = *std::max_element(DNL.begin(), DNL.end());
@@ -361,4 +363,6 @@ void CaculateParams::caculateDACStaticParams()
 }
 
 
-
+void CaculateParams::setWindowFunc(WindowFuncClass windowFunc) {
+    this->windowFunc = windowFunc;
+}

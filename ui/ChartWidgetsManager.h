@@ -7,7 +7,7 @@
 #include <QList>
 #include <QMenu>
 #include <QAction>
-#include <QContextMenuEvent>
+#include <ChartControlWidget.h>
 #include <SpectrumChartTryWidget.h>
 
 class ChartWidgetsManager : public QWidget {
@@ -25,87 +25,26 @@ public:
         chartWidgets.append(chart);
     }
 
-    void reorganizeCharts() {
-        // 清除现有布局
-        QLayoutItem *child;
-        while ((child = gridLayout->takeAt(0)) != nullptr) {
-            if (child->widget()) child->widget()->setParent(nullptr);
-            delete child;
-        }
-
-        if (chartWidgets.isEmpty()) return;
-
-        QList<int> toShow = visibleIndexes;
-        int count = toShow.size();
-        if (count == 0) return;
-
-        int rows = qCeil(qSqrt(count));
-        int cols = qCeil(count / double(rows));
-        int idx = 0;
-        for (int i : toShow) {
-            int row = idx / cols;
-            int col = idx % cols;
-            gridLayout->addWidget(chartWidgets[i], row, col);
-            ++idx;
-        }
-        for (int r = 1; r < gridLayout->rowCount(); ++r)
-            gridLayout->setRowStretch(r, 0);
-        for (int c = 1; c < gridLayout->columnCount(); ++c)
-            gridLayout->setColumnStretch(c, 0);
-        for (int r = 0; r < rows; ++r)
-            gridLayout->setRowStretch(r, 1);
-        for (int c = 0; c < cols; ++c)
-            gridLayout->setColumnStretch(c, 1);
+    QHash<int, GridPosition> getCurrentLayout() const {
+        return currentLayoutInform;
     }
+
+    void reorganizeCharts();
+    void reorganizeFromInform(const QHash<int, GridPosition> &inform);
 
     int chartCount() const { return chartWidgets.size(); }
+public slots:
+    void receiveLayoutInform(QHash<int, GridPosition> &inform);
 
 private slots:
-    void showContextMenu(const QPoint &pos) {
-        QMenu menu(this);
-        // for (QWidget *w : chartWidgets) {
-        //     // 判断是否有addCustomContextMenuActions方法
-        //     auto *custom = dynamic_cast<SpectrumChartTryWidget*>(w);
-        //     if (custom) {
-        //         custom->addCustomContextMenuActions(&menu);
-        //     }
-        //     // 你也可以用接口基类，或用QWidget的property判断
-        // }
-        menu.addSeparator();
-        QList<QAction*> actions;
-
-        if(chartWidgets.size() > ChartWidgetNames.size()) {
-            qDebug() << "ChartWidgetsManager: chartWidgets size exceeds ChartWidgetNames size!";
-        }
-
-        for (int i = 0; i < ChartWidgetNames.size(); ++i) {
-            QString title = ChartWidgetNames[i];
-            QAction *action = menu.addAction(title);
-            action->setCheckable(true);
-            action->setChecked(visibleIndexes.contains(i));
-            action->setData(i);
-            actions.append(action);
-        }
-        QAction *selected = menu.exec(mapToGlobal(pos));
-        if (selected) {
-            
-            int idx = selected->data().toInt();
-            showAll = false;
-            if (visibleIndexes.contains(idx)) {
-                visibleIndexes.removeAll(idx);
-            } else {
-                visibleIndexes.append(idx);
-            }
-            reorganizeCharts();
-            
-        }
-    }
+    void showContextMenu(const QPoint &pos);
 
 private:
     QGridLayout *gridLayout;
     QList<QWidget*> chartWidgets;
     bool showAll = false;
     QList<int> visibleIndexes;
+    QHash<int, GridPosition> currentLayoutInform;
 
     QList<int> getAllIndexes() const {
         QList<int> idxs;
@@ -123,16 +62,6 @@ private:
         "N9040B Chart",
     };
 };
-
-
-
-
-
-
-
-
-
-
 
 
 

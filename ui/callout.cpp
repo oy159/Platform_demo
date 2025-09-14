@@ -10,7 +10,7 @@
 
 Callout::Callout(QChart *chart)
     : QGraphicsItem(chart)
-    , m_chart(chart)
+    , m_chart(chart), IfDrawMarker(false)
 {
 }
 
@@ -68,10 +68,24 @@ void Callout::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     }
     QPainterPath path;
     path.addRoundedRect(m_rect, 5, 5);
-
+    const qreal size = 8.0;
+    qreal halfSide = size / 1.732;
 
     if (isAnchorVisible()) {
         QPointF anchor = mapFromParent(m_chart->mapToPosition(m_anchor));
+        QPointF point3 = anchor;
+        if (IfDrawMarker) {
+            QPolygonF triangle;
+            triangle << QPointF(anchor.x(), anchor.y())          // 上顶点
+                     << QPointF(anchor.x() - halfSide, anchor.y() - size)  // 左上顶点
+                     << QPointF(anchor.x() + halfSide, anchor.y() - size); // 右上顶点
+
+            painter->setBrush(m_color);
+            painter->setPen(Qt::NoPen);
+            painter->drawPolygon(triangle);
+            point3 = {anchor.x(), anchor.y() - size};
+        }
+
         if (!m_rect.contains(anchor) && !m_anchor.isNull()) {
             QPointF point1, point2;
 
@@ -93,24 +107,26 @@ void Callout::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
             bool vertical = qAbs(anchor.x() - x) > qAbs(anchor.y() - y);
 
             qreal x1 = x + leftOfCenter * 10 - rightOfCenter * 20 + cornerCase * !vertical * (onLeft * 10 - onRight * 20);
-            qreal y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20);;
+            qreal y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20) - 10;
             point1.setX(x1);
             point1.setY(y1);
 
-            qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * !vertical * (onLeft * 20 - onRight * 10);;
-            qreal y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10);;
+            qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * !vertical * (onLeft * 20 - onRight * 10);
+            qreal y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10) - 10;
             point2.setX(x2);
             point2.setY(y2);
 
             path.moveTo(point1);
-            path.lineTo(anchor);
+            path.lineTo(point3);
             path.lineTo(point2);
             path = path.simplified();
         }
     }
     painter->setBrush(QColor(255, 255, 255));
+    painter->setPen(Qt::black);
     painter->drawPath(path);
     painter->drawText(m_textRect, m_text);
+
 }
 
 void Callout::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -133,7 +149,7 @@ void Callout::setText(const QString &text)
     m_text = text;
     QFontMetrics metrics(m_font);
     m_textRect = metrics.boundingRect(QRect(0, 0, 150, 150), Qt::AlignLeft, m_text);
-    m_textRect.translate(5, 5);
+    m_textRect.translate(5, -5);
     prepareGeometryChange();
     m_rect = m_textRect.adjusted(-5, -5, 5, 5);
 }
@@ -147,4 +163,21 @@ void Callout::updateGeometry()
 {
     prepareGeometryChange();
     setPos(m_chart->mapToPosition(m_anchor) + QPoint(10, -50));
+}
+
+void Callout::setMarkerColor(QColor color) {
+    m_color = color;
+    setIfDrawColor(true);
+}
+
+QColor Callout::getColor() const {
+    return m_color;
+}
+
+void Callout::setIfDrawColor(bool status) {
+    IfDrawMarker = status;
+}
+
+bool Callout::isIfDrawColor() const {
+    return IfDrawMarker;
 }

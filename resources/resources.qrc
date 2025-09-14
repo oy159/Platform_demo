@@ -4,7 +4,14 @@
         <file>icon/settings.svg</file>
         <file>icon/caret_left.png</file>
         <file>icon/caret_right.png</file>
+        <file>icon/go-down-symbolic.symbolic.png</file>
+        <file>icon/go-next-symbolic.symbolic.png</file>
+        <file>icon/go-previous-symbolic.symbolic.png</file>
+        <file>icon/go-up-symbolic.symbolic.png</file>
+        <file>icon/object-select-symbolic.symbolic.png</file>
         <file>qss/themes/style.qss</file>
         <file>qss/themes/MacOS.qss</file>
+        <file>qss/themes/Ubuntu.qss</file>
+        <file>qss/themes/abc.qss</file>
     </qresource>
 </RCC>

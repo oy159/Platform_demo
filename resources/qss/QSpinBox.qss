@@ -4,13 +4,13 @@ QSpinBox {
     border: 1px solid #cccccc;
     border-radius: 4px;
     padding: 2px;
-    min-width: 35px;
+    min-width: 50px;
 }
 
 QSpinBox::up-button{
     subcontrol-origin: border;
     subcontrol-position: right;
-    image: url(:/icon/caret_right.png);
+    //image: url(:/icon/caret_right.png);
     width: 16px;
     height: 25px;
 }
@@ -18,7 +18,7 @@ QSpinBox::up-button{
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: left;
-    image: url(:/icon/caret_left.png);
+    //image: url(:/icon/caret_left.png);
     width: 16px;
     height: 25px;
 }

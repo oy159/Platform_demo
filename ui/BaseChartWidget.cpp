@@ -76,7 +76,7 @@ void BaseChartWidget::initChart() {
     // 标记点序列
     m_scatterSeries = new QScatterSeries();
     m_scatterSeries->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-    m_scatterSeries->setMarkerSize(20.0);
+    m_scatterSeries->setMarkerSize(10.0);
     m_scatterSeries->setColor(Qt::transparent); // 散点不可见但信号可用
     m_scatterSeries->setBorderColor(Qt::transparent);
     m_chart->addSeries(m_scatterSeries);
@@ -127,12 +127,14 @@ void BaseChartWidget::initMenu() {
     connect(ZoomOutAction, &QAction::triggered, [this]() {
         // 启用矩形缩放模式
         m_chartView->setRubberBand(QChartView::RectangleRubberBand);
+        m_chartView->setCursor(Qt::CrossCursor);
     });
 
     // 连接缩放完成信号
     connect(m_chartView, &NavigationChartView::zoomCompleted, this, [this]() {
         // 缩放完成后关闭缩放模式
         m_chartView->setRubberBand(QChartView::NoRubberBand);
+        m_chartView->setCursor(Qt::ArrowCursor);
     });
 
     markerSubMenu = settingSubMenu->addMenu("Marker");
@@ -142,20 +144,10 @@ void BaseChartWidget::initMenu() {
     marker1Action->setCheckable(true);
     marker1Action->setChecked(true);
     markerSubMenu->addAction(marker1Action);
-    markerActions.push_back(marker1Action);
+    markerActions.append(marker1Action);
     connect(marker1Action, &MarkerColorAction::checkedChanged, this, &BaseChartWidget::setMarkerToggled);
-
-    m_MarkerSeries.clear();
-    auto* marker1 = new QScatterSeries();
-    marker1->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-    marker1->setMarkerSize(10);
-    m_chart->addSeries(marker1);
-    marker1->attachAxis(m_axisX);
-    marker1->attachAxis(m_axisY);
-    m_MarkerSeries.append(marker1);
-
-    MarkerCalloutFlag.clear();
-    MarkerCalloutFlag.push_back({false, -1}); // Marker1默认开启
+    m_tooltip = new Callout(m_chart);
+    m_tooltip->setMarkerColor(marker1Action->color());
 
     markerSubMenu->addSeparator();
     addMarkerAction = markerSubMenu->addAction("添加标记点");
@@ -166,17 +158,13 @@ void BaseChartWidget::initMenu() {
         for (auto* callout : m_callouts) {
             if (callout) {
                 callout->hide();
+                callout->setIfDrawColor(false);
                 m_calloutPool.append(callout);
             }
         }
-
         m_callouts.clear();
-        for (int i = 1; i < m_MarkerSeries.size(); ++i) {
-            m_chart->removeSeries(m_MarkerSeries[i]);
-            delete m_MarkerSeries[i];
-        }
-        m_MarkerSeries.erase(m_MarkerSeries.begin() + 1, m_MarkerSeries.end());
-        m_MarkerSeries[0]->clear();
+        mPeaksVisible.resize(mPeaks.size(), false);
+        marker1Action->setChecked(true);
     });
 
     findMaxAction = markerSubMenu->addAction("查找最大值");
@@ -258,6 +246,7 @@ void BaseChartWidget::updateChartDataDirect(std::vector<double> data) {
     mPeaks = findPeaks(data);
     std::sort(mPeaks.begin(), mPeaks.end(),
              [](const QPointF& a, const QPointF& b) { return a.y() > b.y(); });
+    mPeaksVisible.resize(mPeaks.size(), false);
 
 }
 
@@ -370,9 +359,9 @@ void BaseChartWidget::keepCallout()
     } else {
         m_tooltip = new Callout(m_chart);
     }
-    if (!MarkerCalloutFlag[MarkerIndex].first) {
-        MarkerCalloutFlag[MarkerIndex] = {true, m_callouts.size() - 1};
-    }
+    // if (!MarkerCalloutFlag[MarkerIndex].first) {
+    //     MarkerCalloutFlag[MarkerIndex] = {true, m_callouts.size() - 1};
+    // }
 }
 
 void BaseChartWidget::tooltip(QPointF point, bool state)
@@ -393,12 +382,12 @@ void BaseChartWidget::tooltip(QPointF point, bool state)
         m_tooltip->updateGeometry();
         m_tooltip->show();
         updateCoordText(point);
-        if (!MarkerCalloutFlag[MarkerIndex].first) {
-            auto* marker = m_MarkerSeries[MarkerIndex];
-            marker->setColor(markerActions[MarkerIndex]->color());
-            marker->clear();
-            marker->append(point);
-        }
+        // if (!MarkerCalloutFlag[MarkerIndex].first) {
+        //     auto* marker = m_MarkerSeries[MarkerIndex];
+        //     marker->setColor(markerActions[MarkerIndex]->color());
+        //     marker->clear();
+        //     marker->append(point);
+        // }
     } else {
         m_tooltip->hide();
     }
@@ -421,7 +410,6 @@ void BaseChartWidget::wheelEvent(QWheelEvent *event) {
         if (yAxis) {
             double rangeMin = yAxis->min();
             double rangeMax = yAxis->max();
-            double range = rangeMax - rangeMin;
 
             if (event->angleDelta().y() > 0) {
                 // 放大 Y 轴（缩小范围）
@@ -438,43 +426,6 @@ void BaseChartWidget::wheelEvent(QWheelEvent *event) {
 
 // todo：需要大幅度修改
 void BaseChartWidget::keyPressEvent(QKeyEvent *event) {
-    if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_F) {
-        // 弹出输入框，获取用户输入的 X 值
-        bool ok;
-        double targetX = QInputDialog::getDouble(this, "查找点", "请输入 X 坐标值：", 0, -10000, 10000, 2, &ok);
-
-        if (ok) {
-            // 查找对应点
-            QPointF closestPoint;
-            double minDistance = std::numeric_limits<double>::max();
-
-            for (const QPointF &point : m_series->points()) {
-                double distance = std::abs(point.x() - targetX);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestPoint = point;
-                }
-            }
-
-            // 如果找到点，则标注坐标
-            if (minDistance < std::numeric_limits<double>::max()) {
-                if (m_tooltip == nullptr) {
-                    if (!m_calloutPool.isEmpty()) {
-                        m_tooltip = m_calloutPool.takeFirst();
-                    } else {
-                        m_tooltip = new Callout(m_chart);
-                    }
-                }
-                m_tooltip->setAnchor(closestPoint);
-                m_tooltip->setZValue(11);
-                m_tooltip->updateGeometry();
-                m_tooltip->show();
-            } else {
-                QMessageBox::information(this, "查找点", "未找到对应的点！");
-            }
-        }
-    }
-
     QWidget::keyPressEvent(event);
 }
 
@@ -498,8 +449,8 @@ void BaseChartWidget::addMarker() {
     QString markerName = QString("Marker%1").arg(markerCount);
 
     // 可以选择不同的颜色，这里使用循环的颜色列表
-    static QList<Qt::GlobalColor> colors = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
-    Qt::GlobalColor color = colors[(markerCount - 1) % colors.size()];
+    static QList<QColor> colors = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta, Qt::darkRed};
+    QColor color = colors[(markerCount - 1) % colors.size()];
 
     MarkerColorAction* newMarkerAction = new MarkerColorAction(markerName, color, markerSubMenu);
     newMarkerAction->setCheckable(true);
@@ -507,16 +458,6 @@ void BaseChartWidget::addMarker() {
 
     // 添加到管理向量
     markerActions.append(newMarkerAction);
-
-
-    auto* marker = new QScatterSeries();
-    marker->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-    marker->setMarkerSize(10.0);
-    m_chart->addSeries(marker);
-    marker->attachAxis(m_axisX);
-    marker->attachAxis(m_axisY);
-    m_MarkerSeries.append(marker);
-    MarkerCalloutFlag.push_back({false, -1});
 
     // 将新标记点插入到分隔符之前
     QList<QAction*> actions = markerSubMenu->actions();
@@ -541,16 +482,13 @@ void BaseChartWidget::setMarkerToggled(bool checked) {
     if (auto* action = qobject_cast<MarkerColorAction*>(sender())) {
 
         if (checked) {
-            // 如果当前action被选中，则取消其他所有action的选中
-            MarkerIndex = markerActions.indexOf(action);
-            MarkerCalloutFlag[MarkerIndex].first = false;
+            m_tooltip->setMarkerColor(action->color());
             for (MarkerColorAction* otherAction : markerActions) {
                 if (otherAction != action) {
                     otherAction->setChecked(false);
                 }
             }
         } else {
-            // 如果当前action被取消选中，检查是否至少有一个被选中
             bool anyChecked = false;
             for (MarkerColorAction* otherAction : markerActions) {
                 if (otherAction->isChecked()) {
@@ -558,10 +496,7 @@ void BaseChartWidget::setMarkerToggled(bool checked) {
                     break;
                 }
             }
-            // 如果没有一个被选中，则重新选中当前action
             if (!anyChecked) {
-                MarkerIndex = markerActions.indexOf(action);
-                MarkerCalloutFlag[MarkerIndex].first = false;
                 action->setChecked(true);
             }
         }
@@ -664,48 +599,31 @@ void BaseChartWidget::optimizeCursor() const {
 void BaseChartWidget::findMaxPoint() {
     if (mPeaks.isEmpty()) return;
 
-    auto* marker = m_MarkerSeries[MarkerIndex];
-    marker->setColor(markerActions[MarkerIndex]->color());
+    if (!mPeaksVisible[0]) {
+        if (m_tooltip == nullptr) {
+            if (!m_calloutPool.isEmpty()) {
+                m_tooltip = m_calloutPool.takeFirst();
+            } else {
+                m_tooltip = new Callout(m_chart);
+            }
+        }
 
-    // 只显示最大点
-    marker->clear();
-    marker->append(mPeaks[0]);
-
-
-    // 显示callout
-    if (m_tooltip == nullptr) {
+        m_tooltip->setText(QString("最大值\nX: %1\nY: %2").arg(mPeaks[0].x()).arg(mPeaks[0].y()));
+        m_tooltip->setAnchor(mPeaks[0]);
+        m_tooltip->setZValue(11);
+        m_tooltip->updateGeometry();
+        m_tooltip->show();
+        m_callouts.append(m_tooltip);
         if (!m_calloutPool.isEmpty()) {
             m_tooltip = m_calloutPool.takeFirst();
         } else {
             m_tooltip = new Callout(m_chart);
         }
+        updateCoordText(mPeaks[0]);
+        // 记录当前索引
+        mCurrentPeakIndex = 0;
+        mPeaksVisible[0] = true;
     }
-
-    if (MarkerCalloutFlag[MarkerIndex].second >= 0) {
-        m_chart->scene()->removeItem(m_callouts[MarkerCalloutFlag[MarkerIndex].second]);
-        delete m_callouts[MarkerCalloutFlag[MarkerIndex].second];
-        m_callouts.removeAt(MarkerCalloutFlag[MarkerIndex].second);
-        MarkerCalloutFlag[MarkerIndex].second = -1;
-    }
-    m_tooltip->setText(QString("最大值\nX: %1\nY: %2").arg(mPeaks[0].x()).arg(mPeaks[0].y()));
-    m_tooltip->setAnchor(mPeaks[0]);
-    m_tooltip->setZValue(11);
-    m_tooltip->updateGeometry();
-    m_tooltip->show();
-    m_callouts.append(m_tooltip);
-    if (!m_calloutPool.isEmpty()) {
-        m_tooltip = m_calloutPool.takeFirst();
-    } else {
-        m_tooltip = new Callout(m_chart);
-    }
-
-
-    MarkerCalloutFlag[MarkerIndex].second = m_callouts.size() - 1;
-
-    updateCoordText(mPeaks[0]);
-
-    // 记录当前索引
-    mCurrentPeakIndex = mPeaks.indexOf(mPeaks[0]);
 }
 
 void BaseChartWidget::findNextPoint() {
@@ -717,16 +635,59 @@ void BaseChartWidget::findNextPoint() {
 
     QPointF nextPeak = mPeaks[mCurrentPeakIndex];
 
-    // 设置marker颜色
+    if (!mPeaksVisible[mCurrentPeakIndex]) {
+        if (m_tooltip == nullptr) {
+            if (!m_calloutPool.isEmpty()) {
+                m_tooltip = m_calloutPool.takeFirst();
+            } else {
+                m_tooltip = new Callout(m_chart);
+            }
+        }
 
+        m_tooltip->setText(QString("峰值\nX: %1\nY: %2").arg(nextPeak.x()).arg(nextPeak.y()));
+        m_tooltip->setAnchor(nextPeak);
+        m_tooltip->setZValue(11);
+        m_tooltip->updateGeometry();
+        m_tooltip->show();
+        m_callouts.append(m_tooltip);
+        if (!m_calloutPool.isEmpty()) {
+            m_tooltip = m_calloutPool.takeFirst();
+        } else {
+            m_tooltip = new Callout(m_chart);
+        }
+        mPeaksVisible[mCurrentPeakIndex] = true;
+        updateCoordText(nextPeak);
+    }
+}
 
-    QScatterSeries* marker = m_MarkerSeries[MarkerIndex];
-    marker->setColor(markerActions[MarkerIndex]->color());
-    marker->clear();
-    marker->append(nextPeak);
+void BaseChartWidget::findPoint(int index) {
+    if (mPeaks.isEmpty()) return;
+    if (index < 0 || index >= mPeaks.size())
+        return;
+    mCurrentPeakIndex = index;
+    QPointF nextPeak = mPeaks[mCurrentPeakIndex];
 
+    if (!mPeaksVisible[mCurrentPeakIndex]) {
+        if (m_tooltip == nullptr) {
+            if (!m_calloutPool.isEmpty()) {
+                m_tooltip = m_calloutPool.takeFirst();
+            } else {
+                m_tooltip = new Callout(m_chart);
+            }
+        }
 
-    // 显示callout
+        m_tooltip->setText(QString("峰值\nX: %1\nY: %2").arg(nextPeak.x()).arg(nextPeak.y()));
+        m_tooltip->setAnchor(nextPeak);
+        m_tooltip->setZValue(11);
+        m_tooltip->updateGeometry();
+        m_tooltip->show();
+        m_callouts.append(m_tooltip);
+        mPeaksVisible[mCurrentPeakIndex] = true;
+        updateCoordText(nextPeak);
+    }
+}
+
+void BaseChartWidget::findPoint(QPointF point) {
     if (m_tooltip == nullptr) {
         if (!m_calloutPool.isEmpty()) {
             m_tooltip = m_calloutPool.takeFirst();
@@ -735,27 +696,14 @@ void BaseChartWidget::findNextPoint() {
         }
     }
 
-    if (MarkerCalloutFlag[MarkerIndex].second >= 0) {
-        m_chart->scene()->removeItem(m_callouts[MarkerCalloutFlag[MarkerIndex].second]);
-        delete m_callouts[MarkerCalloutFlag[MarkerIndex].second];
-        m_callouts.removeAt(MarkerCalloutFlag[MarkerIndex].second);
-        MarkerCalloutFlag[MarkerIndex].second = -1;
-    }
-    m_tooltip->setText(QString("峰值\nX: %1\nY: %2").arg(nextPeak.x()).arg(nextPeak.y()));
-    m_tooltip->setAnchor(nextPeak);
+    m_tooltip->setText(QString("峰值\nX: %1\nY: %2").arg(point.x()).arg(point.y()));
+    m_tooltip->setAnchor(point);
     m_tooltip->setZValue(11);
     m_tooltip->updateGeometry();
     m_tooltip->show();
     m_callouts.append(m_tooltip);
-    if (!m_calloutPool.isEmpty()) {
-        m_tooltip = m_calloutPool.takeFirst();
-    } else {
-        m_tooltip = new Callout(m_chart);
-    }
+    updateCoordText(point);
 
-    MarkerCalloutFlag[MarkerIndex].second = m_callouts.size() - 1;
-
-    updateCoordText(nextPeak);
 }
 
 QVector<QPointF> BaseChartWidget::findPeaks(const std::vector<double>& data,
@@ -856,3 +804,14 @@ void BaseChartWidget::autoAdjust() {
     optimizeAxisRanges(m_series->points());
 }
 
+void BaseChartWidget::setPeakData(QVector<QPointF> Peaks) {
+    mPeaks = Peaks;
+}
+
+void BaseChartWidget::markPeak(int index) {
+    findPoint(index);
+}
+
+void BaseChartWidget::setPointMarker(QPointF point) {
+    findPoint(point);
+}
