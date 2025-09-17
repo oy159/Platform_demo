@@ -20,6 +20,8 @@ typedef enum{
     CMD_SET_DDS_FREQ = 0xff7fff85,
     CMD_SET_DAC_VALUE = 0xff7fff86,
     CMD_SET_DDS_TWO_TONE = 0xff7fff87,
+    CMD_GET_ZYNQ_TEMP = 0xff7fff88,
+    CMD_SET_ZYNQ_AUTODETECT = 0xff7fff89,
 }DeviceCommand;
 
 typedef enum{
@@ -28,6 +30,7 @@ typedef enum{
     AD9268 = 2,
     AD9142 = 3,
     AD9747 = 4,
+    AutoDetect = 5
 } DeviceType;
 
 class UdpWorker : public QObject{

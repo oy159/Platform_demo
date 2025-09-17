@@ -90,6 +90,7 @@ public slots:
     }
     void caculateDACStaticParams();
     void setWindowFunc(WindowFuncClass windowFunc);
+    void calculateADCTwoToneParams();
 
 private:
     void calculateFFT();

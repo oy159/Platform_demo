@@ -109,11 +109,13 @@ void CaculateParams::caculateDynamicParamsADC() {
     emit TransferPeakData(fft_db_peaks);
 }
 
+void CaculateParams::calculateADCTwoToneParams() {
 
+}
 
 std::vector<Peak> CaculateParams::findPeaks(const std::vector<double>& data,
-                    double minHeight,
-                    size_t minDistance){
+                                            double minHeight,
+                                            size_t minDistance){
     std::vector<Peak> peaks;
 
     if (data.size() < 3) return peaks;

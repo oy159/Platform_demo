@@ -62,6 +62,9 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         }else if(datagram.contains("AD9747")){
             emit initializePlatform("AD9747");
             mdeviceType = AD9747;
+        }else if(datagram.contains("AutoDetect")) {
+            emit initializePlatform("AutoDetect");
+            mdeviceType = AutoDetect;
         }
 
     }

@@ -96,6 +96,7 @@ protected slots:
     void findPoint(int index);
     void findPoint(QPointF point);
     void setMarkerToggled(bool checked);
+    void AddMarkerSeries();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -122,7 +123,7 @@ private:
 
 
     QMenu *axisYSubMenu;
-    QWidgetAction *axisYPrecision;
+    QWidgetAction *axisYAction;
     QWidget *axisYPrecisionWidget;
     QHBoxLayout *axisYPrecisionLayout;
     QLabel *axisYPrecisionLabel;

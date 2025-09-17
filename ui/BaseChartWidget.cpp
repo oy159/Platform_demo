@@ -137,7 +137,7 @@ void BaseChartWidget::initMenu() {
         m_chartView->setCursor(Qt::ArrowCursor);
     });
 
-    markerSubMenu = settingSubMenu->addMenu("Marker");
+    markerSubMenu = menu->addMenu("Marker");
 
     markerActions.clear();
     marker1Action = new MarkerColorAction("Marker1", Qt::red, markerSubMenu);
@@ -150,6 +150,8 @@ void BaseChartWidget::initMenu() {
     m_tooltip->setMarkerColor(marker1Action->color());
 
     markerSubMenu->addSeparator();
+    auto *showMarkerAction = markerSubMenu->addAction("显示");
+    connect(showMarkerAction, &QAction::triggered, this, &BaseChartWidget::AddMarkerSeries);
     addMarkerAction = markerSubMenu->addAction("添加标记点");
     connect(addMarkerAction, &QAction::triggered, this, &BaseChartWidget::addMarker);
     ClearMarkerAction = markerSubMenu->addAction("清除所有标记点");
@@ -174,9 +176,10 @@ void BaseChartWidget::initMenu() {
 
 
     axisYSubMenu = menu->addMenu("Y轴");
-    axisYPrecision = new QWidgetAction(axisYSubMenu);
+    axisYAction = new QWidgetAction(axisYSubMenu);
     axisYPrecisionWidget = new QWidget();
-    axisYPrecisionLayout = new QHBoxLayout(axisYPrecisionWidget);
+    auto *mainAxisYLayout = new QVBoxLayout();
+    axisYPrecisionLayout = new QHBoxLayout();
     axisYPrecisionLabel = new QLabel("波形图Y轴小数位数");
     axisYPrecisionSB = new QSpinBox();
     axisYPrecisionSB->setRange(0, 3);
@@ -191,18 +194,35 @@ void BaseChartWidget::initMenu() {
         }
     });
 
+
+    auto *axisYTickCountLayout = new QHBoxLayout();
+    auto *axisYTickCountLabel = new QLabel("波形图Y轴坐标数");
+    auto *axisYTickCountSB = new QSpinBox();
+    axisYTickCountSB->setRange(2, 11);
+    axisYTickCountSB->setValue(11);
+    connect(axisYTickCountSB, &QSpinBox::valueChanged, axisYPrecisionWidget, [this](int value) {
+        int m_yTickCount = value;
+        m_axisY->setTickCount(m_yTickCount);
+    });
+
     axisYPrecisionLayout->addWidget(axisYPrecisionLabel);
     axisYPrecisionLayout->addWidget(axisYPrecisionSB);
+    axisYTickCountLayout->addWidget(axisYTickCountLabel);
+    axisYTickCountLayout->addWidget(axisYTickCountSB);
 
-    axisYPrecisionWidget->setLayout(axisYPrecisionLayout);
-    axisYPrecision->setDefaultWidget(axisYPrecisionWidget);
-    axisYSubMenu->addAction(axisYPrecision);
+    mainAxisYLayout->addLayout(axisYPrecisionLayout);
+    mainAxisYLayout->addLayout(axisYTickCountLayout);
+
+    axisYPrecisionWidget->setLayout(mainAxisYLayout);
+    axisYAction->setDefaultWidget(axisYPrecisionWidget);
+    axisYSubMenu->addAction(axisYAction);
 
 
     axisXSubMenu = menu->addMenu("X轴");
     axisXPrecision = new QWidgetAction(axisXSubMenu);
     axisXPrecisionWidget = new QWidget();
-    axisXPrecisionLayout = new QHBoxLayout(axisXPrecisionWidget);
+    auto *mainAxisXLayout = new QVBoxLayout();
+    axisXPrecisionLayout = new QHBoxLayout();
     axisXPrecisionLabel = new QLabel("波形图X轴小数位数");
     axisXPrecisionSB = new QSpinBox();
     axisXPrecisionSB->setRange(0, 3);
@@ -217,10 +237,25 @@ void BaseChartWidget::initMenu() {
         }
     });
 
+    auto *axisXTickCountLayout = new QHBoxLayout();
+    auto *axisXTickCountLabel = new QLabel("波形图X轴坐标数");
+    auto *axisXTickCountSB = new QSpinBox();
+    axisXTickCountSB->setRange(2, 11);
+    axisXTickCountSB->setValue(11);
+    connect(axisXTickCountSB, &QSpinBox::valueChanged, axisXPrecisionWidget, [this](int value) {
+        int m_yTickCount = value;
+        m_axisX->setTickCount(m_yTickCount);
+    });
+
     axisXPrecisionLayout->addWidget(axisXPrecisionLabel);
     axisXPrecisionLayout->addWidget(axisXPrecisionSB);
+    axisXTickCountLayout->addWidget(axisXTickCountLabel);
+    axisXTickCountLayout->addWidget(axisXTickCountSB);
 
-    axisXPrecisionWidget->setLayout(axisXPrecisionLayout);
+    mainAxisXLayout->addLayout(axisXPrecisionLayout);
+    mainAxisXLayout->addLayout(axisXTickCountLayout);
+
+    axisXPrecisionWidget->setLayout(mainAxisXLayout);
     axisXPrecision->setDefaultWidget(axisXPrecisionWidget);
     axisXSubMenu->addAction(axisXPrecision);
 
@@ -247,7 +282,6 @@ void BaseChartWidget::updateChartDataDirect(std::vector<double> data) {
     std::sort(mPeaks.begin(), mPeaks.end(),
              [](const QPointF& a, const QPointF& b) { return a.y() > b.y(); });
     mPeaksVisible.resize(mPeaks.size(), false);
-
 }
 
 // 额外传Peak即可
@@ -258,7 +292,7 @@ void BaseChartWidget::updateChartData(const QVector<QPointF> &data) {
     m_scatterSeries->clear();
 
     m_series->replace(data);
-    m_scatterSeries->replace(data);
+    // m_scatterSeries->replace(data);
     // only first
     if(first){
         optimizeAxisRanges(data);
@@ -282,7 +316,7 @@ void BaseChartWidget::optimizeAxisRanges(const QVector<QPointF> &data) {
         maxY = qMax(maxY, point.y());
     }
 
-    // 记录原始范围用于恢复
+
     optimizeAxisRange(minX, maxX, 0);
     m_axisX->setRange(minX, maxX);
     m_recoverXMin = minX;
@@ -476,6 +510,10 @@ void BaseChartWidget::addMarker() {
     }
 
     connect(newMarkerAction, &MarkerColorAction::checkedChanged, this, &BaseChartWidget::setMarkerToggled);
+}
+
+void BaseChartWidget::AddMarkerSeries() {
+    m_scatterSeries->replace(m_series->points());
 }
 
 void BaseChartWidget::setMarkerToggled(bool checked) {

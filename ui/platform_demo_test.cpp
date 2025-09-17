@@ -401,6 +401,9 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
     }else if(DeviceName == "AD9747"){
         mDeviceType = DeviceType::AD9747;
         mUdpStartFlag = true;
+    }else if (DeviceName == "AutoDetect"){
+        mDeviceType = DeviceType::AutoDetect;
+        mUdpStartFlag = true;
     }else{
         qDebug() << "Unknown device type!";
         mDeviceType = DeviceType::UnknownDevice;
