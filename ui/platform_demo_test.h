@@ -48,6 +48,7 @@ signals:
 private slots:
     void handleInitializePlatform(const QString &DeviceName);
     void handleConnectButton();
+    void handleDeviceIOTestBtn();
     void handleInstrumentDetectBtn();
     void handleErrorOccurred(const QString &error);
     void handleDynamicCaculateFinished(double SFDR, double THD, double SNR, double ENOB);

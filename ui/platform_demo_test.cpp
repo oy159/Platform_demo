@@ -81,9 +81,6 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
     connect(this, &platform_demo_test::startOtherCaculate, this, &platform_demo_test::handleADCTestAfterCali);
 
-    // connect(ui->connectSetAction, &QAction::triggered, this, [=]() {
-    //     ui->connectSettings->show();
-    // });
     connect(ui->instrumentSettingsBtn, &QPushButton::clicked, this, [=]() {
         ui->connectSettings->show();
     });
@@ -91,6 +88,8 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(ui->ChartWidgetControlButton, &QPushButton::clicked, [=]() {
                 ui->chartControlWidget->show();
     });
+
+    connect(ui->deviceTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDeviceIOTestBtn);
 
     connect(ui->chartControlWidget, &ChartControlWidget::sendInform, ui->chartGridWidget, &ChartWidgetsManager::receiveLayoutInform);
 
@@ -106,6 +105,19 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mUdpWorker, &UdpWorker::ADCDataReady, this, &platform_demo_test::handleADCDataCaculate);
     connect(mUdpWorker, &UdpWorker::errorOccurred, this, &platform_demo_test::handleErrorOccurred);
     connect(mUdpWorker, &UdpWorker::initializePlatform, this, &platform_demo_test::handleInitializePlatform);
+    connect(mUdpWorker, &UdpWorker::sendTemp, this, [=](QString message){
+        ui->statusbar->showMessage(message, 3000);
+    });
+    connect(mUdpWorker, &UdpWorker::autoDetectResult, this, [=](bool result){
+       if(result){
+           QMessageBox::question(this, "提示", "IO测试成功",
+                                 QMessageBox::Ok, QMessageBox::Ok);
+       } else {
+           QMessageBox::question(this, "提示", "IO测试失败",
+                                 QMessageBox::Ok, QMessageBox::Ok);
+       }
+       ui->deviceTestButton->setEnabled(true);
+    });
 
     connect(this, &platform_demo_test::clearADCData, mUdpWorker, &UdpWorker::handleClearADCData);
 
@@ -455,6 +467,20 @@ void platform_demo_test::handleConnectButton() {
     }
 }
 
+void platform_demo_test::handleDeviceIOTestBtn() {
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType !=  AutoDetect) {
+        QMessageBox::critical(this, "Error", "请更换为自检子卡及对应固件");
+        return;
+    }
+    ui->deviceTestButton->setEnabled(false);
+    QMetaObject::invokeMethod(mUdpWorker, "handleGetAutoDetect", Qt::QueuedConnection);
+}
+
 void platform_demo_test::handleInstrumentDetectBtn() {
     auto messages = mInstrumentManager->findAllVisaResources();
     for (size_t i = 0; i < messages.size(); ++i) {
@@ -718,10 +744,9 @@ void platform_demo_test::handleDynamicADCTest() {
         return;
     }
 
-    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
+//    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
 
-//    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForDynamicADC);
-
+    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForDynamicADC);
 
 }
 
@@ -742,8 +767,8 @@ void platform_demo_test::handleStaticADCTest() {
         return;
     }
 
-    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForStaticADC);
-//    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForStaticADC);
+//    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForStaticADC);
+    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForStaticADC);
 
 }
 

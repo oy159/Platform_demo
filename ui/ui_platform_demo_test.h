@@ -40,6 +40,7 @@ public:
     QGroupBox *ipGroupBox;
     QVBoxLayout *ipGroupBoxLayout;
     QPushButton *connectButton;
+    QPushButton *deviceTestButton;
 
 
     QGroupBox *messageGroupBox;
@@ -161,7 +162,10 @@ public:
 
         connectButton = new QPushButton("连接设备", ipGroupBox);
         connectButton->setCheckable(true);
+        deviceTestButton = new QPushButton("设备IO测试", ipGroupBox);
+        deviceTestButton->setChecked(true);
         ipGroupBoxLayout->addWidget(connectButton);
+        ipGroupBoxLayout->addWidget(deviceTestButton);
 
         messageGroupBox = new QGroupBox("仪器资源", leftWidget);
         messageGroupBoxLayout = new QVBoxLayout(messageGroupBox);

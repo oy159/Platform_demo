@@ -1,7 +1,10 @@
+#include <QtEndian>
 #include "udpworker.h"
 
 UdpWorker::UdpWorker(QObject *parent) : QObject(parent) {
     udpSocket = new QUdpSocket(this);
+    udpSocket2 = new QUdpSocket(this);
+
     connect(this,&UdpWorker::dataReceived,this,&UdpWorker::handleDataReceived);
 }
 
@@ -18,9 +21,21 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         udpSocket->abort();
     }
     if (!udpSocket->bind(QHostAddress::Any, local_port)) {
-        emit errorOccurred("Failed to bind to local port");
+        emit errorOccurred("Failed to bind to local port"+ QString::number(local_port));
         return;
     }
+
+    if (udpSocket2->state() == QAbstractSocket::BoundState) {
+        udpSocket2->close();
+    }
+    if (udpSocket2->state() == QAbstractSocket::UnconnectedState) {
+        udpSocket2->abort();
+    }
+    if (!udpSocket2->bind(QHostAddress::Any, 14514)) {
+        emit errorOccurred("Failed to bind to local port" + QString::number(14514));
+        return;
+    }
+
     this->target_ip = ip;
     this->remote_port = remote_port;
     this->local_port = local_port;
@@ -68,11 +83,15 @@ void UdpWorker::connectToHost(const QString &ip, int remote_port, int local_port
         }
 
     }
-
-
     // 再打开数据处理
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+
+    tempTimer = new QTimer(this);
+    tempTimer->setInterval(5000); // 5秒间隔
+    connect(tempTimer, &QTimer::timeout, this, &UdpWorker::handleGetTemp);
+    tempTimer->start();
+//    handleGetAutoDetect();
 }
 
 void UdpWorker::disconnectFromHost() {
@@ -82,6 +101,7 @@ void UdpWorker::disconnectFromHost() {
 }
 
 void UdpWorker::sendMessage(const QString &message) {
+//    tempTimer->stop();
     if (!message.isEmpty()) {
         QByteArray data = message.toUtf8();
         qint64 bytesSent = udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
@@ -114,6 +134,7 @@ void UdpWorker::handleDataReceived(const QByteArray &data) {
     if(transFinished){
         emit ADCDataReady(AdcDataArray);
     }
+//    tempTimer->start();
 }
 
 void UdpWorker::convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array) {
@@ -383,4 +404,83 @@ void UdpWorker::handleSetDACValue(int value)
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
     connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 
+}
+
+void UdpWorker::handleGetTemp() {
+    current_command = CMD_GET_ZYNQ_TEMP;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+
+    udpSocket2->writeDatagram(data, QHostAddress(target_ip), remote_port);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket2, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(1000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket2->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket2->pendingDatagramSize());
+        udpSocket2->readDatagram(datagram.data(), datagram.size());
+
+        // todo: 解析datagram，判断是否获取成功
+        uint32_t cpuTemp, cpuVolt;
+        if (datagram.size() == 2 * sizeof(cpuTemp)) {
+            memcpy(&cpuTemp, datagram.constData(), sizeof(cpuTemp));
+            memcpy(&cpuVolt, datagram.constData() + sizeof(cpuVolt), sizeof(cpuVolt));
+            float temp = XAdcPs_RawToTemperature(cpuTemp);
+            float volt = XAdcPs_RawToVoltage(cpuVolt);
+//            qDebug() << "get zynq return temp: " << temp;
+            QString tempStr = "cpu0 温度: " +  QString::number(temp,10,3) +
+                                "\u2103  cpu 电压: " + QString::number(volt,10,3) + "V";
+            qDebug() << tempStr;
+            emit sendTemp(tempStr);
+        }
+    }
+}
+
+void UdpWorker::handleGetAutoDetect() {
+    current_command = CMD_SET_ZYNQ_AUTODETECT;
+    QByteArray data;
+    data.append((char)((current_command >> 24) & 0xFF));
+    data.append((char)((current_command >> 16) & 0xFF));
+    data.append((char)((current_command >> 8) & 0xFF));
+    data.append((char)(current_command & 0xFF));
+    disconnect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
+    udpSocket->writeDatagram(data, QHostAddress(target_ip), remote_port);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    timer.start(5000); // 设置超时时间为1秒
+    loop.exec();
+
+    if (udpSocket->hasPendingDatagrams()){
+        QByteArray datagram;
+        datagram.resize(udpSocket->pendingDatagramSize());
+        udpSocket->readDatagram(datagram.data(), datagram.size());
+
+        qDebug() << "get zynq return: " << datagram;
+        // todo: 解析datagram，判断是否获取成功
+        if(datagram.contains("AutoDetect Set Success")){
+            qDebug() << "AutoDetect Success";
+            emit autoDetectResult(true);
+        } else if(datagram.contains("AutoDetect Set Fail")){
+            qDebug() << "AutoDetect Fail";
+            bool autoDetectResult(false);
+        }else {
+            emit errorOccurred("Failed to set AD9268 channel");
+        }
+
+    }
+    disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);
+    connect(udpSocket, &QUdpSocket::readyRead,this, &UdpWorker::handleReadyRead);
 }

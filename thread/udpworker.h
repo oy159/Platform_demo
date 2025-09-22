@@ -50,6 +50,8 @@ public slots:
     void handleSetAD9518InternalClock();
     void handleSetDDSFreq(int freq_Hz, int Mode = 1);
     void handleSetDACValue(int value);
+    void handleGetTemp();
+    void handleGetAutoDetect();
 
 
 signals:
@@ -58,6 +60,8 @@ signals:
     void ADCDataReady(const std::vector<uint16_t> &data);
     void initializePlatform(const QString &DeviceName);
     void DACValueSetSuccess();
+    void sendTemp(const QString &Temp);
+    void autoDetectResult(bool result);
 
 private slots:
     void handleReadyRead();
@@ -67,8 +71,9 @@ private slots:
 private:
     void convertBufferToU16Array(const QByteArray &buffer, std::vector<uint16_t> &u16Array);
     QUdpSocket *udpSocket;
+    QUdpSocket *udpSocket2;
     QByteArray buffer;
-//    QTimer *timer;
+    QTimer *tempTimer;
 //    QThreadPool *threadPool;
     QEventLoop eventLoop;
     QString target_ip;
@@ -87,6 +92,11 @@ private:
 #define BIG_LITTLE_SWAP16(x)        ( (((*(short int *)&x) & 0xff00) >> 8) | \
                                       (((*(short int *)&x) & 0x00ff) << 8) )
 
+#define XAdcPs_RawToTemperature(AdcData)				\
+	((((float)(AdcData)/65536.0f)/0.00198421639f ) - 273.15f)
+
+#define XAdcPs_RawToVoltage(AdcData) 					\
+	((((float)(AdcData))* (3.0f))/65536.0f)
 
 // typedef enum{
 //     ADC_DYNAMIC_MODE = 0,
