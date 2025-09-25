@@ -801,6 +801,7 @@ void platform_demo_test::handleTwoTonesADCTest() {
 
 }
 
+
 void platform_demo_test::handleStaticADCTest() {
     // 1.验证当前固件为ADC，且已打开udp
     if(!mUdpStartFlag) {
