@@ -42,6 +42,7 @@ public:
     void setAMOutputStatus(int source, bool on);
     
     void setTwoTone(int channel, double voltage);
+    void setTwoTone(int channel, double voltage, double freq);
 
 private:
     ViSession m_defaultRM;

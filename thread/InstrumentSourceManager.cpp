@@ -326,3 +326,4 @@ std::vector<std::string> InstrumentSourceManager::findAllVisaResources() {
 
     return resources;
 }
+

@@ -120,7 +120,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     auto *GeneratorResource2FreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
     GeneratorResource2FreqSpinBox = new QDoubleSpinBox(GeneratorResourceGroupBox);
     GeneratorResource2FreqSpinBox->setDecimals(6);
-    GeneratorResource2FreqSpinBox->setValue(10.0);
+    GeneratorResource2FreqSpinBox->setValue(2.9);
     auto *GeneratorResource2FreqUnitLabel = new QLabel("MHz", GeneratorResourceGroupBox);
     auto *QSpacerItem3 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 

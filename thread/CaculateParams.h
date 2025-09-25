@@ -34,6 +34,9 @@ public:
     double getTHD() const { return THD; }
     double getSNR() const { return SNR; }
     double getENOB() const { return ENOB; }
+    void setSampleRate(int sampleRate) {
+        sample_rate = sampleRate;
+    };
     void setADCBits(int bits) {
         ADC_BITS = bits;
         if (ADC_BITS == 16) {
@@ -50,9 +53,6 @@ public:
             INL.resize(4096, 0);
         }
     }
-
-
-
 
 signals:
     void dynamicParamsCalculateFinished(double SFDR, double THD, double SNR, double ENOB);
@@ -90,10 +90,11 @@ public slots:
     }
     void caculateDACStaticParams();
     void setWindowFunc(WindowFuncClass windowFunc);
-    void calculateADCTwoToneParams();
+    void calculateADCTwoToneParams(double f1, double f2);
 
 private:
     void calculateFFT();
+    static int findPeakNearFrequency(double target_freq, const std::vector<double>& freq, const std::vector<double>& fft_db);
     std::vector<double> mData;
     std::vector<double> fft_abs;
 
@@ -148,6 +149,8 @@ private:
     double maxDACINL = 0.0;
     double minDACINL = 0.0;
     double minDACDNL = 0.0;
+
+    double ADC_IMD3 = 0.0;
 
     WindowFuncClass windowFunc = Hanning;
 

@@ -211,3 +211,22 @@ void KeySightVisa_33622A::setTwoTone(int channel, double voltage) {
     setAMOutputStatus(channel, true);
     setOutputStatus(channel, true);
 }
+
+void KeySightVisa_33622A::setTwoTone(int channel, double voltage, double freq) {
+    setOutputStatus(channel, false);
+    setAMOutputStatus(channel, false);
+
+    setFrequency(channel, freq); // 设置频率为5MHz
+    setVoltage(channel, voltage); // 设置振幅
+    setOffsetVoltage(channel, 0.0); // 设置偏置电压为0V
+    setFunc(channel, "SIN"); // 设置波形为正弦波
+
+    setAMSource(channel, "INTernal"); // 设置AM源为内部
+    setAMInternalFunc(channel, "SIN"); // 设置AM内部波形为正弦波
+    setAMInternalFreq(channel,  5e5); // 设置AM频率为500kHz
+    setAMDepth(channel, 100); // 设置AM深度为100%
+    setAMDSSC(channel, true); // 启用DSSC
+
+    setAMOutputStatus(channel, true);
+    setOutputStatus(channel, true);
+}
