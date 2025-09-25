@@ -801,6 +801,33 @@ void platform_demo_test::handleTwoTonesADCTest() {
 
 }
 
+void platform_demo_test::handleTwoTonesADCTest() {
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        return;
+    }
+
+    if(mADCUsedInstrumentType != InstrumentType::KS3362A) {
+        QMessageBox::warning(this, "Warning", "当前仪器未连接到KS3362A，无法输出双音信号");
+        return;
+    }
+    //    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
+
+    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForDynamicADC);
+    ifTwoToneTest = true;
+
+}
+
 void platform_demo_test::handleStaticADCTest() {
     // 1.验证当前固件为ADC，且已打开udp
     if(!mUdpStartFlag) {
