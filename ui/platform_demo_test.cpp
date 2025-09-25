@@ -408,6 +408,7 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
         mDeviceType = DeviceType::AD9434;
         mUdpStartFlag = true;
         emit ChangeStackWidget(0);
+        ui->ADCChannelChoiceGroupBox->hide();
         ui->switchWidgetLabel->setText("SAD9434EE");
     }else if(DeviceName == "AD9268"){
         mCaculateParams->setADCBits(16);
@@ -416,6 +417,7 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
         mDeviceType = DeviceType::AD9268;
         mUdpStartFlag = true;
         emit ChangeStackWidget(0);
+        ui->ADCChannelChoiceGroupBox->show();
         ui->switchWidgetLabel->setText("JAD9268");
     }else if(DeviceName == "AD9142"){
         mDeviceType = DeviceType::AD9142;

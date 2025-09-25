@@ -320,6 +320,8 @@ public:
         ADCChannelChoiceGroupBoxLayout->addWidget(ADCChannel1CheckBox);
         ADCChannelChoiceGroupBoxLayout->addWidget(ADCChannel2CheckBox);
 
+        ADCChannelChoiceGroupBox->hide();
+
 
         paramTestADCGroupBox = new QGroupBox("参数测试", DisplayADCParamsWidget);
         paramTestADCGroupBoxLayout = new QVBoxLayout(paramTestADCGroupBox);
@@ -415,7 +417,7 @@ public:
         rightStackedWidget->addWidget(DisplayADCParamsWidget);
         rightStackedWidget->addWidget(DisplayDACParamsWidget);
         rightStackedWidget->addWidget(new QWidget);
-        rightStackedWidget->setCurrentIndex(2); // 默认显示ADC部件
+        rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
 
         chartGridWidget = new ChartWidgetsManager(splitter);
         chartWidget1 = new SpectrumChartTryWidget;
