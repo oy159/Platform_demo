@@ -82,6 +82,10 @@ public:
     // QPushButton *FindPeakButton;
     // QPushButton *FindNextButton;
 
+    QGroupBox *TwoToneParamsADCGroupBox;
+    QVBoxLayout *TwoToneParamsADCGroupBoxLayout;
+    QLabel *IMD3ADCLabel;
+
     QGroupBox *StaticParamsADCGroupBox;
     QVBoxLayout *StaticParamsADCGroupBoxLayout;
     QLabel *DNLADCLabel;
@@ -271,8 +275,14 @@ public:
         DynamicParamsADCGroupBoxLayout->addWidget(SNRADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(THDADCLabel);
         DynamicParamsADCGroupBoxLayout->addWidget(ENOBADCLabel);
-        // DynamicParamsADCGroupBoxLayout->addWidget(FindPeakButton);
-        // DynamicParamsADCGroupBoxLayout->addWidget(FindNextButton);
+
+        TwoToneParamsADCGroupBox = new QGroupBox("ADC TwoTone Parameters", DisplayADCParamsWidget);
+        TwoToneParamsADCGroupBoxLayout = new QVBoxLayout(TwoToneParamsADCGroupBox);
+
+        IMD3ADCLabel = new QLabel("IMD3: ", TwoToneParamsADCGroupBox);
+
+        TwoToneParamsADCGroupBoxLayout->addWidget(IMD3ADCLabel);
+
 
         StaticParamsADCGroupBox = new QGroupBox("ADC Static Parameters", DisplayADCParamsWidget);
         StaticParamsADCGroupBoxLayout = new QVBoxLayout(StaticParamsADCGroupBox);
@@ -325,6 +335,7 @@ public:
 
         
         DisplayADCParamsLayout->addWidget(DynamicParamsADCGroupBox);
+        DisplayADCParamsLayout->addWidget(TwoToneParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(StaticParamsADCGroupBox);
         DisplayADCParamsLayout->addWidget(WindowsFuncGroupBox);
         DisplayADCParamsLayout->addWidget(ADCChannelChoiceGroupBox);
@@ -404,7 +415,7 @@ public:
         rightStackedWidget->addWidget(DisplayADCParamsWidget);
         rightStackedWidget->addWidget(DisplayDACParamsWidget);
         rightStackedWidget->addWidget(new QWidget);
-        rightStackedWidget->setCurrentIndex(2); // 默认显示ADC部件
+        rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
 
         chartGridWidget = new ChartWidgetsManager(splitter);
         chartWidget1 = new SpectrumChartTryWidget;

@@ -21,6 +21,7 @@ typedef enum{
     DAC_DYNAMIC_MODE = 2,
     DAC_STATIC_MODE = 3,
     AUTO_CALI_MODE = 4,
+    ADC_TWO_TONE_MODE = 5,
 } CACULATE_MODE;
 
 typedef enum{
@@ -59,6 +60,7 @@ private slots:
     void handleADCDataCaculate(std::vector<uint16_t> data);
     void handleDynamicADCTest();
     void handleStaticADCTest();
+    void handleTwoTonesADCTest();
     void handleADCTestAfterCali(CALIVOLTAGE_MODE CaliVoltageMode);
     
     void handleSetConfigForGenerator();
@@ -105,6 +107,7 @@ private:
     InstrumentType mADCUsedInstrumentType = UnknownInstrument;
     DeviceType mDeviceType = UnknownDevice;
     CALIVOLTAGE_MODE mCaliVoltageMode = ForDynamicADC;
+    bool ifTwoToneTest = false;
     std::vector<bool> mCaliVoltageFlag = {false, false};
     std::vector<bool> mConnectToInstrumentFlag = {false, false, false, false}; // N9040B, KS3362A, SMA100B, KS34460A
 

@@ -335,10 +335,14 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 //    chartWidget3->adjustaxisX();
     mCaculateParams->setData(adc16Data);
     chartWidget1->setSampleRate(1e8); // 设置采样率
+    mCaculateParams->setSampleRate(1e8);
 
     QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+    // double freq = 1e6*ui->connectSettings->GeneratorResource2FreqSpinBox->value();
+    // QMetaObject::invokeMethod(mCaculateParams, "calculateADCTwoToneParams", Qt::QueuedConnection, Q_ARG(double, freq - 5e5), Q_ARG(double, freq + 5e5));
 
     connect(ui->dynamicParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleDynamicADCTest);
+    connect(ui->twoTonesADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleTwoTonesADCTest);
     connect(ui->staticParamsADCTestButton, &QPushButton::clicked, this, &platform_demo_test::handleStaticADCTest);
 
     connect(mCaculateParams, &CaculateParams::staticDACParamsCalculateFinished, this, &platform_demo_test::handleStaticDACParamsCalculateFinished);
@@ -374,7 +378,9 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
         std::vector<double> vecdata(data.begin(), data.end());
         mCaculateParams->setData(vecdata);
         mCalculateThread->start();
-        QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+        // QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
+        double freq = 1e6*ui->connectSettings->GeneratorResourceFreqSpinBox->value();
+        QMetaObject::invokeMethod(mCaculateParams, "calculateADCTwoToneParams", Qt::QueuedConnection, Q_ARG(double, freq - 5e5), Q_ARG(double, freq + 5e5));
     });
     // timer->start(100); // 每秒更新一次
 
@@ -397,6 +403,7 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
 
     if(DeviceName == "AD9434"){
         mCaculateParams->setADCBits(12);
+        mCaculateParams->setSampleRate(5e8);
         chartWidget1->setSampleRate(5e8); // 设置采样率
         mDeviceType = DeviceType::AD9434;
         mUdpStartFlag = true;
@@ -404,6 +411,7 @@ void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
         ui->switchWidgetLabel->setText("SAD9434EE");
     }else if(DeviceName == "AD9268"){
         mCaculateParams->setADCBits(16);
+        mCaculateParams->setSampleRate(1e8);
         chartWidget1->setSampleRate(1e8); // 设置采样率
         mDeviceType = DeviceType::AD9268;
         mUdpStartFlag = true;
@@ -709,7 +717,12 @@ void platform_demo_test::handleADCDataCaculate(std::vector<uint16_t> data) {
     if(mCaculateMode == ADC_DYNAMIC_MODE) {
         QMetaObject::invokeMethod(mCaculateParams, "caculateDynamicParamsADC", Qt::QueuedConnection);
         emit clearADCData();
-    } else if (mCaculateMode == ADC_STATIC_MODE) {
+    }else if (mCaculateMode == ADC_TWO_TONE_MODE) {
+        double freq = 1e6*ui->connectSettings->GeneratorResource2FreqSpinBox->value();
+        mInstrumentManager->ks33622A->setTwoTone(1, ks3362a_volt, freq);
+        QMetaObject::invokeMethod(mCaculateParams, "calculateADCTwoToneParams", Qt::QueuedConnection, Q_ARG(double, freq - 5e5), Q_ARG(double, freq + 5e5));
+        emit clearADCData();
+    }else if (mCaculateMode == ADC_STATIC_MODE) {
         ui->staticParamsADCTestButton->setEnabled(false);
         QMetaObject::invokeMethod(mCaculateParams, "caculateStaticDataHistogram", Qt::QueuedConnection);
 
@@ -761,6 +774,33 @@ void platform_demo_test::handleDynamicADCTest() {
 
 }
 
+void platform_demo_test::handleTwoTonesADCTest() {
+    if(!mUdpStartFlag) {
+        QMessageBox::warning(this, "Warning", "请先打开UDP连接！");
+        return;
+    }
+
+    if(mDeviceType ==  UnknownDevice) {
+        QMessageBox::warning(this, "Warning", "未知设备！");
+        return;
+    }
+
+    if(mDeviceType != AD9268 && mDeviceType != AD9434) {
+        QMessageBox::warning(this, "Warning", "当前不是ADC设备，无法进行静态指标测试！");
+        return;
+    }
+
+    if(mADCUsedInstrumentType != InstrumentType::KS3362A) {
+        QMessageBox::warning(this, "Warning", "当前仪器未连接到KS3362A，无法输出双音信号");
+        return;
+    }
+    //    AutoCaliGeneratorVoltage(CALIVOLTAGE_MODE::ForDynamicADC);
+
+    handleADCTestAfterCali(CALIVOLTAGE_MODE::ForDynamicADC);
+    ifTwoToneTest = true;
+
+}
+
 void platform_demo_test::handleStaticADCTest() {
     // 1.验证当前固件为ADC，且已打开udp
     if(!mUdpStartFlag) {
@@ -788,6 +828,10 @@ void platform_demo_test::handleADCTestAfterCali(CALIVOLTAGE_MODE CaliVoltageMode
 {
     if(CaliVoltageMode == CALIVOLTAGE_MODE::ForDynamicADC) {
         mCaculateMode = ADC_DYNAMIC_MODE;
+        if (ifTwoToneTest) {
+            ifTwoToneTest = false;
+            mCaculateMode = ADC_TWO_TONE_MODE;
+        }
     } else if(CaliVoltageMode == CALIVOLTAGE_MODE::ForStaticADC) {
         mCaculateMode = ADC_STATIC_MODE;
     }

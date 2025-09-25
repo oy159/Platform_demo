@@ -109,8 +109,72 @@ void CaculateParams::caculateDynamicParamsADC() {
     emit TransferPeakData(fft_db_peaks);
 }
 
-void CaculateParams::calculateADCTwoToneParams() {
+void CaculateParams::calculateADCTwoToneParams(double f1, double f2) {
+    calculateFFT();
+    auto nfft = (fft_abs.size()) * 2;
+    const auto& fft_mag = fft_abs;
+    std::vector<double> freq(fft_mag.size());
+    for (size_t i = 0; i < freq.size(); ++i) {
+        freq[i] = (double)i * sample_rate / (double)nfft;
+    }
+    std::vector<double> fft_db;
+    fft_db.reserve(fft_abs.size());
+    for (double fft_ab : fft_abs) {
+        fft_db.push_back(20 * log10(fft_ab));
+    }
 
+    double imd3_1 = 2*f1 - f2;
+    double imd3_2 = 2*f2 - f1;
+
+    int idx_f1 = findPeakNearFrequency(f1, freq, fft_db);
+    int idx_f2 = findPeakNearFrequency(f2, freq, fft_db);
+
+    // 找到IMD3产物的位置
+    int idx_imd3_1 = findPeakNearFrequency(imd3_1, freq, fft_db);
+    int idx_imd3_2 = findPeakNearFrequency(imd3_2, freq, fft_db);
+
+    double tone_power_db = (fft_db[idx_f1] + fft_db[idx_f2]) / 2;
+    double imd3_power_db = std::max(fft_db[idx_imd3_1], fft_db[idx_imd3_2]);
+
+    // 计算IMD3
+    ADC_IMD3 = tone_power_db - imd3_power_db;
+
+    qDebug() << "IMD3: " << ADC_IMD3;
+
+    emit TransferFFTData(fft_db);
+    emit TransferPeakData(fft_db_peaks);
+
+}
+
+int CaculateParams::findPeakNearFrequency(double target_freq, const std::vector<double>& freq, const std::vector<double>& fft_db) {
+    // 找到最接近目标频率的频点
+    double min_diff = std::numeric_limits<double>::max();
+    int best_index = 0;
+
+    for (size_t i = 0; i < freq.size(); ++i) {
+        double diff = std::abs(freq[i] - target_freq);
+        if (diff < min_diff) {
+            min_diff = diff;
+            best_index = i;
+        }
+    }
+
+    // 在附近寻找实际峰值（考虑频谱泄漏）
+    int search_range = 5; // 搜索范围
+    int start = std::max(0, best_index - search_range);
+    int end = std::min(static_cast<int>(freq.size()) - 1, best_index + search_range);
+
+    int peak_index = best_index;
+    double peak_value = fft_db[best_index];
+
+    for (int i = start; i <= end; ++i) {
+        if (fft_db[i] > peak_value) {
+            peak_value = fft_db[i];
+            peak_index = i;
+        }
+    }
+
+    return peak_index;
 }
 
 std::vector<Peak> CaculateParams::findPeaks(const std::vector<double>& data,
