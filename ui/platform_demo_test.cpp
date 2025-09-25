@@ -106,17 +106,14 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
     connect(mUdpWorker, &UdpWorker::errorOccurred, this, &platform_demo_test::handleErrorOccurred);
     connect(mUdpWorker, &UdpWorker::initializePlatform, this, &platform_demo_test::handleInitializePlatform);
     connect(mUdpWorker, &UdpWorker::sendTemp, this, [=](QString message){
-        ui->statusbar->showMessage(message, 3000);
+//        ui->statusbar->showMessage(message, 3000);
+        QStringList parts = message.split('\n');
+        ui->DisplayCpuTempLabel->setText(parts[0]);
+        ui->DisplayCpuVoltLabel->setText(parts[1]);
     });
-    connect(mUdpWorker, &UdpWorker::autoDetectResult, this, [=](bool result){
-       if(result){
-           QMessageBox::question(this, "提示", "IO测试成功",
-                                 QMessageBox::Ok, QMessageBox::Ok);
-       } else {
-           QMessageBox::question(this, "提示", "IO测试失败",
-                                 QMessageBox::Ok, QMessageBox::Ok);
-       }
-       ui->deviceTestButton->setEnabled(true);
+    connect(mUdpWorker, &UdpWorker::autoDetectResult, this, [=](const QByteArray &datagram){
+        ui->StatusDisplayWindow->append(datagram);
+        ui->deviceTestButton->setEnabled(true);
     });
 
     connect(this, &platform_demo_test::clearADCData, mUdpWorker, &UdpWorker::handleClearADCData);
@@ -236,16 +233,16 @@ platform_demo_test::platform_demo_test(QWidget *parent) :
 
 
     // * 切换右侧堆叠窗口
-    connect(ui->switchWidgetButton, &QPushButton::clicked, this, [=]() {
-        int currentIndex = ui->rightStackedWidget->currentIndex();
-        int nextIndex = (currentIndex + 1) % ui->rightStackedWidget->count();
-        ui->rightStackedWidget->setCurrentIndex(nextIndex); 
-        // 更新按钮文本
-        if (nextIndex == 0) {
-            ui->switchWidgetButton->setText("切换到DAC参数");
-        } else {
-            ui->switchWidgetButton->setText("切换到ADC参数");
-        }
+    connect(this, &platform_demo_test::ChangeStackWidget, this, [=](int index) {
+//        int currentIndex = ui->rightStackedWidget->currentIndex();
+//        int nextIndex = (currentIndex + 1) % ui->rightStackedWidget->count();
+        ui->rightStackedWidget->setCurrentIndex(index);
+//        // 更新按钮文本
+//        if (nextIndex == 0) {
+//            ui->switchWidgetLabel->setText("切换到DAC参数");
+//        } else {
+//            ui->switchWidgetLabel->setText("切换到ADC参数");
+//        }
     });
 
     
@@ -397,29 +394,41 @@ platform_demo_test::~platform_demo_test() {
 
 void platform_demo_test::handleInitializePlatform(const QString &DeviceName){
     qDebug() << "Initialize platform with device: " << DeviceName;
+
     if(DeviceName == "AD9434"){
         mCaculateParams->setADCBits(12);
         chartWidget1->setSampleRate(5e8); // 设置采样率
         mDeviceType = DeviceType::AD9434;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(0);
+        ui->switchWidgetLabel->setText("SAD9434EE");
     }else if(DeviceName == "AD9268"){
         mCaculateParams->setADCBits(16);
         chartWidget1->setSampleRate(1e8); // 设置采样率
         mDeviceType = DeviceType::AD9268;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(0);
+        ui->switchWidgetLabel->setText("JAD9268");
     }else if(DeviceName == "AD9142"){
         mDeviceType = DeviceType::AD9142;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(1);
+        ui->switchWidgetLabel->setText("AD9142");
     }else if(DeviceName == "AD9747"){
         mDeviceType = DeviceType::AD9747;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(1);
+        ui->switchWidgetLabel->setText("AD9747");
     }else if (DeviceName == "AutoDetect"){
         mDeviceType = DeviceType::AutoDetect;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(2);
+        ui->switchWidgetLabel->setText("自检卡");
     }else{
         qDebug() << "Unknown device type!";
         mDeviceType = DeviceType::UnknownDevice;
         mUdpStartFlag = true;
+        emit ChangeStackWidget(2);
         return;
     }
 
@@ -464,6 +473,8 @@ void platform_demo_test::handleConnectButton() {
                                             "}");
         // disconnect
         QMetaObject::invokeMethod(mUdpWorker, "disconnectFromHost", Qt::QueuedConnection);
+        emit ChangeStackWidget(2);
+        ui->switchWidgetLabel->setText("未知设备");
     }
 }
 

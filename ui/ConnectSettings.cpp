@@ -9,25 +9,25 @@
 ConnectSettings::ConnectSettings(QWidget *parent) {
     resize(200, 500);
 
-    setWindowTitle("Connect Settings");
+    setWindowTitle("连接设置");
 
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(5);
 
-    auto *ipGroupBox = new QGroupBox("控制器IP", this);
+    auto *ipGroupBox = new QGroupBox("模数/数模转换电路测试平台", this);
     auto *ipGroupBoxLayout = new QVBoxLayout(ipGroupBox);
     auto *ipLayout = new QHBoxLayout();
     auto *portLayout = new QHBoxLayout();
 
-    auto *ipLabel = new QLabel("控制器IP:", ipGroupBox);
+    auto *ipLabel = new QLabel("模数/数模转换电路测试平台IP:", ipGroupBox);
     ipLineEdit = new QLineEdit(ipGroupBox);
     ipLineEdit->setText("192.168.1.10");
     ipLineEdit->setReadOnly(true);
     ipLayout->addWidget(ipLabel);
     ipLayout->addWidget(ipLineEdit);
 
-    auto *portLabel = new QLabel("控制器端口:", ipGroupBox);
+    auto *portLabel = new QLabel("端口:", ipGroupBox);
     portLineEdit = new QLineEdit(ipGroupBox);
     portLineEdit->setText("12345");
     portLineEdit->setReadOnly(true);
@@ -38,7 +38,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     ipGroupBoxLayout->addLayout(portLayout);
 
 
-    auto *SpectrumResourceGroupBox = new QGroupBox("频谱仪", this);
+    auto *SpectrumResourceGroupBox = new QGroupBox("频谱仪(N9040B)", this);
     auto *SpectrumResourceGroupBoxLayout = new QVBoxLayout(SpectrumResourceGroupBox);
     auto *SpectrumResourceLayout = new QVBoxLayout();
 
@@ -47,7 +47,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
 //    SpectrumResourceLineEdit->setText("TCPIP0::K-N9040B-70101.local::hislip0::INSTR");
     SpectrumResourceLineEdit->setText("TCPIP::192.168.1.4::INSTR");
 
-    DetectSpectrumBtn = new QPushButton("Detect", SpectrumResourceGroupBox);
+    DetectSpectrumBtn = new QPushButton("连接", SpectrumResourceGroupBox);
 
     SpectrumResourceLayout->addWidget(SpectrumResourceLabel);
     SpectrumResourceLayout->addWidget(SpectrumResourceLineEdit);
@@ -56,14 +56,14 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     SpectrumResourceGroupBoxLayout->addLayout(SpectrumResourceLayout);
 
 
-    auto *GeneratorResourceGroupBox = new QGroupBox("信号发生器", this);
+    auto *GeneratorResourceGroupBox = new QGroupBox("信号发生器(SMA100B)", this);
     auto *GeneratorResourceGroupBoxLayout = new QVBoxLayout(GeneratorResourceGroupBox);
     auto *GeneratorResourceLayout = new QVBoxLayout();
 
     auto *GeneratorResourceLabel = new QLabel("信号发生器资源:", GeneratorResourceGroupBox);
     GeneratorResourceLineEdit = new QLineEdit(GeneratorResourceGroupBox);
     GeneratorResourceLineEdit->setText("TCPIP::192.168.1.7::hislip0::INSTR");
-    DetectGeneratorBtn = new QPushButton("Detect", GeneratorResourceGroupBox);
+    DetectGeneratorBtn = new QPushButton("连接", GeneratorResourceGroupBox);
 
     auto *GeneratorResourceFreqHBoxLayout = new QHBoxLayout();
     auto *GeneratorResourceFreqLabel = new QLabel("频率设置:", GeneratorResourceGroupBox);
@@ -96,7 +96,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceExternalClockFreqHBoxLayout->addItem(QSpacerItem2);
     GeneratorResourceExternalClockFreqHBoxLayout->addWidget(GeneratorResourceExternalClockFreqCheckBox);
 
-    SettingGeneratorResourceBtn = new QPushButton("设置", GeneratorResourceGroupBox);
+    SettingGeneratorResourceBtn = new QPushButton("设置参数", GeneratorResourceGroupBox);
 
     GeneratorResourceLayout->addWidget(GeneratorResourceLabel);
     GeneratorResourceLayout->addWidget(GeneratorResourceLineEdit);
@@ -108,7 +108,7 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceGroupBoxLayout->addLayout(GeneratorResourceLayout);
 
 
-    auto *GeneratorResourceGroupBox2 = new QGroupBox("低频信号发生器", this);
+    auto *GeneratorResourceGroupBox2 = new QGroupBox("低频信号发生器(3362A)", this);
     auto *GeneratorResourceGroupBoxLayout2 = new QVBoxLayout(GeneratorResourceGroupBox2);
     auto *GeneratorResourceLayout2 = new QVBoxLayout();
 
@@ -130,8 +130,8 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceGroupBox2Layout->addItem(QSpacerItem3);
 
     
-    DetectGeneratorBtn2 = new QPushButton("检测", GeneratorResourceGroupBox2);
-    SettingGeneratorResourceBtn2 = new QPushButton("设置", GeneratorResourceGroupBox2);
+    DetectGeneratorBtn2 = new QPushButton("连接", GeneratorResourceGroupBox2);
+    SettingGeneratorResourceBtn2 = new QPushButton("设置参数", GeneratorResourceGroupBox2);
 
     GeneratorResourceLayout2->addWidget(GeneratorResourceLabel2);
     GeneratorResourceLayout2->addWidget(GeneratorResourceLineEdit2);
@@ -142,14 +142,14 @@ ConnectSettings::ConnectSettings(QWidget *parent) {
     GeneratorResourceGroupBoxLayout2->addLayout(GeneratorResourceLayout2);
 
 
-    auto *VoltmeterGroupBox = new QGroupBox("台表", this);
+    auto *VoltmeterGroupBox = new QGroupBox("台式万用表(34460A)", this);
     auto *VoltmeterGroupBoxLayout = new QVBoxLayout(VoltmeterGroupBox);
     auto *VoltmeterLayout = new QVBoxLayout();
 
-    auto *VoltmeterLabel = new QLabel("台表资源:", VoltmeterGroupBox);
+    auto *VoltmeterLabel = new QLabel("台式万用表资源:", VoltmeterGroupBox);
     VoltmeterResourceLineEdit = new QLineEdit(VoltmeterGroupBox);
     VoltmeterResourceLineEdit->setText("USB0::0x2A8D::0x0501::MY60048805::INSTR");
-    DetectVoltmeterBtn = new QPushButton("Detect", VoltmeterGroupBox);
+    DetectVoltmeterBtn = new QPushButton("连接", VoltmeterGroupBox);
 
     VoltmeterLayout->addWidget(VoltmeterLabel);
     VoltmeterLayout->addWidget(VoltmeterResourceLineEdit);

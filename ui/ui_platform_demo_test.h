@@ -48,9 +48,23 @@ public:
     QPushButton *instrumentDetectBtn;
     QPushButton *instrumentSettingsBtn;
 
-
-    QPushButton *switchWidgetButton;
+    QLabel *TestDeviceLabel;
+    QLabel *switchWidgetLabel;
     QPushButton *ChartWidgetControlButton;
+    QGroupBox *StatusDisplayGroupBox;
+    QVBoxLayout *StatusDisplayLayout;
+    QTextBrowser *StatusDisplayWindow;
+
+    QGroupBox* DisplayCpuGroupBox;
+    QVBoxLayout* DisplayCpuLayout;
+    QHBoxLayout* DisplayCpuTempLayout;
+    QWidget* colorBlock1;
+    QLabel* DisplayCpuTempLabel;
+    QHBoxLayout* DisplayCpuVoltLayout;
+    QWidget* colorBlock2;
+    QLabel* DisplayCpuVoltLabel;
+
+
     QSpacerItem *verticalSpacer;
 
     QStackedWidget *rightStackedWidget;  // 主堆叠部件
@@ -157,31 +171,78 @@ public:
         leftWidget = new QWidget(splitter);
         controlLayout = new QVBoxLayout(leftWidget);
 
-        ipGroupBox = new QGroupBox("设备连接测试", leftWidget);
+        ipGroupBox = new QGroupBox("设备连接", leftWidget);
         ipGroupBoxLayout = new QVBoxLayout(ipGroupBox);
 
-        connectButton = new QPushButton("连接设备", ipGroupBox);
+
+        TestDeviceLabel = new QLabel("测试器件: ", leftWidget);
+        switchWidgetLabel = new QLabel("未知设备", leftWidget);
+        switchWidgetLabel->setAlignment(Qt::AlignCenter);
+        QFont switchWidgetLabelFont;
+        switchWidgetLabelFont.setPointSize(16);
+        switchWidgetLabelFont.setBold(true);
+        switchWidgetLabel->setFont(switchWidgetLabelFont);
+
+        connectButton = new QPushButton("连接测试平台", ipGroupBox);
         connectButton->setCheckable(true);
         deviceTestButton = new QPushButton("设备IO测试", ipGroupBox);
         deviceTestButton->setChecked(true);
+
+        ipGroupBoxLayout->addWidget(TestDeviceLabel);
+        ipGroupBoxLayout->addWidget(switchWidgetLabel);
         ipGroupBoxLayout->addWidget(connectButton);
         ipGroupBoxLayout->addWidget(deviceTestButton);
 
-        messageGroupBox = new QGroupBox("仪器资源", leftWidget);
+        messageGroupBox = new QGroupBox("设置", leftWidget);
         messageGroupBoxLayout = new QVBoxLayout(messageGroupBox);
         instrumentDetectBtn = new QPushButton("检测仪器", messageGroupBox);
-        instrumentSettingsBtn = new QPushButton("仪器设置", messageGroupBox);
+        instrumentDetectBtn->hide();
+        instrumentSettingsBtn = new QPushButton("测试用通用仪器设置", messageGroupBox);
+        ChartWidgetControlButton = new QPushButton("测试图表控制", leftWidget);
+
+
         messageGroupBoxLayout->addWidget(instrumentDetectBtn);
         messageGroupBoxLayout->addWidget(instrumentSettingsBtn);
+        messageGroupBoxLayout->addWidget(ChartWidgetControlButton);
 
-        // 添加切换按钮
-        switchWidgetButton = new QPushButton("切换显示部件 (ADC/DAC)", leftWidget);
-        ChartWidgetControlButton = new QPushButton("图表控制", leftWidget);
+
+        DisplayCpuGroupBox = new QGroupBox(leftWidget);
+        DisplayCpuLayout = new QVBoxLayout(DisplayCpuGroupBox);
+        DisplayCpuTempLayout = new QHBoxLayout();
+        colorBlock1 = new QWidget();
+        colorBlock1->setFixedSize(16, 16); // 设置正方形大小
+        colorBlock1->setStyleSheet(QString("background-color: %1; border: 1px solid gray;").arg("#90EE90"));
+        DisplayCpuTempLabel = new QLabel("测试平台处理器核心温度: ", leftWidget);
+
+        DisplayCpuTempLayout->addWidget(colorBlock1);
+        DisplayCpuTempLayout->addWidget(DisplayCpuTempLabel);
+
+        DisplayCpuVoltLayout = new QHBoxLayout();
+        colorBlock2 = new QWidget();
+        colorBlock2->setFixedSize(16, 16); // 设置正方形大小
+        colorBlock2->setStyleSheet(QString("background-color: %1; border: 1px solid gray;").arg("#90EE90"));
+        DisplayCpuVoltLabel = new QLabel("测试平台处理器核心电压: ", leftWidget);
+
+        DisplayCpuVoltLayout->addWidget(colorBlock2);
+        DisplayCpuVoltLayout->addWidget(DisplayCpuVoltLabel);
+
+        DisplayCpuLayout->addLayout(DisplayCpuTempLayout);
+        DisplayCpuLayout->addLayout(DisplayCpuVoltLayout);
+
+
+        StatusDisplayGroupBox = new QGroupBox("测试平台I/O自检测试");
+        StatusDisplayLayout = new QVBoxLayout(StatusDisplayGroupBox);
+        StatusDisplayWindow = new QTextBrowser();
+        StatusDisplayWindow->setObjectName("自检显示窗口");
+        StatusDisplayWindow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        StatusDisplayLayout->addWidget(StatusDisplayWindow);
+
 
         controlLayout->addWidget(ipGroupBox);
         controlLayout->addWidget(messageGroupBox);
-        controlLayout->addWidget(switchWidgetButton);
-        controlLayout->addWidget(ChartWidgetControlButton);
+        controlLayout->addWidget(DisplayCpuGroupBox);
+        controlLayout->addWidget(StatusDisplayGroupBox);
+        controlLayout->addWidget(StatusDisplayGroupBox);
 
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -342,7 +403,8 @@ public:
         // 将两个显示部件添加到堆叠部件中
         rightStackedWidget->addWidget(DisplayADCParamsWidget);
         rightStackedWidget->addWidget(DisplayDACParamsWidget);
-        rightStackedWidget->setCurrentIndex(0); // 默认显示ADC部件
+        rightStackedWidget->addWidget(new QWidget);
+        rightStackedWidget->setCurrentIndex(2); // 默认显示ADC部件
 
         chartGridWidget = new ChartWidgetsManager(splitter);
         chartWidget1 = new SpectrumChartTryWidget;
@@ -396,7 +458,7 @@ public:
         platform_demo_test->setWindowTitle(QCoreApplication::translate("platform_demo_test", "platform_demo_test", nullptr));
         // menuFile->setTitle(QCoreApplication::translate("platform_demo_test", "File", nullptr));
         // menuSettings->setTitle(QCoreApplication::translate("platform_demo_test", "Settings", nullptr));
-        switchWidgetButton->setText(QCoreApplication::translate("platform_demo_test", "切换显示部件 (ADC/DAC)", nullptr));
+//        switchWidgetLabel->setText(QCoreApplication::translate("platform_demo_test", "切换显示部件 (ADC/DAC)", nullptr));
 
     } // retranslateUi
 

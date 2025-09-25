@@ -61,7 +61,7 @@ signals:
     void initializePlatform(const QString &DeviceName);
     void DACValueSetSuccess();
     void sendTemp(const QString &Temp);
-    void autoDetectResult(bool result);
+    void autoDetectResult(const QByteArray &datagram);
 
 private slots:
     void handleReadyRead();

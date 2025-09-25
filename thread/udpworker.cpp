@@ -437,8 +437,8 @@ void UdpWorker::handleGetTemp() {
             float temp = XAdcPs_RawToTemperature(cpuTemp);
             float volt = XAdcPs_RawToVoltage(cpuVolt);
 //            qDebug() << "get zynq return temp: " << temp;
-            QString tempStr = "cpu0 温度: " +  QString::number(temp,10,3) +
-                                "\u2103  cpu 电压: " + QString::number(volt,10,3) + "V";
+            QString tempStr = "测试平台处理器核心温度: " +  QString::number(temp,10,3) +
+                                "\u2103\n测试平台处理器核心电压: " + QString::number(volt,10,3) + "V";
             qDebug() << tempStr;
             emit sendTemp(tempStr);
         }
@@ -472,13 +472,11 @@ void UdpWorker::handleGetAutoDetect() {
         // todo: 解析datagram，判断是否获取成功
         if(datagram.contains("AutoDetect Set Success")){
             qDebug() << "AutoDetect Success";
-            emit autoDetectResult(true);
         } else if(datagram.contains("AutoDetect Set Fail")){
             qDebug() << "AutoDetect Fail";
-            bool autoDetectResult(false);
-        }else {
-            emit errorOccurred("Failed to set AD9268 channel");
         }
+
+        emit autoDetectResult(datagram);
 
     }
     disconnect(udpSocket, &QUdpSocket::readyRead, &loop, &QEventLoop::quit);

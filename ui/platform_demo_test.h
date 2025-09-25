@@ -44,6 +44,7 @@ signals:
     void clearADCData();
     void startOtherCaculate(CALIVOLTAGE_MODE CaliVoltageMode);
     void TransferDACStaticData(const std::vector<double>& data);
+    void ChangeStackWidget(int index);
 
 private slots:
     void handleInitializePlatform(const QString &DeviceName);
